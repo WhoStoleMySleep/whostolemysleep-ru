@@ -1,6 +1,7 @@
 import { db } from '~/server/db'
 import * as schema from '~/server/db/schema'
 import { markDirty, postPaths } from '~/server/utils/pending'
+import { sanitizeHtml } from '~/server/utils/sanitize'
 
 interface CreateBody {
   slug:        string
@@ -20,6 +21,9 @@ interface CreateBody {
 export default defineEventHandler(async (event) => {
   const body = await readBody<CreateBody>(event)
   const { tag_ids, ...fields } = body
+
+  fields.text_ru = sanitizeHtml(fields.text_ru)
+  fields.text_en = sanitizeHtml(fields.text_en)
 
   const [created] = await db.insert(schema.post).values(fields).returning()
 

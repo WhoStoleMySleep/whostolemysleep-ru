@@ -17,6 +17,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@pinia/nuxt": "^0.11.3",
+    "@types/sanitize-html": "^2.16.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
@@ -26,6 +27,7 @@
     "nodemailer": "^6.9.14",
     "nuxt": "^3.13.2",
     "pinia": "^3.0.4",
+    "sanitize-html": "^2.17.4",
     "vue": "latest",
     "vue-router": "latest"
   },
