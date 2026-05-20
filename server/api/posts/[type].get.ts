@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale, pick } from '../../utils/locale'
 
-export default defineEventHandler(async (event) => {
+async function fetchPosts(event: any) {
   const type = getRouterParam(event, 'type')
   if (type !== 'blog' && type !== 'project') {
     throw createError({ statusCode: 400, message: `Invalid type: ${type}` })
@@ -42,4 +42,9 @@ export default defineEventHandler(async (event) => {
       position: img.position,
     })),
   }))
+}
+
+export default defineCachedEventHandler(fetchPosts, {
+  maxAge:  600,
+  getKey:  (event) => `posts-${getRouterParam(event, 'type')}-${getQuery(event).locale ?? 'ru'}`,
 })

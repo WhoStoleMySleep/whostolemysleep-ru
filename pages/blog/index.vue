@@ -8,9 +8,10 @@ useSeoMeta({
   description: () => t('seo.blog_desc'),
 })
 
-const { data: posts, pending } = await useFetch<Post[]>('/api/posts/blog', {
-  query: { locale },
-})
+const { data: posts, pending } = await useAsyncData(
+  () => `posts-blog-${locale.value}`,
+  () => $fetch<Post[]>('/api/posts/blog', { query: { locale: locale.value } }),
+)
 
 const localQuery = ref('')
 const filtered = computed(() => {

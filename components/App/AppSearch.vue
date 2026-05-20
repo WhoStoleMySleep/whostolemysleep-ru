@@ -3,6 +3,7 @@ const search = useSearchStore()
 const input  = ref<HTMLInputElement | null>(null)
 const route  = useRoute()
 const { t }  = useLocale()
+const localePath = useLocalePath()
 
 watch(() => search.isOpen, (val) => {
   if (val) {
@@ -56,7 +57,7 @@ const { formatLong } = useFormatDate()
             <ul v-else-if="search.results.length > 0" class="search-results">
               <li v-for="item in search.results" :key="item.id" class="search-result">
                 <NuxtLink
-                  :to="item.url ?? `/blog/${item.slug}`"
+                  :to="item.url ?? localePath(`/blog/${item.slug}`)"
                   :target="item.url ? '_blank' : ''"
                   class="search-result__link"
                   @click="search.close()"

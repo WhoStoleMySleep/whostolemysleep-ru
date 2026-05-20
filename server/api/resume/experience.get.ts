@@ -1,13 +1,11 @@
 import { db } from '../../db'
 import { getLocale, pick } from '../../utils/locale'
 
-export default defineEventHandler(async (event) => {
+async function fetchExperience(event: any) {
   const locale = getLocale(event)
 
   const rows = await db.query.experience.findMany({
-    with: {
-      bullets: { orderBy: (b, { asc }) => [asc(b.order)] },
-    },
+    with: { bullets: { orderBy: (b, { asc }) => [asc(b.order)] } },
     orderBy: (e, { asc }) => [asc(e.order)],
   })
 
@@ -24,4 +22,9 @@ export default defineEventHandler(async (event) => {
       order: b.order,
     })),
   }))
+}
+
+export default defineCachedEventHandler(fetchExperience, {
+  maxAge:  7200,
+  getKey:  (event) => `experience-${getQuery(event).locale ?? 'ru'}`,
 })

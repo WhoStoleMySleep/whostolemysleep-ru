@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@nuxtjs/i18n": "^10.3.0",
     "@pinia/nuxt": "^0.11.3",
     "@types/sanitize-html": "^2.16.1",
     "@vercel/analytics": "^2.0.1",

@@ -4,10 +4,12 @@ import type { Post } from '~/types'
 const route  = useRoute()
 const slug   = route.params.slug as string
 const { locale, t } = useLocale()
+const localePath = useLocalePath()
 
-const { data: post, error } = await useFetch<Post>(`/api/blog/${slug}`, {
-  query: { locale },
-})
+const { data: post, error } = await useAsyncData(
+  () => `blog-${slug}-${locale.value}`,
+  () => $fetch<Post>(`/api/blog/${slug}`, { query: { locale: locale.value } }),
+)
 
 if (error.value || !post.value) {
   throw createError({ statusCode: 404, message: 'Post not found' })
@@ -26,7 +28,7 @@ const { formatLong } = useFormatDate()
     <div class="container post-container">
 
       <header class="post-header">
-        <NuxtLink to="/blog" class="post-back">
+        <NuxtLink :to="localePath('/blog')" class="post-back">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M10 7H4M6 4L3 7L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>

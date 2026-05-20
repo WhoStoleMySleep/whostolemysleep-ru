@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const year = new Date().getFullYear()
 const { t } = useLocale()
+const localePath = useLocalePath()
 </script>
 
 <template>
@@ -12,10 +13,10 @@ const { t } = useLocale()
       </div>
 
       <nav class="footer__nav" aria-label="Links">
-        <NuxtLink to="/blog"     class="footer__link">{{ t('nav.blog') }}</NuxtLink>
-        <NuxtLink to="/projects" class="footer__link">{{ t('nav.projects') }}</NuxtLink>
-        <NuxtLink to="/resume"   class="footer__link">{{ t('nav.resume') }}</NuxtLink>
-        <NuxtLink to="/contacts" class="footer__link">{{ t('nav.contacts') }}</NuxtLink>
+        <NuxtLink :to="localePath('/blog')"     class="footer__link">{{ t('nav.blog') }}</NuxtLink>
+        <NuxtLink :to="localePath('/projects')" class="footer__link">{{ t('nav.projects') }}</NuxtLink>
+        <NuxtLink :to="localePath('/resume')"   class="footer__link">{{ t('nav.resume') }}</NuxtLink>
+        <NuxtLink :to="localePath('/contacts')" class="footer__link">{{ t('nav.contacts') }}</NuxtLink>
         <a href="https://t.me/WhoStoleMySleepDev"       target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
         <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
       </nav>

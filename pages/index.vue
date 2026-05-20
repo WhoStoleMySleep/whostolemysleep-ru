@@ -2,15 +2,16 @@
 import type { Post, AboutMe } from '~/types'
 
 const { locale, t } = useLocale()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title:       () => t('seo.home_title'),
   description: () => t('seo.home_desc'),
 })
 
-const { data: about }    = await useFetch<AboutMe>('/api/about',         { query: { locale } })
-const { data: blog }     = await useFetch<Post[]>('/api/posts/blog',     { query: { locale } })
-const { data: projects } = await useFetch<Post[]>('/api/posts/project',  { query: { locale } })
+const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }))
+const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }))
+const { data: projects } = await useAsyncData(() => `posts-project-${locale.value}`, () => $fetch<Post[]>('/api/posts/project',   { query: { locale: locale.value } }))
 
 const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]
@@ -43,28 +44,28 @@ onMounted(() => {
           </h1>
 
           <div class="hero__nav">
-            <NuxtLink to="/blog" class="hero__nav-item">
+            <NuxtLink :to="localePath('/blog')" class="hero__nav-item">
               <span class="hero__nav-num">01</span>
               <span class="hero__nav-label">{{ t('nav.blog') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
-            <NuxtLink to="/projects" class="hero__nav-item">
+            <NuxtLink :to="localePath('/projects')" class="hero__nav-item">
               <span class="hero__nav-num">02</span>
               <span class="hero__nav-label">{{ t('nav.projects') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
-            <NuxtLink to="/resume" class="hero__nav-item">
+            <NuxtLink :to="localePath('/resume')" class="hero__nav-item">
               <span class="hero__nav-num">03</span>
               <span class="hero__nav-label">{{ t('nav.resume') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
-            <NuxtLink to="/contacts" class="hero__nav-item">
+            <NuxtLink :to="localePath('/contacts')" class="hero__nav-item">
               <span class="hero__nav-num">04</span>
               <span class="hero__nav-label">{{ t('nav.contacts') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -108,8 +109,8 @@ onMounted(() => {
         <div class="about__grid">
           <div class="about__text" v-html="about.text" />
           <div class="about__links">
-            <UiButton to="/resume">{{ t('about.resume') }}</UiButton>
-            <UiButton to="/contacts" variant="ghost">{{ t('about.contact') }}</UiButton>
+            <UiButton :to="localePath('/resume')">{{ t('about.resume') }}</UiButton>
+            <UiButton :to="localePath('/contacts')" variant="ghost">{{ t('about.contact') }}</UiButton>
           </div>
         </div>
       </div>
@@ -120,7 +121,7 @@ onMounted(() => {
       <div class="container">
         <div class="section__header">
           <p class="eyebrow section__eyebrow">{{ t('news.eyebrow') }}</p>
-          <NuxtLink to="/blog" class="section__more">{{ t('news.all') }}</NuxtLink>
+          <NuxtLink :to="localePath('/blog')" class="section__more">{{ t('news.all') }}</NuxtLink>
         </div>
         <div class="news__grid">
           <UiCard v-for="item in news" :key="item.id" :item="item" />

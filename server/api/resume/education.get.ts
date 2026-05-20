@@ -1,7 +1,7 @@
 import { db } from '../../db'
 import { getLocale, pick } from '../../utils/locale'
 
-export default defineEventHandler(async (event) => {
+async function fetchEducation(event: any) {
   const locale = getLocale(event)
 
   const rows = await db.query.education.findMany({
@@ -16,4 +16,9 @@ export default defineEventHandler(async (event) => {
     date_to:        row.date_to,
     order:          row.order,
   }))
+}
+
+export default defineCachedEventHandler(fetchEducation, {
+  maxAge:  7200,
+  getKey:  (event) => `education-${getQuery(event).locale ?? 'ru'}`,
 })

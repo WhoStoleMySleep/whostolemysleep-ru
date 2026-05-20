@@ -14,10 +14,10 @@ const [
   { data: education },
   { data: skillGroups },
 ] = await Promise.all([
-  useFetch<AboutMe>('/api/about',              { query: { locale } }),
-  useFetch<Experience[]>('/api/resume/experience', { query: { locale } }),
-  useFetch<Education[]>('/api/resume/education',   { query: { locale } }),
-  useFetch<SkillGroup[]>('/api/skills',            { query: { locale } }),
+  useAsyncData(() => `about-${locale.value}`,      () => $fetch<AboutMe>('/api/about',               { query: { locale: locale.value } })),
+  useAsyncData(() => `experience-${locale.value}`, () => $fetch<Experience[]>('/api/resume/experience', { query: { locale: locale.value } })),
+  useAsyncData(() => `education-${locale.value}`,  () => $fetch<Education[]>('/api/resume/education',   { query: { locale: locale.value } })),
+  useAsyncData(() => `skills-${locale.value}`,     () => $fetch<SkillGroup[]>('/api/skills',            { query: { locale: locale.value } })),
 ])
 
 const { formatPeriod } = useFormatDate()

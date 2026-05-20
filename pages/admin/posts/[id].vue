@@ -1,4 +1,5 @@
 <script setup lang="ts">
+defineI18nRoute(false)
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const route  = useRoute()

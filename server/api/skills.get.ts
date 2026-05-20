@@ -1,7 +1,7 @@
 import { db } from '../db'
 import { getLocale, pick } from '../utils/locale'
 
-export default defineEventHandler(async (event) => {
+async function fetchSkills(event: any) {
   const locale = getLocale(event)
 
   const groups = await db.query.skillGroup.findMany({
@@ -15,4 +15,9 @@ export default defineEventHandler(async (event) => {
     name: pick(g.name_ru, g.name_en, locale),
     skills: g.skills.map((s) => ({ id: s.id, name: s.name, order: s.order })),
   }))
+}
+
+export default defineCachedEventHandler(fetchSkills, {
+  maxAge:  7200,
+  getKey:  (event) => `skills-${getQuery(event).locale ?? 'ru'}`,
 })

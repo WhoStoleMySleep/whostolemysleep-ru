@@ -3,14 +3,15 @@ const route = useRoute()
 const search = useSearchStore()
 const { isDark, toggle } = useTheme()
 const { locale, setLocale, t } = useLocale()
+const localePath = useLocalePath()
 const scrolled   = ref(false)
 const mobileOpen = ref(false)
 
 const nav = computed(() => [
-  { label: t('nav.blog'),     to: '/blog' },
-  { label: t('nav.projects'), to: '/projects' },
-  { label: t('nav.resume'),   to: '/resume' },
-  { label: t('nav.contacts'), to: '/contacts' },
+  { label: t('nav.blog'),     to: localePath('/blog') },
+  { label: t('nav.projects'), to: localePath('/projects') },
+  { label: t('nav.resume'),   to: localePath('/resume') },
+  { label: t('nav.contacts'), to: localePath('/contacts') },
 ])
 
 onMounted(() => {
@@ -29,7 +30,7 @@ function toggleLocale() {
 <template>
   <header class="header" :class="{ 'header--scrolled': scrolled }">
     <div class="container header__inner">
-      <NuxtLink to="/" class="header__logo" aria-label="На главную">
+      <NuxtLink :to="localePath('/')" class="header__logo" aria-label="На главную">
         <span class="logo-text">wms<span class="logo-dot">.</span></span>
       </NuxtLink>
 

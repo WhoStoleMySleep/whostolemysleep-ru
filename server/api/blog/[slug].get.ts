@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale, pick } from '../../utils/locale'
 
-export default defineEventHandler(async (event) => {
+async function fetchPost(event: any) {
   const slug = getRouterParam(event, 'slug')
   if (!slug) throw createError({ statusCode: 400, message: 'Invalid slug' })
 
@@ -41,4 +41,9 @@ export default defineEventHandler(async (event) => {
       position: img.position,
     })),
   }
+}
+
+export default defineCachedEventHandler(fetchPost, {
+  maxAge:  600,
+  getKey:  (event) => `blog-${getRouterParam(event, 'slug')}-${getQuery(event).locale ?? 'ru'}`,
 })

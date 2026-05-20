@@ -1,0 +1,75 @@
+{
+  "nav": { "blog": "Blog", "projects": "Projects", "resume": "Resume", "contacts": "Contacts" },
+  "hero": {
+    "eyebrow": "Frontend Development",
+    "line1": "Main focus —",
+    "line2": "building websites",
+    "line3": "with over",
+    "years": "years",
+    "status": "Open to opportunities"
+  },
+  "about": { "eyebrow": "About me", "resume": "View resume", "contact": "Contact me" },
+  "news": { "eyebrow": "Latest posts", "all": "All posts →" },
+  "blog": {
+    "eyebrow": "Blog",
+    "title": "Posts & Thoughts",
+    "subtitle": "Articles about development, architecture, tools and experience",
+    "filter": "Filter by topic...",
+    "empty": "No posts found"
+  },
+  "card": { "blog": "Blog", "project": "Project" },
+  "post": { "back": "Back to blog", "source": "Open source" },
+  "projects": {
+    "eyebrow": "Projects",
+    "title": "Works & Experiments",
+    "subtitle": "Commercial projects, pet projects and open-source",
+    "all": "All",
+    "empty": "No projects found"
+  },
+  "resume": {
+    "eyebrow": "Resume",
+    "title": "Experience & Skills",
+    "about": "About me",
+    "experience": "Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "present": "present"
+  },
+  "contacts": {
+    "eyebrow": "Contacts",
+    "title1": "Let's",
+    "title2": "talk",
+    "subtitle": "Open to new projects, questions and interesting opportunities",
+    "email": "Email",
+    "status": "Status",
+    "statusText": "Open to opportunities",
+    "response": "Response time",
+    "responseVal": "~24 hours",
+    "name": "Name",
+    "namePlaceholder": "John Doe",
+    "message": "Message",
+    "messagePlaceholder": "Tell me about your project...",
+    "submit": "Send message",
+    "success": "Message sent. I will contact you shortly.",
+    "required": "Please fill all fields",
+    "sendError": "Send error. Please try again later."
+  },
+  "search": {
+    "placeholder": "Search blog and projects...",
+    "empty": "Nothing found for \"{q}\"",
+    "hint": "Type to search by titles, descriptions and tags"
+  },
+  "footer": { "dev": "Frontend Developer" },
+  "seo": {
+    "home_title": "Frontend Developer",
+    "home_desc": "Frontend developer with 4+ years of experience. React, Vue, Next.js, Nuxt, TypeScript.",
+    "blog_title": "Blog",
+    "blog_desc": "Articles about frontend development, technologies and work experience.",
+    "projects_title": "Projects",
+    "projects_desc": "Project portfolio — websites, applications, open-source.",
+    "resume_title": "Resume",
+    "resume_desc": "Work experience, education and technical skills of a frontend developer.",
+    "contacts_title": "Contacts",
+    "contacts_desc": "Contact a frontend developer. Feedback form."
+  }
+}

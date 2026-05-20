@@ -4,9 +4,10 @@ import type { Post } from '~/types'
 const props = defineProps<{ item: Post }>()
 const { format } = useFormatDate()
 const { t } = useLocale()
+const localePath = useLocalePath()
 
 const href = computed(() =>
-  props.item.url ? props.item.url : `/blog/${props.item.slug}`
+  props.item.url ? props.item.url : localePath(`/blog/${props.item.slug}`)
 )
 const isExternal = computed(() => !!props.item.url)
 </script>

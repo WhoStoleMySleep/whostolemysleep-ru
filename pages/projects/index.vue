@@ -8,9 +8,10 @@ useSeoMeta({
   description: () => t('seo.projects_desc'),
 })
 
-const { data: projects, pending } = await useFetch<Post[]>('/api/posts/project', {
-  query: { locale },
-})
+const { data: projects, pending } = await useAsyncData(
+  () => `posts-project-${locale.value}`,
+  () => $fetch<Post[]>('/api/posts/project', { query: { locale: locale.value } }),
+)
 
 const activeTag = ref<string | null>(null)
 
