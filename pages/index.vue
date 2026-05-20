@@ -77,13 +77,25 @@ onMounted(() => {
             <span class="hero__status-dot" aria-hidden="true" />
             <span class="hero__status-text">Открыт к предложениям</span>
           </div>
-          <p class="hero__handle">@whostolemysleep</p>
+          <div class="hero__socials">
+            <a href="https://t.me/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="hero__social-link" aria-label="Telegram">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M21.8 2.3L1.4 10.1c-1.3.5-1.3 1.3-.2 1.6l5.1 1.6 11.8-7.5c.6-.3 1.1-.1.7.2L8.5 15.5l-.4 5.3c.6 0 .9-.3 1.2-.6l2.9-2.8 6 4.4c1.1.6 1.9.3 2.1-.9l3.8-17.9c.5-1.5-.6-2.2-1.8-1.7z" fill="currentColor"/>
+              </svg>
+              <span>@whostolemysleep</span>
+            </a>
+            <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="hero__social-link" aria-label="GitHub">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.9 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z" fill="currentColor"/>
+              </svg>
+              <span>GitHub</span>
+            </a>
+          </div>
         </div>
       </div>
 
       <div class="hero__scroll-hint" aria-hidden="true">
         <span class="hero__scroll-line" />
-        <span class="hero__scroll-label">scroll</span>
       </div>
     </section>
 
@@ -242,7 +254,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12px;
+  gap: 16px;
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.6s ease 0.8s;
@@ -253,6 +265,29 @@ onMounted(() => {
 @media (max-width: 768px) {
   .hero__aside { align-items: flex-start; }
 }
+
+.hero__socials {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .hero__socials { align-items: flex-start; }
+}
+
+.hero__social-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+
+.hero__social-link:hover { color: var(--accent); }
 
 .hero__status {
   display: flex;
@@ -290,32 +325,22 @@ onMounted(() => {
 
 .hero__scroll-hint {
   position: absolute;
-  bottom: 32px;
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  animation: scroll-hint 2.5s ease infinite;
+  animation: scroll-fade 3s ease infinite;
 }
 
-@keyframes scroll-hint {
-  0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0); }
-  50% { opacity: 0.7; transform: translateX(-50%) translateY(8px); }
+@keyframes scroll-fade {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.5; }
 }
 
 .hero__scroll-line {
+  display: block;
   width: 1px;
-  height: 40px;
-  background: linear-gradient(to bottom, var(--accent), transparent);
-}
-
-.hero__scroll-label {
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--text-3);
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
 }
 
 /* ── Sections ── */

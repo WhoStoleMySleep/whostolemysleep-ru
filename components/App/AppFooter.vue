@@ -15,6 +15,8 @@ const year = new Date().getFullYear()
         <NuxtLink to="/projects" class="footer__link">Проекты</NuxtLink>
         <NuxtLink to="/resume" class="footer__link">Резюме</NuxtLink>
         <NuxtLink to="/contacts" class="footer__link">Контакты</NuxtLink>
+        <a href="https://t.me/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
+        <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
       </nav>
     </div>
   </footer>

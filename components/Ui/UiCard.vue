@@ -171,11 +171,17 @@ const isExternal = computed(() => !!props.item.url)
 
 .card__external {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  color: var(--text-3);
-  padding: 6px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
+  top: 14px;
+  right: 14px;
+  color: var(--accent);
+  padding: 7px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(240, 192, 96, 0.25);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.card:hover .card__external {
+  background: rgba(240, 192, 96, 0.2);
+  border-color: rgba(240, 192, 96, 0.4);
 }
 </style>

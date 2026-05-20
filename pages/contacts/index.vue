@@ -43,8 +43,8 @@ async function submit() {
         <div class="contacts-info">
           <div class="contact-block">
             <p class="contact-block__label">Почта</p>
-            <a href="mailto:thekostia5@gmail.com" class="contact-block__value">
-              thekostia5@gmail.com
+            <a href="mailto:whostolemysleep@gmail.com" class="contact-block__value">
+              whostolemysleep@gmail.com
             </a>
           </div>
           <div class="contact-block">
