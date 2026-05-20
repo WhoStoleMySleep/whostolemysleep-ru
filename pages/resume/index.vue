@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AboutMe, Inform, Skills } from '~/types'
+import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
 
 useSeoMeta({
   title: 'Резюме',
@@ -10,13 +10,15 @@ const [
   { data: about },
   { data: experience },
   { data: education },
-  { data: skills },
+  { data: skillGroups },
 ] = await Promise.all([
   useFetch<AboutMe>('/api/about'),
-  useFetch<Inform[]>('/api/inform/experience'),
-  useFetch<Inform[]>('/api/inform/education'),
-  useFetch<Skills>('/api/skills'),
+  useFetch<Experience[]>('/api/resume/experience'),
+  useFetch<Education[]>('/api/resume/education'),
+  useFetch<SkillGroup[]>('/api/skills'),
 ])
+
+const { formatPeriod } = useFormatDate()
 </script>
 
 <template>
@@ -51,15 +53,13 @@ const [
             >
               <div class="resume-item__header">
                 <div>
-                  <h3 class="resume-item__title">{{ item.title }}</h3>
-                  <p class="resume-item__place">{{ item.place }}</p>
+                  <h3 class="resume-item__title">{{ item.position }}</h3>
+                  <p class="resume-item__place">{{ item.company }}</p>
                 </div>
-                <span class="resume-item__date">{{ item.dateString }}</span>
+                <span class="resume-item__date">{{ formatPeriod(item.date_from, item.date_to) }}</span>
               </div>
-              <ul v-if="item.InformDetails.length" class="resume-item__details">
-                <li v-for="detail in item.InformDetails" :key="detail.id">
-                  {{ detail.text }}
-                </li>
+              <ul v-if="item.bullets.length" class="resume-item__details">
+                <li v-for="bullet in item.bullets" :key="bullet.id">{{ bullet.text }}</li>
               </ul>
             </div>
           </div>
@@ -80,43 +80,26 @@ const [
             >
               <div class="resume-item__header">
                 <div>
-                  <h3 class="resume-item__title">{{ item.title }}</h3>
-                  <p class="resume-item__place">{{ item.place }}</p>
+                  <h3 class="resume-item__title">{{ item.specialization }}</h3>
+                  <p class="resume-item__place">{{ item.institution }}</p>
                 </div>
-                <span class="resume-item__date">{{ item.dateString }}</span>
+                <span class="resume-item__date">{{ formatPeriod(item.date_from, item.date_to) }}</span>
               </div>
-              <ul v-if="item.InformDetails.length" class="resume-item__details">
-                <li v-for="detail in item.InformDetails" :key="detail.id">
-                  {{ detail.text }}
-                </li>
-              </ul>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Skills -->
-      <section v-if="skills" class="resume-section">
+      <section v-if="skillGroups?.length" class="resume-section">
         <div class="resume-section__label">
           <p class="eyebrow">Навыки</p>
         </div>
         <div class="resume-section__content">
           <div class="skills-grid">
-            <div class="skill-group">
-              <p class="skill-group__label">Языки</p>
-              <p class="skill-group__value">{{ skills.languages }}</p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group__label">Фреймворки</p>
-              <p class="skill-group__value">{{ skills.frameworks }}</p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group__label">CMS</p>
-              <p class="skill-group__value">{{ skills.cms }}</p>
-            </div>
-            <div class="skill-group">
-              <p class="skill-group__label">Инструменты</p>
-              <p class="skill-group__value">{{ skills.instruments }}</p>
+            <div v-for="group in skillGroups" :key="group.id" class="skill-group">
+              <p class="skill-group__label">{{ group.name }}</p>
+              <p class="skill-group__value">{{ group.skills.map(s => s.name).join(', ') }}</p>
             </div>
           </div>
         </div>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Product } from '~/types'
+import type { Post } from '~/types'
 
-const props = defineProps<{ item: Product }>()
+const props = defineProps<{ item: Post }>()
 const { format } = useFormatDate()
 
 const href = computed(() =>
-  props.item.url ? props.item.url : `/blog/${props.item.id}`
+  props.item.url ? props.item.url : `/blog/${props.item.slug}`
 )
 const isExternal = computed(() => !!props.item.url)
 </script>
@@ -33,7 +33,7 @@ const isExternal = computed(() => !!props.item.url)
           <span class="card__date">{{ format(item.date) }}</span>
         </div>
         <h3 class="card__title">{{ item.title }}</h3>
-        <p class="card__descr">{{ item.text_short }}</p>
+        <p class="card__descr">{{ item.excerpt }}</p>
         <ul v-if="item.tags.length" class="card__tags">
           <li v-for="tag in item.tags.slice(0, 4)" :key="tag.id" class="card__tag">
             {{ tag.name }}

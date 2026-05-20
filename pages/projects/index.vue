@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Product } from '~/types'
+import type { Post } from '~/types'
 
 useSeoMeta({
   title: 'Проекты',
   description: 'Портфолио проектов — сайты, приложения, open-source.',
 })
 
-const { data: projects, pending } = await useFetch<Product[]>('/api/products/project')
+const { data: projects, pending } = await useFetch<Post[]>('/api/posts/project')
 
 const activeTag = ref<string | null>(null)
 

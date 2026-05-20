@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Product } from '~/types'
+import type { Post } from '~/types'
 
 const route = useRoute()
-const id = route.params.id as string
+const slug = route.params.slug as string
 
-const { data: post, error } = await useFetch<Product>(`/api/blog/${id}`)
+const { data: post, error } = await useFetch<Post>(`/api/blog/${slug}`)
 
 if (error.value || !post.value) {
   throw createError({ statusCode: 404, message: 'Статья не найдена' })
@@ -12,7 +12,7 @@ if (error.value || !post.value) {
 
 useSeoMeta({
   title: () => post.value?.title ?? 'Статья',
-  description: () => post.value?.text_short ?? '',
+  description: () => post.value?.excerpt ?? '',
 })
 
 const { formatLong } = useFormatDate()
@@ -31,8 +31,7 @@ const { formatLong } = useFormatDate()
         </NuxtLink>
 
         <div class="post-meta">
-          <span class="post-date">{{ formatLong(post.date) }}</span>
-          <span v-if="post.author" class="post-author">{{ post.author }}</span>
+          <span v-if="post.published_at" class="post-date">{{ formatLong(post.published_at) }}</span>
         </div>
 
         <h1 class="post-title">{{ post.title }}</h1>

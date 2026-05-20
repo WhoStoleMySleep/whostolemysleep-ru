@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import Fuse from 'fuse.js'
-import type { Product } from '~/types'
+import type { Post } from '~/types'
 
 export const useSearchStore = defineStore('search', () => {
   const isOpen = ref(false)
   const query = ref('')
-  const results = ref<Product[]>([])
-  const allItems = ref<Product[]>([])
+  const results = ref<Post[]>([])
+  const allItems = ref<Post[]>([])
   const isLoaded = ref(false)
 
   async function open() {
@@ -22,8 +22,8 @@ export const useSearchStore = defineStore('search', () => {
 
   async function loadItems() {
     const [blog, projects] = await Promise.all([
-      $fetch<Product[]>('/api/products/blog'),
-      $fetch<Product[]>('/api/products/project'),
+      $fetch<Post[]>('/api/posts/blog'),
+      $fetch<Post[]>('/api/posts/project'),
     ])
     allItems.value = [...(blog ?? []), ...(projects ?? [])]
     isLoaded.value = true
@@ -36,7 +36,7 @@ export const useSearchStore = defineStore('search', () => {
       return
     }
     const fuse = new Fuse(allItems.value, {
-      keys: ['title', 'text_short', 'tags.name'],
+      keys: ['title', 'excerpt', 'tags.name'],
       threshold: 0.4,
       includeScore: true,
     })

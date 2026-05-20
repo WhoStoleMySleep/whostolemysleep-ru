@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Product, AboutMe } from '~/types'
+import type { Post, AboutMe } from '~/types'
 
 useSeoMeta({
   title: 'Frontend-разработчик',
@@ -7,8 +7,8 @@ useSeoMeta({
 })
 
 const { data: about } = await useFetch<AboutMe>('/api/about')
-const { data: blog } = await useFetch<Product[]>('/api/products/blog')
-const { data: projects } = await useFetch<Product[]>('/api/products/project')
+const { data: blog } = await useFetch<Post[]>('/api/posts/blog')
+const { data: projects } = await useFetch<Post[]>('/api/posts/project')
 
 const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]

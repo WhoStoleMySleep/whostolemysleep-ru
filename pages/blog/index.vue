@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Product } from '~/types'
+import type { Post } from '~/types'
 
 useSeoMeta({
   title: 'Блог',
   description: 'Статьи о фронтенд-разработке, технологиях и опыте работы.',
 })
 
-const { data: posts, pending } = await useFetch<Product[]>('/api/products/blog')
+const { data: posts, pending } = await useFetch<Post[]>('/api/posts/blog')
 const search = useSearchStore()
 const localQuery = ref('')
 const filtered = computed(() => {
@@ -15,7 +15,7 @@ const filtered = computed(() => {
   return (posts.value ?? []).filter(
     (p) =>
       p.title.toLowerCase().includes(q) ||
-      p.text_short.toLowerCase().includes(q) ||
+      p.excerpt.toLowerCase().includes(q) ||
       p.tags.some((t) => t.name.toLowerCase().includes(q)),
   )
 })
