@@ -3,6 +3,7 @@ import type { Post } from '~/types'
 
 const props = defineProps<{ item: Post }>()
 const { format } = useFormatDate()
+const { t } = useLocale()
 
 const href = computed(() =>
   props.item.url ? props.item.url : `/blog/${props.item.slug}`
@@ -29,8 +30,8 @@ const isExternal = computed(() => !!props.item.url)
       </div>
       <div class="card__body">
         <div class="card__meta">
-          <span class="card__type">{{ item.type === 'blog' ? 'Блог' : 'Проект' }}</span>
-          <span class="card__date">{{ format(item.date) }}</span>
+          <span class="card__type">{{ item.type === 'blog' ? t('card.blog') : t('card.project') }}</span>
+          <span v-if="item.published_at" class="card__date">{{ format(item.published_at) }}</span>
         </div>
         <h3 class="card__title">{{ item.title }}</h3>
         <p class="card__descr">{{ item.excerpt }}</p>
@@ -61,9 +62,7 @@ const isExternal = computed(() => !!props.item.url)
 .card::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; top: 0; bottom: 0;
   width: 2px;
   background: var(--accent);
   transform: scaleY(0);
@@ -74,21 +73,12 @@ const isExternal = computed(() => !!props.item.url)
 .card:hover { border-color: var(--border-s); background: var(--bg-2); }
 .card:hover::before { transform: scaleY(1); }
 
-.card__inner {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
+.card__inner { display: flex; flex-direction: column; height: 100%; }
 
-.card__image-wrap {
-  position: relative;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-}
+.card__image-wrap { position: relative; aspect-ratio: 16/9; overflow: hidden; }
 
 .card__image {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   object-fit: cover;
   transition: transform 0.5s var(--ease-out);
 }
@@ -109,11 +99,7 @@ const isExternal = computed(() => !!props.item.url)
   gap: 10px;
 }
 
-.card__meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.card__meta { display: flex; align-items: center; gap: 12px; }
 
 .card__type {
   font-size: 10px;
@@ -123,10 +109,7 @@ const isExternal = computed(() => !!props.item.url)
   color: var(--accent);
 }
 
-.card__date {
-  font-size: 11px;
-  color: var(--text-3);
-}
+.card__date { font-size: 11px; color: var(--text-3); }
 
 .card__title {
   font-family: var(--font-display);
@@ -148,12 +131,7 @@ const isExternal = computed(() => !!props.item.url)
   overflow: hidden;
 }
 
-.card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
+.card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 
 .card__tag {
   font-size: 10px;
@@ -164,15 +142,11 @@ const isExternal = computed(() => !!props.item.url)
   transition: color 0.2s, border-color 0.2s;
 }
 
-.card:hover .card__tag {
-  color: var(--text-2);
-  border-color: var(--border-s);
-}
+.card:hover .card__tag { color: var(--text-2); border-color: var(--border-s); }
 
 .card__external {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 14px; right: 14px;
   color: var(--accent);
   padding: 7px;
   background: var(--accent-dim);

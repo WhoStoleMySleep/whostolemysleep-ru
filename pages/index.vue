@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import type { Post, AboutMe } from '~/types'
 
+const { locale, t } = useLocale()
+
 useSeoMeta({
-  title: 'Frontend-разработчик',
-  description: 'Frontend-разработчик с опытом более 4 лет. React, Vue, Next.js, Nuxt, TypeScript.',
+  title:       () => t('seo.home_title'),
+  description: () => t('seo.home_desc'),
 })
 
-const { data: about } = await useFetch<AboutMe>('/api/about')
-const { data: blog } = await useFetch<Post[]>('/api/posts/blog')
-const { data: projects } = await useFetch<Post[]>('/api/posts/project')
+const { data: about }    = await useFetch<AboutMe>('/api/about',         { query: { locale } })
+const { data: blog }     = await useFetch<Post[]>('/api/posts/blog',     { query: { locale } })
+const { data: projects } = await useFetch<Post[]>('/api/posts/project',  { query: { locale } })
 
 const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]
-  return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6)
+  return all.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()).slice(0, 6)
 })
 
 const isVisible = ref(false)
@@ -24,47 +26,47 @@ onMounted(() => {
 <template>
   <div class="home">
 
-    <!-- ── Hero ── -->
+    <!-- Hero -->
     <section class="hero" :class="{ 'hero--visible': isVisible }">
       <div class="hero__bg-glow" aria-hidden="true" />
       <div class="container hero__inner">
         <div class="hero__content">
-          <p class="eyebrow hero__eyebrow">Frontend Разработка</p>
+          <p class="eyebrow hero__eyebrow">{{ t('hero.eyebrow') }}</p>
           <h1 class="hero__title">
-            <span class="hero__title-line">Основное занятие —</span>
-            <span class="hero__title-line hero__title-line--accent">создание сайтов</span>
-            <span class="hero__title-line">с опытом более</span>
+            <span class="hero__title-line">{{ t('hero.line1') }}</span>
+            <span class="hero__title-line hero__title-line--accent">{{ t('hero.line2') }}</span>
+            <span class="hero__title-line">{{ t('hero.line3') }}</span>
             <span class="hero__title-counter">
               4<span class="hero__title-plus">+</span>
-              <span class="hero__title-years">лет</span>
+              <span class="hero__title-years">{{ t('hero.years') }}</span>
             </span>
           </h1>
 
           <div class="hero__nav">
             <NuxtLink to="/blog" class="hero__nav-item">
               <span class="hero__nav-num">01</span>
-              <span class="hero__nav-label">Блог</span>
+              <span class="hero__nav-label">{{ t('nav.blog') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
             <NuxtLink to="/projects" class="hero__nav-item">
               <span class="hero__nav-num">02</span>
-              <span class="hero__nav-label">Проекты</span>
+              <span class="hero__nav-label">{{ t('nav.projects') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
             <NuxtLink to="/resume" class="hero__nav-item">
               <span class="hero__nav-num">03</span>
-              <span class="hero__nav-label">Резюме</span>
+              <span class="hero__nav-label">{{ t('nav.resume') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </NuxtLink>
             <NuxtLink to="/contacts" class="hero__nav-item">
               <span class="hero__nav-num">04</span>
-              <span class="hero__nav-label">Контакты</span>
+              <span class="hero__nav-label">{{ t('nav.contacts') }}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -75,7 +77,7 @@ onMounted(() => {
         <div class="hero__aside">
           <div class="hero__status">
             <span class="hero__status-dot" aria-hidden="true" />
-            <span class="hero__status-text">Открыт к предложениям</span>
+            <span class="hero__status-text">{{ t('hero.status') }}</span>
           </div>
           <div class="hero__socials">
             <a href="https://t.me/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="hero__social-link" aria-label="Telegram">
@@ -99,26 +101,26 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- ── About ── -->
+    <!-- About -->
     <section v-if="about" class="section about">
       <div class="container">
-        <p class="eyebrow section__eyebrow">Обо мне</p>
+        <p class="eyebrow section__eyebrow">{{ t('about.eyebrow') }}</p>
         <div class="about__grid">
           <div class="about__text" v-html="about.text" />
           <div class="about__links">
-            <UiButton to="/resume">Посмотреть резюме</UiButton>
-            <UiButton to="/contacts" variant="ghost">Написать мне</UiButton>
+            <UiButton to="/resume">{{ t('about.resume') }}</UiButton>
+            <UiButton to="/contacts" variant="ghost">{{ t('about.contact') }}</UiButton>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── News ── -->
+    <!-- News -->
     <section v-if="news.length" class="section news">
       <div class="container">
         <div class="section__header">
-          <p class="eyebrow section__eyebrow">Последние записи</p>
-          <NuxtLink to="/blog" class="section__more">Все записи →</NuxtLink>
+          <p class="eyebrow section__eyebrow">{{ t('news.eyebrow') }}</p>
+          <NuxtLink to="/blog" class="section__more">{{ t('news.all') }}</NuxtLink>
         </div>
         <div class="news__grid">
           <UiCard v-for="item in news" :key="item.id" :item="item" />
@@ -130,7 +132,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ── Hero ── */
+/* Hero */
 .hero {
   position: relative;
   min-height: calc(100dvh - 72px);
@@ -317,12 +319,6 @@ onMounted(() => {
   color: #4ade80;
 }
 
-.hero__handle {
-  font-size: 11px;
-  color: var(--text-3);
-  letter-spacing: 0.1em;
-}
-
 .hero__scroll-hint {
   position: absolute;
   bottom: 40px;
@@ -343,7 +339,7 @@ onMounted(() => {
   background: linear-gradient(to bottom, transparent, var(--accent), transparent);
 }
 
-/* ── Sections ── */
+/* Sections */
 .section { padding: 96px 0; }
 
 .section__eyebrow { margin-bottom: 32px; }
@@ -364,7 +360,7 @@ onMounted(() => {
 
 .section__more:hover { color: var(--accent); }
 
-/* ── About ── */
+/* About */
 .about__grid {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -392,7 +388,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* ── News ── */
+/* News */
 .news__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

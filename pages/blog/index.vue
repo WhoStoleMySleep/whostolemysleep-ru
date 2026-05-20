@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import type { Post } from '~/types'
 
+const { locale, t, postCount } = useLocale()
+
 useSeoMeta({
-  title: 'Блог',
-  description: 'Статьи о фронтенд-разработке, технологиях и опыте работы.',
+  title:       () => t('seo.blog_title'),
+  description: () => t('seo.blog_desc'),
 })
 
-const { data: posts, pending } = await useFetch<Post[]>('/api/posts/blog')
-const search = useSearchStore()
+const { data: posts, pending } = await useFetch<Post[]>('/api/posts/blog', {
+  query: { locale },
+})
+
 const localQuery = ref('')
 const filtered = computed(() => {
   if (!localQuery.value.trim()) return posts.value ?? []
@@ -16,7 +20,7 @@ const filtered = computed(() => {
     (p) =>
       p.title.toLowerCase().includes(q) ||
       p.excerpt.toLowerCase().includes(q) ||
-      p.tags.some((t) => t.name.toLowerCase().includes(q)),
+      p.tags.some((tag) => tag.name.toLowerCase().includes(q)),
   )
 })
 </script>
@@ -25,30 +29,26 @@ const filtered = computed(() => {
   <div class="page blog-page">
     <div class="container">
       <header class="page-header">
-        <p class="eyebrow">Блог</p>
-        <h1 class="page-title">Записи &amp; Мысли</h1>
-        <p class="page-subtitle">Статьи о разработке, архитектуре, инструментах и опыте</p>
+        <p class="eyebrow">{{ t('blog.eyebrow') }}</p>
+        <h1 class="page-title">{{ t('blog.title') }}</h1>
+        <p class="page-subtitle">{{ t('blog.subtitle') }}</p>
       </header>
 
       <div class="blog-filter">
         <input
           v-model="localQuery"
           class="blog-filter__input"
-          placeholder="Фильтр по теме..."
+          :placeholder="t('blog.filter')"
           type="search"
         />
-        <span class="blog-filter__count">
-          {{ filtered.length }} {{ filtered.length === 1 ? 'запись' : 'записей' }}
-        </span>
+        <span class="blog-filter__count">{{ postCount(filtered.length) }}</span>
       </div>
 
       <div v-if="pending" class="loading">
         <span class="loading__dot" v-for="i in 3" :key="i" />
       </div>
 
-      <div v-else-if="filtered.length === 0" class="empty">
-        Записей не найдено
-      </div>
+      <div v-else-if="filtered.length === 0" class="empty">{{ t('blog.empty') }}</div>
 
       <div v-else class="blog-grid">
         <UiCard v-for="post in filtered" :key="post.id" :item="post" />
@@ -59,9 +59,7 @@ const filtered = computed(() => {
 
 <style scoped>
 .page { padding: 64px 0 96px; }
-
 .page-header { margin-bottom: 56px; }
-
 .eyebrow { margin-bottom: 20px; }
 
 .page-title {
@@ -72,11 +70,7 @@ const filtered = computed(() => {
   margin-bottom: 16px;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: var(--text-2);
-  max-width: 480px;
-}
+.page-subtitle { font-size: 14px; color: var(--text-2); max-width: 480px; }
 
 .blog-filter {
   display: flex;
@@ -103,12 +97,7 @@ const filtered = computed(() => {
 .blog-filter__input::placeholder { color: var(--text-3); }
 .blog-filter__input:focus { border-color: var(--accent); }
 
-.blog-filter__count {
-  font-size: 11px;
-  color: var(--text-3);
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
+.blog-filter__count { font-size: 11px; color: var(--text-3); letter-spacing: 0.05em; white-space: nowrap; }
 
 .blog-grid {
   display: grid;
@@ -120,32 +109,19 @@ const filtered = computed(() => {
 @media (max-width: 1024px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px)  { .blog-grid { grid-template-columns: 1fr; } }
 
-.loading {
-  display: flex;
-  gap: 8px;
-  padding: 48px 0;
-}
-
+.loading { display: flex; gap: 8px; padding: 48px 0; }
 .loading__dot {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   background: var(--accent);
   border-radius: 50%;
   animation: loading-pulse 1.2s ease infinite;
 }
-
 .loading__dot:nth-child(2) { animation-delay: 0.2s; }
 .loading__dot:nth-child(3) { animation-delay: 0.4s; }
-
 @keyframes loading-pulse {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1); }
 }
 
-.empty {
-  padding: 64px 0;
-  font-size: 14px;
-  color: var(--text-3);
-  text-align: center;
-}
+.empty { padding: 64px 0; font-size: 14px; color: var(--text-3); text-align: center; }
 </style>

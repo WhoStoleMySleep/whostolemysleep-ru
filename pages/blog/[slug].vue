@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import type { Post } from '~/types'
 
-const route = useRoute()
-const slug = route.params.slug as string
+const route  = useRoute()
+const slug   = route.params.slug as string
+const { locale, t } = useLocale()
 
-const { data: post, error } = await useFetch<Post>(`/api/blog/${slug}`)
+const { data: post, error } = await useFetch<Post>(`/api/blog/${slug}`, {
+  query: { locale },
+})
 
 if (error.value || !post.value) {
-  throw createError({ statusCode: 404, message: 'Статья не найдена' })
+  throw createError({ statusCode: 404, message: 'Post not found' })
 }
 
 useSeoMeta({
-  title: () => post.value?.title ?? 'Статья',
+  title:       () => post.value?.title ?? t('blog.eyebrow'),
   description: () => post.value?.excerpt ?? '',
 })
 
@@ -27,7 +30,7 @@ const { formatLong } = useFormatDate()
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M10 7H4M6 4L3 7L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Назад к блогу
+          {{ t('post.back') }}
         </NuxtLink>
 
         <div class="post-meta">
@@ -49,7 +52,7 @@ const { formatLong } = useFormatDate()
 
       <div v-if="post.url" class="post-external">
         <a :href="post.url" target="_blank" rel="noopener noreferrer" class="post-external__link">
-          Открыть источник
+          {{ t('post.source') }}
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -62,7 +65,6 @@ const { formatLong } = useFormatDate()
 
 <style scoped>
 .post-page { padding: 64px 0 120px; }
-
 .post-container { max-width: 760px; }
 
 .post-back {
@@ -79,15 +81,8 @@ const { formatLong } = useFormatDate()
 
 .post-header { margin-bottom: 48px; }
 
-.post-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
+.post-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
 .post-date { font-size: 12px; color: var(--text-3); }
-.post-author { font-size: 12px; color: var(--accent); }
 
 .post-title {
   font-family: var(--font-display);
@@ -98,11 +93,7 @@ const { formatLong } = useFormatDate()
   margin-bottom: 24px;
 }
 
-.post-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.post-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .post-tag {
   font-size: 10px;
@@ -113,22 +104,10 @@ const { formatLong } = useFormatDate()
   color: var(--text-3);
 }
 
-.post-cover {
-  margin-bottom: 48px;
-  border: 1px solid var(--border);
-}
+.post-cover { margin-bottom: 48px; border: 1px solid var(--border); }
+.post-cover img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 
-.post-cover img {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
-}
-
-.post-body {
-  font-size: 15px;
-  line-height: 1.8;
-  color: var(--text-2);
-}
+.post-body { font-size: 15px; line-height: 1.8; color: var(--text-2); }
 
 .post-body :deep(h2),
 .post-body :deep(h3) {
@@ -168,19 +147,10 @@ const { formatLong } = useFormatDate()
   margin: 32px 0;
 }
 
-.post-body :deep(pre code) {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 13px;
-}
+.post-body :deep(pre code) { background: none; border: none; padding: 0; font-size: 13px; }
 
 .post-body :deep(ul),
-.post-body :deep(ol) {
-  padding-left: 24px;
-  margin-bottom: 20px;
-}
-
+.post-body :deep(ol) { padding-left: 24px; margin-bottom: 20px; }
 .post-body :deep(ul) { list-style: disc; }
 .post-body :deep(ol) { list-style: decimal; }
 .post-body :deep(li) { margin-bottom: 6px; }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
 
+const { locale, t } = useLocale()
+
 useSeoMeta({
-  title: 'Резюме',
-  description: 'Опыт работы, образование и технические навыки frontend-разработчика.',
+  title:       () => t('seo.resume_title'),
+  description: () => t('seo.resume_desc'),
 })
 
 const [
@@ -12,10 +14,10 @@ const [
   { data: education },
   { data: skillGroups },
 ] = await Promise.all([
-  useFetch<AboutMe>('/api/about'),
-  useFetch<Experience[]>('/api/resume/experience'),
-  useFetch<Education[]>('/api/resume/education'),
-  useFetch<SkillGroup[]>('/api/skills'),
+  useFetch<AboutMe>('/api/about',              { query: { locale } }),
+  useFetch<Experience[]>('/api/resume/experience', { query: { locale } }),
+  useFetch<Education[]>('/api/resume/education',   { query: { locale } }),
+  useFetch<SkillGroup[]>('/api/skills',            { query: { locale } }),
 ])
 
 const { formatPeriod } = useFormatDate()
@@ -25,32 +27,26 @@ const { formatPeriod } = useFormatDate()
   <div class="page resume-page">
     <div class="container">
       <header class="page-header">
-        <p class="eyebrow">Резюме</p>
-        <h1 class="page-title">Опыт &amp; Навыки</h1>
+        <p class="eyebrow">{{ t('resume.eyebrow') }}</p>
+        <h1 class="page-title">{{ t('resume.title') }}</h1>
       </header>
 
-      <!-- About -->
       <section v-if="about" class="resume-section">
         <div class="resume-section__label">
-          <p class="eyebrow">Обо мне</p>
+          <p class="eyebrow">{{ t('resume.about') }}</p>
         </div>
         <div class="resume-section__content">
           <div class="resume-about" v-html="about.text" />
         </div>
       </section>
 
-      <!-- Experience -->
       <section v-if="experience?.length" class="resume-section">
         <div class="resume-section__label">
-          <p class="eyebrow">Опыт</p>
+          <p class="eyebrow">{{ t('resume.experience') }}</p>
         </div>
         <div class="resume-section__content">
           <div class="resume-timeline">
-            <div
-              v-for="item in experience"
-              :key="item.id"
-              class="resume-item"
-            >
+            <div v-for="item in experience" :key="item.id" class="resume-item">
               <div class="resume-item__header">
                 <div>
                   <h3 class="resume-item__title">{{ item.position }}</h3>
@@ -66,18 +62,13 @@ const { formatPeriod } = useFormatDate()
         </div>
       </section>
 
-      <!-- Education -->
       <section v-if="education?.length" class="resume-section">
         <div class="resume-section__label">
-          <p class="eyebrow">Образование</p>
+          <p class="eyebrow">{{ t('resume.education') }}</p>
         </div>
         <div class="resume-section__content">
           <div class="resume-timeline">
-            <div
-              v-for="item in education"
-              :key="item.id"
-              class="resume-item"
-            >
+            <div v-for="item in education" :key="item.id" class="resume-item">
               <div class="resume-item__header">
                 <div>
                   <h3 class="resume-item__title">{{ item.specialization }}</h3>
@@ -90,10 +81,9 @@ const { formatPeriod } = useFormatDate()
         </div>
       </section>
 
-      <!-- Skills -->
       <section v-if="skillGroups?.length" class="resume-section">
         <div class="resume-section__label">
-          <p class="eyebrow">Навыки</p>
+          <p class="eyebrow">{{ t('resume.skills') }}</p>
         </div>
         <div class="resume-section__content">
           <div class="skills-grid">
@@ -159,11 +149,7 @@ const { formatPeriod } = useFormatDate()
   margin-bottom: 4px;
 }
 
-.resume-item__place {
-  font-size: 12px;
-  color: var(--accent);
-  letter-spacing: 0.05em;
-}
+.resume-item__place { font-size: 12px; color: var(--accent); letter-spacing: 0.05em; }
 
 .resume-item__date {
   font-size: 11px;
@@ -181,11 +167,7 @@ const { formatPeriod } = useFormatDate()
   padding-left: 20px;
 }
 
-.resume-item__details li {
-  font-size: 13px;
-  color: var(--text-2);
-  position: relative;
-}
+.resume-item__details li { font-size: 13px; color: var(--text-2); position: relative; }
 
 .resume-item__details li::before {
   content: '—';
@@ -217,9 +199,5 @@ const { formatPeriod } = useFormatDate()
   margin-bottom: 12px;
 }
 
-.skill-group__value {
-  font-size: 13px;
-  color: var(--text-2);
-  line-height: 1.8;
-}
+.skill-group__value { font-size: 13px; color: var(--text-2); line-height: 1.8; }
 </style>

@@ -2,15 +2,16 @@
 const route = useRoute()
 const search = useSearchStore()
 const { isDark, toggle } = useTheme()
-const scrolled = ref(false)
+const { locale, setLocale, t } = useLocale()
+const scrolled   = ref(false)
 const mobileOpen = ref(false)
 
-const nav = [
-  { label: 'Блог',     to: '/blog' },
-  { label: 'Проекты',  to: '/projects' },
-  { label: 'Резюме',   to: '/resume' },
-  { label: 'Контакты', to: '/contacts' },
-]
+const nav = computed(() => [
+  { label: t('nav.blog'),     to: '/blog' },
+  { label: t('nav.projects'), to: '/projects' },
+  { label: t('nav.resume'),   to: '/resume' },
+  { label: t('nav.contacts'), to: '/contacts' },
+])
 
 onMounted(() => {
   const onScroll = () => { scrolled.value = window.scrollY > 40 }
@@ -19,6 +20,10 @@ onMounted(() => {
 })
 
 watch(() => route.path, () => { mobileOpen.value = false })
+
+function toggleLocale() {
+  setLocale(locale.value === 'ru' ? 'en' : 'ru')
+}
 </script>
 
 <template>
@@ -28,7 +33,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
         <span class="logo-text">wms<span class="logo-dot">.</span></span>
       </NuxtLink>
 
-      <nav class="header__nav" aria-label="Основная навигация">
+      <nav class="header__nav">
         <NuxtLink
           v-for="item in nav"
           :key="item.to"
@@ -41,14 +46,22 @@ watch(() => route.path, () => { mobileOpen.value = false })
       </nav>
 
       <div class="header__actions">
-        <button class="header__search-btn" @click="search.open()" aria-label="Поиск">
+        <button class="header__search-btn" @click="search.open()" aria-label="Search">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
 
-        <button class="header__theme-btn" @click="toggle()" :aria-label="isDark ? 'Светлая тема' : 'Тёмная тема'" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
+        <button
+          class="header__lang-btn"
+          @click="toggleLocale()"
+          :title="locale === 'ru' ? 'Switch to English' : 'Переключить на русский'"
+        >
+          {{ locale === 'ru' ? 'EN' : 'RU' }}
+        </button>
+
+        <button class="header__theme-btn" @click="toggle()" :aria-label="isDark ? 'Light theme' : 'Dark theme'">
           <Transition name="theme-icon" mode="out-in">
             <svg v-if="isDark" key="sun" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
@@ -65,7 +78,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
           :class="{ 'header__burger--open': mobileOpen }"
           @click="mobileOpen = !mobileOpen"
           :aria-expanded="mobileOpen"
-          aria-label="Меню"
+          aria-label="Menu"
         >
           <span /><span /><span />
         </button>
@@ -92,9 +105,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
 <style scoped>
 .header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 100;
   height: 72px;
   transition: background 0.3s ease, border-color 0.3s ease;
@@ -118,10 +129,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
   gap: 40px;
 }
 
-.header__logo {
-  flex-shrink: 0;
-  margin-right: auto;
-}
+.header__logo { flex-shrink: 0; margin-right: auto; }
 
 .logo-text {
   font-family: var(--font-display);
@@ -132,22 +140,12 @@ watch(() => route.path, () => { mobileOpen.value = false })
   transition: color 0.2s;
 }
 
-.logo-dot {
-  color: var(--accent);
-}
+.logo-dot { color: var(--accent); }
+.header__logo:hover .logo-text { color: var(--accent); }
 
-.header__logo:hover .logo-text {
-  color: var(--accent);
-}
+.header__nav { display: flex; gap: 32px; }
 
-.header__nav {
-  display: flex;
-  gap: 32px;
-}
-
-@media (max-width: 640px) {
-  .header__nav { display: none; }
-}
+@media (max-width: 640px) { .header__nav { display: none; } }
 
 .header__link {
   font-size: 12px;
@@ -162,9 +160,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
 .header__link::after {
   content: '';
   position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
+  bottom: -2px; left: 0; right: 0;
   height: 1px;
   background: var(--accent);
   transform: scaleX(0);
@@ -177,13 +173,10 @@ watch(() => route.path, () => { mobileOpen.value = false })
 .header__link--active { color: var(--accent); }
 .header__link--active::after { transform: scaleX(1); }
 
-.header__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.header__actions { display: flex; align-items: center; gap: 8px; }
 
-.header__search-btn {
+.header__search-btn,
+.header__theme-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,8 +187,31 @@ watch(() => route.path, () => { mobileOpen.value = false })
   transition: color 0.2s, background 0.2s;
 }
 
-.header__search-btn:hover {
+.header__search-btn:hover,
+.header__theme-btn:hover {
   color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.header__lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.header__lang-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
   background: var(--accent-dim);
 }
 
@@ -210,9 +226,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
   padding: 8px;
 }
 
-@media (max-width: 640px) {
-  .header__burger { display: flex; }
-}
+@media (max-width: 640px) { .header__burger { display: flex; } }
 
 .header__burger span {
   display: block;
@@ -253,22 +267,6 @@ watch(() => route.path, () => { mobileOpen.value = false })
 .mobile-nav-leave-active { transition: opacity 0.2s ease, transform 0.2s var(--ease-out); }
 .mobile-nav-enter-from,
 .mobile-nav-leave-to { opacity: 0; transform: translateY(-8px); }
-
-.header__theme-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--text-2);
-  border-radius: var(--r-s);
-  transition: color 0.2s, background 0.2s;
-}
-
-.header__theme-btn:hover {
-  color: var(--accent);
-  background: var(--accent-dim);
-}
 
 .theme-icon-enter-active,
 .theme-icon-leave-active { transition: opacity 0.15s ease, transform 0.15s var(--ease-out); }

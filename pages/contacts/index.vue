@@ -1,7 +1,9 @@
 <script setup lang="ts">
+const { t } = useLocale()
+
 useSeoMeta({
-  title: 'Контакты',
-  description: 'Связаться с фронтенд-разработчиком. Форма обратной связи.',
+  title:       () => t('seo.contacts_title'),
+  description: () => t('seo.contacts_desc'),
 })
 
 const form = reactive({ name: '', email: '', message: '' })
@@ -10,7 +12,7 @@ const errorMsg = ref('')
 
 async function submit() {
   if (!form.name || !form.email || !form.message) {
-    errorMsg.value = 'Заполните все поля'
+    errorMsg.value = t('contacts.required')
     return
   }
 
@@ -25,7 +27,7 @@ async function submit() {
     form.message = ''
   } catch {
     status.value = 'error'
-    errorMsg.value = 'Ошибка отправки. Попробуйте позже.'
+    errorMsg.value = t('contacts.sendError')
   }
 }
 </script>
@@ -34,29 +36,29 @@ async function submit() {
   <div class="page contacts-page">
     <div class="container">
       <header class="page-header">
-        <p class="eyebrow">Контакты</p>
-        <h1 class="page-title">Давайте<br /><em>поговорим</em></h1>
-        <p class="page-subtitle">Открыт к новым проектам, вопросам и интересным предложениям</p>
+        <p class="eyebrow">{{ t('contacts.eyebrow') }}</p>
+        <h1 class="page-title">{{ t('contacts.title1') }}<br /><em>{{ t('contacts.title2') }}</em></h1>
+        <p class="page-subtitle">{{ t('contacts.subtitle') }}</p>
       </header>
 
       <div class="contacts-grid">
         <div class="contacts-info">
           <div class="contact-block">
-            <p class="contact-block__label">Почта</p>
+            <p class="contact-block__label">{{ t('contacts.email') }}</p>
             <a href="mailto:whostolemysleep@gmail.com" class="contact-block__value">
               whostolemysleep@gmail.com
             </a>
           </div>
           <div class="contact-block">
-            <p class="contact-block__label">Статус</p>
+            <p class="contact-block__label">{{ t('contacts.status') }}</p>
             <div class="contact-status">
               <span class="contact-status__dot" />
-              <span class="contact-status__text">Открыт к предложениям</span>
+              <span class="contact-status__text">{{ t('contacts.statusText') }}</span>
             </div>
           </div>
           <div class="contact-block">
-            <p class="contact-block__label">Время отклика</p>
-            <p class="contact-block__value">~24 часа</p>
+            <p class="contact-block__label">{{ t('contacts.response') }}</p>
+            <p class="contact-block__value">{{ t('contacts.responseVal') }}</p>
           </div>
         </div>
 
@@ -66,18 +68,18 @@ async function submit() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M20 6L9 17L4 12" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <p class="form-success__text">Сообщение отправлено. Свяжусь с вами в ближайшее время.</p>
+              <p class="form-success__text">{{ t('contacts.success') }}</p>
             </div>
 
             <div v-else class="form-fields">
               <div class="form-group">
-                <label class="form-label" for="name">Имя</label>
+                <label class="form-label" for="name">{{ t('contacts.name') }}</label>
                 <input
                   id="name"
                   v-model="form.name"
                   class="form-input"
                   type="text"
-                  placeholder="Иван Иванов"
+                  :placeholder="t('contacts.namePlaceholder')"
                   autocomplete="name"
                 />
               </div>
@@ -95,12 +97,12 @@ async function submit() {
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="message">Сообщение</label>
+                <label class="form-label" for="message">{{ t('contacts.message') }}</label>
                 <textarea
                   id="message"
                   v-model="form.message"
                   class="form-input form-input--textarea"
-                  placeholder="Расскажите о вашем проекте..."
+                  :placeholder="t('contacts.messagePlaceholder')"
                   rows="6"
                 />
               </div>
@@ -108,7 +110,7 @@ async function submit() {
               <p v-if="errorMsg" class="form-error">{{ errorMsg }}</p>
 
               <UiButton type="submit" :loading="status === 'loading'">
-                Отправить сообщение
+                {{ t('contacts.submit') }}
               </UiButton>
             </div>
           </Transition>

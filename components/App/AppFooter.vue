@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const year = new Date().getFullYear()
+const { t } = useLocale()
 </script>
 
 <template>
@@ -7,15 +8,15 @@ const year = new Date().getFullYear()
     <div class="container footer__inner">
       <div class="footer__left">
         <span class="footer__logo">wms<span class="footer__dot">.</span></span>
-        <p class="footer__copy">© {{ year }} — Frontend-разработчик</p>
+        <p class="footer__copy">© {{ year }} — {{ t('footer.dev') }}</p>
       </div>
 
-      <nav class="footer__nav" aria-label="Ссылки">
-        <NuxtLink to="/blog" class="footer__link">Блог</NuxtLink>
-        <NuxtLink to="/projects" class="footer__link">Проекты</NuxtLink>
-        <NuxtLink to="/resume" class="footer__link">Резюме</NuxtLink>
-        <NuxtLink to="/contacts" class="footer__link">Контакты</NuxtLink>
-        <a href="https://t.me/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
+      <nav class="footer__nav" aria-label="Links">
+        <NuxtLink to="/blog"     class="footer__link">{{ t('nav.blog') }}</NuxtLink>
+        <NuxtLink to="/projects" class="footer__link">{{ t('nav.projects') }}</NuxtLink>
+        <NuxtLink to="/resume"   class="footer__link">{{ t('nav.resume') }}</NuxtLink>
+        <NuxtLink to="/contacts" class="footer__link">{{ t('nav.contacts') }}</NuxtLink>
+        <a href="https://t.me/WhoStoleMySleepDev"       target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
         <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
       </nav>
     </div>
@@ -37,11 +38,7 @@ const year = new Date().getFullYear()
   flex-wrap: wrap;
 }
 
-.footer__left {
-  display: flex;
-  align-items: baseline;
-  gap: 20px;
-}
+.footer__left { display: flex; align-items: baseline; gap: 20px; }
 
 .footer__logo {
   font-family: var(--font-display);
@@ -58,11 +55,7 @@ const year = new Date().getFullYear()
   letter-spacing: 0.05em;
 }
 
-.footer__nav {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
+.footer__nav { display: flex; gap: 24px; flex-wrap: wrap; }
 
 .footer__link {
   font-size: 11px;

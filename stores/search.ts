@@ -3,11 +3,19 @@ import Fuse from 'fuse.js'
 import type { Post } from '~/types'
 
 export const useSearchStore = defineStore('search', () => {
-  const isOpen = ref(false)
-  const query = ref('')
-  const results = ref<Post[]>([])
+  const isOpen   = ref(false)
+  const query    = ref('')
+  const results  = ref<Post[]>([])
   const allItems = ref<Post[]>([])
   const isLoaded = ref(false)
+
+  const { locale } = useLocale()
+
+  watch(locale, () => {
+    isLoaded.value = false
+    allItems.value = []
+    if (isOpen.value) loadItems()
+  })
 
   async function open() {
     isOpen.value = true
@@ -16,14 +24,14 @@ export const useSearchStore = defineStore('search', () => {
 
   function close() {
     isOpen.value = false
-    query.value = ''
+    query.value  = ''
     results.value = []
   }
 
   async function loadItems() {
     const [blog, projects] = await Promise.all([
-      $fetch<Post[]>('/api/posts/blog'),
-      $fetch<Post[]>('/api/posts/project'),
+      $fetch<Post[]>('/api/posts/blog',    { query: { locale: locale.value } }),
+      $fetch<Post[]>('/api/posts/project', { query: { locale: locale.value } }),
     ])
     allItems.value = [...(blog ?? []), ...(projects ?? [])]
     isLoaded.value = true
@@ -31,13 +39,10 @@ export const useSearchStore = defineStore('search', () => {
 
   function search(q: string) {
     query.value = q
-    if (!q.trim()) {
-      results.value = []
-      return
-    }
+    if (!q.trim()) { results.value = []; return }
     const fuse = new Fuse(allItems.value, {
-      keys: ['title', 'excerpt', 'tags.name'],
-      threshold: 0.4,
+      keys:         ['title', 'excerpt', 'tags.name'],
+      threshold:    0.4,
       includeScore: true,
     })
     results.value = fuse.search(q).map((r) => r.item)

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const search = useSearchStore()
-const input = ref<HTMLInputElement | null>(null)
-const route = useRoute()
+const input  = ref<HTMLInputElement | null>(null)
+const route  = useRoute()
+const { t }  = useLocale()
 
 watch(() => search.isOpen, (val) => {
   if (val) {
@@ -37,39 +38,37 @@ const { formatLong } = useFormatDate()
                 class="search-input"
                 :value="search.query"
                 @input="search.search(($event.target as HTMLInputElement).value)"
-                placeholder="Поиск по блогу и проектам..."
+                :placeholder="t('search.placeholder')"
                 autocomplete="off"
                 spellcheck="false"
               />
             </div>
-            <button class="search-close" @click="search.close()" aria-label="Закрыть">
+            <button class="search-close" @click="search.close()" aria-label="Close">
               <kbd>esc</kbd>
             </button>
           </div>
 
           <div class="search-body">
             <div v-if="search.query && search.results.length === 0" class="search-empty">
-              Ничего не найдено по запросу «{{ search.query }}»
+              {{ t('search.empty').replace('{q}', search.query) }}
             </div>
 
             <ul v-else-if="search.results.length > 0" class="search-results">
               <li v-for="item in search.results" :key="item.id" class="search-result">
                 <NuxtLink
-                  :to="item.url ?? `/blog/${item.id}`"
+                  :to="item.url ?? `/blog/${item.slug}`"
                   :target="item.url ? '_blank' : ''"
                   class="search-result__link"
                   @click="search.close()"
                 >
-                  <span class="search-result__type">{{ item.type === 'blog' ? 'Блог' : 'Проект' }}</span>
+                  <span class="search-result__type">{{ item.type === 'blog' ? t('card.blog') : t('card.project') }}</span>
                   <span class="search-result__title">{{ item.title }}</span>
-                  <span class="search-result__date">{{ formatLong(item.date) }}</span>
+                  <span v-if="item.published_at" class="search-result__date">{{ formatLong(item.published_at) }}</span>
                 </NuxtLink>
               </li>
             </ul>
 
-            <p v-else class="search-hint">
-              Введите запрос — поиск по заголовкам, описаниям и тегам
-            </p>
+            <p v-else class="search-hint">{{ t('search.hint') }}</p>
           </div>
         </div>
       </div>
@@ -109,12 +108,7 @@ const { formatLong } = useFormatDate()
 
 .search-icon { color: var(--text-3); flex-shrink: 0; }
 
-.search-input-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.search-input-wrap { flex: 1; display: flex; align-items: center; gap: 12px; }
 
 .search-input {
   flex: 1;
@@ -144,10 +138,7 @@ const { formatLong } = useFormatDate()
   transition: color 0.2s, border-color 0.2s;
 }
 
-.search-close:hover kbd {
-  color: var(--accent);
-  border-color: var(--accent);
-}
+.search-close:hover kbd { color: var(--accent); border-color: var(--accent); }
 
 .search-body { max-height: 400px; overflow-y: auto; }
 
@@ -188,20 +179,12 @@ const { formatLong } = useFormatDate()
   text-overflow: ellipsis;
 }
 
-.search-result__date {
-  font-size: 11px;
-  color: var(--text-3);
-  white-space: nowrap;
-}
+.search-result__date { font-size: 11px; color: var(--text-3); white-space: nowrap; }
 
 .search-overlay-enter-active,
-.search-overlay-leave-active {
-  transition: opacity 0.2s ease;
-}
+.search-overlay-leave-active { transition: opacity 0.2s ease; }
 .search-overlay-enter-active .search-panel,
-.search-overlay-leave-active .search-panel {
-  transition: transform 0.25s var(--ease-out), opacity 0.2s ease;
-}
+.search-overlay-leave-active .search-panel { transition: transform 0.25s var(--ease-out), opacity 0.2s ease; }
 .search-overlay-enter-from,
 .search-overlay-leave-to { opacity: 0; }
 .search-overlay-enter-from .search-panel,
