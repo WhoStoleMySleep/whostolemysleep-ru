@@ -17,6 +17,7 @@ export function useLocale() {
     await navigateTo(switchLocalePath(l))
 
     await nextTick()
+    await nextTick()
     isFading.value = false
   }
 

@@ -3,8 +3,10 @@ const { init } = useTheme()
 const isFading = useState('lang-fade', () => false)
 onMounted(init)
 
+const TRANSITION_NORMAL  = { name: 'page', mode: 'out-in' as const }
+const TRANSITION_INSTANT = { name: 'page', mode: 'out-in' as const, duration: 0 }
 const pageTransition = computed(() =>
-  isFading.value ? false : { name: 'page', mode: 'out-in' as const }
+  isFading.value ? TRANSITION_INSTANT : TRANSITION_NORMAL
 )
 </script>
 
