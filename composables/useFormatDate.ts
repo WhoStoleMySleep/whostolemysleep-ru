@@ -1,0 +1,19 @@
+export function useFormatDate() {
+  function format(dateStr: string | Date): string {
+    return new Date(dateStr).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  }
+
+  function formatLong(dateStr: string | Date): string {
+    return new Date(dateStr).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  }
+
+  return { format, formatLong }
+}
