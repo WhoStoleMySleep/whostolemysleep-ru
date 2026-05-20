@@ -191,6 +191,7 @@ onMounted(() => {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  color: var(--text);
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.7s ease 0.56s, transform 0.7s var(--ease-out) 0.56s;

@@ -40,9 +40,9 @@
   --bg-3:         #d8d0c4;
   --border:       rgba(0, 0, 0, 0.08);
   --border-s:     rgba(0, 0, 0, 0.14);
-  --text:         #1c1814;
-  --text-2:       rgba(28, 24, 20, 0.6);
-  --text-3:       rgba(28, 24, 20, 0.3);
+  --text:         #0f0d0a;
+  --text-2:       rgba(28, 24, 20, 0.75);
+  --text-3:       rgba(28, 24, 20, 0.5);
   --accent:       #b86e10;
   --accent-dim:   rgba(184, 110, 16, 0.12);
   --accent-glow:  rgba(184, 110, 16, 0.05);
@@ -72,6 +72,14 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   transition: var(--theme-transition);
+}
+
+/* ── Light theme: heavier heading weight for contrast on warm bg ── */
+:root.light h1,
+:root.light h2,
+:root.light h3 {
+  font-weight: 500;
+  color: var(--text);
 }
 
 /* ── Light theme: grain is brighter ── */
