@@ -133,9 +133,17 @@ const translations = {
 
 type DeepValue<T> = T extends string ? T : { [K in keyof T]: DeepValue<T[K]> }[keyof T]
 
+const CIS_LANG_CODES = ['ru', 'uk', 'be', 'kk']
+
+function detectLocale(): Locale {
+  const { 'accept-language': acceptLang = '' } = useRequestHeaders(['accept-language'])
+  const langs = acceptLang.toLowerCase().split(',').map((l) => l.trim().split(/[-;]/)[0])
+  return langs.some((code) => CIS_LANG_CODES.includes(code)) ? 'ru' : 'en'
+}
+
 export function useLocale() {
   const cookie = useCookie<Locale>('locale', {
-    default: () => 'ru',
+    default: () => detectLocale(),
     maxAge:  365 * 24 * 3600,
   })
   const locale = useState<Locale>('locale', () => cookie.value)
