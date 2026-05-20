@@ -2,6 +2,13 @@ import {
   pgTable, pgEnum, serial, varchar, text, integer,
   timestamp, boolean, date, primaryKey,
 } from 'drizzle-orm/pg-core'
+
+/* ── Cache invalidation queue ── */
+
+export const pendingRevalidation = pgTable('pending_revalidation', {
+  path:     text('path').primaryKey(),
+  added_at: timestamp('added_at', { withTimezone: true }).defaultNow().notNull(),
+})
 import { relations } from 'drizzle-orm'
 
 /* ── Enums ── */
