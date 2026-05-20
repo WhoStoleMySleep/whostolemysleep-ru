@@ -107,6 +107,10 @@ watch(() => route.path, () => { mobileOpen.value = false })
   border-bottom-color: var(--border);
 }
 
+@media (pointer: coarse) {
+  .header--scrolled { backdrop-filter: none; }
+}
+
 .header__inner {
   display: flex;
   align-items: center;
