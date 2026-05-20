@@ -21,12 +21,9 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'ru' },
       titleTemplate: '%s — whostolemysleep',
       link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Martian+Mono:wght@300;400;500;600&display=swap',
-        },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/cormorant-300-normal-cyrillic.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/cormorant-300-normal-latin.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/martian-mono-300-normal-latin.woff2', crossorigin: '' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
       script: [
