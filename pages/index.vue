@@ -134,7 +134,7 @@ onMounted(() => {
   left: -10%;
   width: 70%;
   height: 80%;
-  background: radial-gradient(ellipse at 30% 40%, rgba(240, 192, 96, 0.05) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 30% 40%, var(--accent-glow) 0%, transparent 60%);
   pointer-events: none;
 }
 

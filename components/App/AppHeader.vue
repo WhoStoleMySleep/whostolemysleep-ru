@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const search = useSearchStore()
+const { isDark, toggle } = useTheme()
 const scrolled = ref(false)
 const mobileOpen = ref(false)
 
@@ -47,6 +48,18 @@ watch(() => route.path, () => { mobileOpen.value = false })
           </svg>
         </button>
 
+        <button class="header__theme-btn" @click="toggle()" :aria-label="isDark ? 'Светлая тема' : 'Тёмная тема'" :title="isDark ? 'Светлая тема' : 'Тёмная тема'">
+          <Transition name="theme-icon" mode="out-in">
+            <svg v-if="isDark" key="sun" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <svg v-else key="moon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6.002 6.002 0 1 0 7 7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </Transition>
+        </button>
+
         <button
           class="header__burger"
           :class="{ 'header__burger--open': mobileOpen }"
@@ -89,7 +102,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
 }
 
 .header--scrolled {
-  background: rgba(7, 7, 10, 0.92);
+  background: var(--header-scrolled-bg);
   backdrop-filter: blur(16px);
   border-bottom-color: var(--border);
 }
@@ -236,4 +249,25 @@ watch(() => route.path, () => { mobileOpen.value = false })
 .mobile-nav-leave-active { transition: opacity 0.2s ease, transform 0.2s var(--ease-out); }
 .mobile-nav-enter-from,
 .mobile-nav-leave-to { opacity: 0; transform: translateY(-8px); }
+
+.header__theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--text-2);
+  border-radius: var(--r-s);
+  transition: color 0.2s, background 0.2s;
+}
+
+.header__theme-btn:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.theme-icon-enter-active,
+.theme-icon-leave-active { transition: opacity 0.15s ease, transform 0.15s var(--ease-out); }
+.theme-icon-enter-from   { opacity: 0; transform: rotate(-30deg) scale(0.7); }
+.theme-icon-leave-to     { opacity: 0; transform: rotate(30deg) scale(0.7); }
 </style>

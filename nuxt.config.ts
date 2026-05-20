@@ -29,6 +29,12 @@ export default defineNuxtConfig({
         },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
+      script: [
+        {
+          children: `try{const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='light'||(!t&&!p))document.documentElement.classList.add('light')}catch(e){}`,
+          tagPriority: 'critical',
+        },
+      ],
       meta: [
         { name: 'theme-color', content: '#07070a' },
         { name: 'color-scheme', content: 'dark' },

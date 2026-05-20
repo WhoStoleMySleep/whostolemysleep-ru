@@ -82,7 +82,7 @@ const { formatLong } = useFormatDate()
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(7, 7, 10, 0.85);
+  background: var(--overlay-bg);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: flex-start;

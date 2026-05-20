@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Martian+Mono:wght@300;400;500;600&display=swap');
 
-/* ── Design tokens ── */
+/* ── Design tokens — dark (default) ── */
 :root {
   --bg:           #07070a;
   --bg-1:         #0d0d12;
@@ -25,11 +25,42 @@
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+
+  --theme-transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+
+  --header-scrolled-bg: rgba(7, 7, 10, 0.92);
+  --overlay-bg:         rgba(7, 7, 10, 0.85);
+}
+
+/* ── Design tokens — light ── */
+:root.light {
+  --bg:           #f4efe6;
+  --bg-1:         #ede8de;
+  --bg-2:         #e4ddd2;
+  --bg-3:         #d8d0c4;
+  --border:       rgba(0, 0, 0, 0.08);
+  --border-s:     rgba(0, 0, 0, 0.14);
+  --text:         #1c1814;
+  --text-2:       rgba(28, 24, 20, 0.6);
+  --text-3:       rgba(28, 24, 20, 0.3);
+  --accent:       #b86e10;
+  --accent-dim:   rgba(184, 110, 16, 0.12);
+  --accent-glow:  rgba(184, 110, 16, 0.05);
+  --blue:         #1a6aaa;
+  --red:          #c03030;
+
+  --header-scrolled-bg: rgba(244, 239, 230, 0.92);
+  --overlay-bg:         rgba(244, 239, 230, 0.85);
 }
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; }
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  background: var(--bg);
+  transition: var(--theme-transition);
+}
 
 body {
   background: var(--bg);
@@ -40,7 +71,11 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  transition: var(--theme-transition);
 }
+
+/* ── Light theme: grain is brighter ── */
+:root.light body::after { opacity: 0.045; mix-blend-mode: multiply; }
 
 /* ── Grain overlay ── */
 body::after {
