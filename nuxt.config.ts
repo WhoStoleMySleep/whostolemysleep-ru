@@ -79,7 +79,6 @@ export default defineNuxtConfig({
         { property: 'og:site_name', content: 'whostolemysleep' },
       ],
     },
-    pageTransition: { name: 'page', mode: 'out-in' },
   },
 
   typescript: {

@@ -283,6 +283,7 @@ button {
 .page-enter-from { opacity: 0; transform: translateY(6px); }
 .page-leave-to  { opacity: 0; transform: translateY(-6px); }
 
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }

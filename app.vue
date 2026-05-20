@@ -2,12 +2,16 @@
 const { init } = useTheme()
 const isFading = useState('lang-fade', () => false)
 onMounted(init)
+
+const pageTransition = computed(() =>
+  isFading.value ? false : { name: 'page', mode: 'out-in' as const }
+)
 </script>
 
 <template>
   <div class="app-root" :class="{ 'app-root--fading': isFading }">
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage :transition="pageTransition" />
     </NuxtLayout>
   </div>
 </template>
