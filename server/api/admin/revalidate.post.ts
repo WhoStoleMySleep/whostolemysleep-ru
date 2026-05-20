@@ -11,7 +11,7 @@ export default defineEventHandler(async () => {
   // On Vercel CDN edge layer, cached responses expire per isr: N timers in nuxt.config.
   const storage = useStorage('cache')
   const keys    = await storage.getKeys('nitro:handlers')
-  await Promise.all(keys.map((k) => storage.removeItem(`cache:nitro:handlers:${k}`)))
+  await Promise.all(keys.map((k) => storage.removeItem(k)))
 
   await db.delete(schema.pendingRevalidation)
   return { ok: true, cleared: paths }
