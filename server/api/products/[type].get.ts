@@ -1,3 +1,7 @@
+import { db } from '../../db'
+import { eq } from 'drizzle-orm'
+import { products } from '../../db/schema'
+
 export default defineEventHandler(async (event) => {
   const type = getRouterParam(event, 'type')
 
@@ -5,11 +9,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: `Invalid type: ${type}` })
   }
 
-  const products = await prisma.products.findMany({
-    where: { type },
-    include: { images: true, tags: true },
-    orderBy: { date: 'desc' },
+  const result = await db.query.products.findMany({
+    where: eq(products.type, type),
+    with: { tags: true, images: true },
+    orderBy: (p, { desc }) => [desc(p.date)],
   })
 
-  return products
+  return result
 })

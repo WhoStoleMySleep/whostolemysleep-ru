@@ -4,7 +4,7 @@ import type { Product } from '~/types'
 const route = useRoute()
 const id = route.params.id as string
 
-const { data: post, error } = await useFetch<Product>(`/api/products/blog/${id}`)
+const { data: post, error } = await useFetch<Product>(`/api/blog/${id}`)
 
 if (error.value || !post.value) {
   throw createError({ statusCode: 404, message: 'Статья не найдена' })

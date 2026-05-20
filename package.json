@@ -4,17 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "prisma generate && nuxt dev",
-    "build": "prisma generate && nuxt build",
+    "dev": "nuxt dev",
+    "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:introspect": "drizzle-kit introspect"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@pinia/nuxt": "^0.11.3",
-    "@prisma/client": "^5.22.0",
+    "drizzle-orm": "^0.45.2",
     "fuse.js": "^7.0.0",
     "nodemailer": "^6.9.14",
     "nuxt": "^3.13.2",
@@ -25,7 +28,7 @@
   "devDependencies": {
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.15",
-    "prisma": "^5.22.0",
+    "drizzle-kit": "^0.31.10",
     "sass": "^1.79.4",
     "typescript": "^5.6.2",
     "vue-tsc": "^2.1.6"

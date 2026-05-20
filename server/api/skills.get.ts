@@ -1,4 +1,6 @@
+import { db } from '../db'
+
 export default defineEventHandler(async () => {
-  const skills = await prisma.skills.findFirst()
-  return skills
+  const result = await db.query.skills.findFirst()
+  return result ?? null
 })

@@ -1,4 +1,6 @@
+import { db } from '../db'
+
 export default defineEventHandler(async () => {
-  const about = await prisma.aboutMe.findFirst()
-  return about
+  const result = await db.query.aboutMe.findFirst()
+  return result ?? null
 })

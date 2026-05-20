@@ -1,3 +1,7 @@
+import { db } from '../../db'
+import { eq } from 'drizzle-orm'
+import { inform } from '../../db/schema'
+
 export default defineEventHandler(async (event) => {
   const type = getRouterParam(event, 'type')
 
@@ -5,11 +9,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: `Invalid type: ${type}` })
   }
 
-  const items = await prisma.inform.findMany({
-    where: { type },
-    include: { InformDetails: true },
-    orderBy: { date: 'desc' },
+  const result = await db.query.inform.findMany({
+    where: eq(inform.type, type),
+    with: { InformDetails: true },
+    orderBy: (i, { desc }) => [desc(i.date)],
   })
 
-  return items
+  return result
 })
