@@ -10,7 +10,6 @@ export default defineNuxtConfig({
     '/projects': { isr: 600 },
     '/resume': { isr: 7200 },
     '/contacts': { ssr: true },
-    '/sitemap.xml': { prerender: true },
   },
 
   css: ['~/assets/css/main.css'],
