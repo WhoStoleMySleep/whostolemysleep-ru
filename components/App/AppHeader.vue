@@ -3,6 +3,7 @@ const route = useRoute()
 const search = useSearchStore()
 const { isDark, toggle } = useTheme()
 const { locale, setLocale, t } = useLocale()
+const { data: siteSettings } = await useSettings()
 const localePath = useLocalePath()
 const scrolled   = ref(false)
 const mobileOpen = ref(false)
@@ -47,7 +48,7 @@ function toggleLocale() {
       </nav>
 
       <div class="header__actions">
-        <button class="header__search-btn" @click="search.open()" aria-label="Search">
+        <button v-if="siteSettings?.show_search" class="header__search-btn" @click="search.open()" aria-label="Search">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>

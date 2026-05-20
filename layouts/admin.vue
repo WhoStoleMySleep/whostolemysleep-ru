@@ -3,9 +3,13 @@ const route  = useRoute()
 const router = useRouter()
 
 const navLinks = [
-  { label: 'Dashboard', to: '/admin' },
-  { label: 'Posts',     to: '/admin/posts' },
-  { label: 'About',     to: '/admin/about' },
+  { label: 'Dashboard',  to: '/admin' },
+  { label: 'Posts',      to: '/admin/posts' },
+  { label: 'About',      to: '/admin/about' },
+  { label: 'Experience', to: '/admin/experience' },
+  { label: 'Education',  to: '/admin/education' },
+  { label: 'Skills',     to: '/admin/skills' },
+  { label: 'Settings',   to: '/admin/settings' },
 ]
 
 async function logout() {

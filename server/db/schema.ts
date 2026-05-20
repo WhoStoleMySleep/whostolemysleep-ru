@@ -112,6 +112,18 @@ export const skill = pgTable('skill', {
   order:    integer('order').notNull().default(0),
 })
 
+/* ── Settings ── */
+
+export const settings = pgTable('settings', {
+  id:           integer('id').primaryKey().default(1),
+  open_to_work: boolean('open_to_work').notNull().default(true),
+  show_search:  boolean('show_search').notNull().default(true),
+  github_url:   text('github_url').notNull().default(''),
+  telegram_url: text('telegram_url').notNull().default(''),
+  email:        text('email').notNull().default(''),
+  updated_at:   timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),
+})
+
 /* ── Auth ── */
 
 export const user = pgTable('user', {

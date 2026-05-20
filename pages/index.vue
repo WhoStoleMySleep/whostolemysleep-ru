@@ -9,6 +9,7 @@ useSeoMeta({
   description: () => t('seo.home_desc'),
 })
 
+const { data: siteSettings } = await useSettings()
 const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }))
 const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }))
 const { data: projects } = await useAsyncData(() => `posts-project-${locale.value}`, () => $fetch<Post[]>('/api/posts/project',   { query: { locale: locale.value } }))
@@ -38,7 +39,7 @@ onMounted(() => {
             <span class="hero__title-line hero__title-line--accent">{{ t('hero.line2') }}</span>
             <span class="hero__title-line">{{ t('hero.line3') }}</span>
             <span class="hero__title-counter">
-              4<span class="hero__title-plus">+</span>
+              {{ siteSettings?.years_experience ?? 4 }}<span class="hero__title-plus">+</span>
               <span class="hero__title-years">{{ t('hero.years') }}</span>
             </span>
           </h1>
@@ -76,18 +77,28 @@ onMounted(() => {
         </div>
 
         <div class="hero__aside">
-          <div class="hero__status">
+          <div v-if="siteSettings?.open_to_work" class="hero__status">
             <span class="hero__status-dot" aria-hidden="true" />
             <span class="hero__status-text">{{ t('hero.status') }}</span>
           </div>
           <div class="hero__socials">
-            <a href="https://t.me/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="hero__social-link" aria-label="Telegram">
+            <a
+              v-if="siteSettings?.telegram_url"
+              :href="siteSettings.telegram_url"
+              target="_blank" rel="noopener noreferrer"
+              class="hero__social-link" aria-label="Telegram"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M21.8 2.3L1.4 10.1c-1.3.5-1.3 1.3-.2 1.6l5.1 1.6 11.8-7.5c.6-.3 1.1-.1.7.2L8.5 15.5l-.4 5.3c.6 0 .9-.3 1.2-.6l2.9-2.8 6 4.4c1.1.6 1.9.3 2.1-.9l3.8-17.9c.5-1.5-.6-2.2-1.8-1.7z" fill="currentColor"/>
               </svg>
               <span>@whostolemysleep</span>
             </a>
-            <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="hero__social-link" aria-label="GitHub">
+            <a
+              v-if="siteSettings?.github_url"
+              :href="siteSettings.github_url"
+              target="_blank" rel="noopener noreferrer"
+              class="hero__social-link" aria-label="GitHub"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.9 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z" fill="currentColor"/>
               </svg>

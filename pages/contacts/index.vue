@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t } = useLocale()
+const { data: siteSettings } = await useSettings()
 
 useSeoMeta({
   title:       () => t('seo.contacts_title'),
@@ -43,13 +44,13 @@ async function submit() {
 
       <div class="contacts-grid">
         <div class="contacts-info">
-          <div class="contact-block">
+          <div v-if="siteSettings?.email" class="contact-block">
             <p class="contact-block__label">{{ t('contacts.email') }}</p>
-            <a href="mailto:whostolemysleep@gmail.com" class="contact-block__value">
-              whostolemysleep@gmail.com
+            <a :href="`mailto:${siteSettings.email}`" class="contact-block__value">
+              {{ siteSettings.email }}
             </a>
           </div>
-          <div class="contact-block">
+          <div v-if="siteSettings?.open_to_work" class="contact-block">
             <p class="contact-block__label">{{ t('contacts.status') }}</p>
             <div class="contact-status">
               <span class="contact-status__dot" />

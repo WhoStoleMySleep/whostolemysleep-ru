@@ -85,6 +85,18 @@ async function flush() {
         <NuxtLink to="/admin/about" class="quick-card">
           <span class="quick-card__label">About me</span>
         </NuxtLink>
+        <NuxtLink to="/admin/experience" class="quick-card">
+          <span class="quick-card__label">Experience</span>
+        </NuxtLink>
+        <NuxtLink to="/admin/education" class="quick-card">
+          <span class="quick-card__label">Education</span>
+        </NuxtLink>
+        <NuxtLink to="/admin/skills" class="quick-card">
+          <span class="quick-card__label">Skills</span>
+        </NuxtLink>
+        <NuxtLink to="/admin/settings" class="quick-card">
+          <span class="quick-card__label">Settings</span>
+        </NuxtLink>
       </div>
     </div>
   </div>
