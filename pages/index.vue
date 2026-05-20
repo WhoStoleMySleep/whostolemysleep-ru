@@ -162,10 +162,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .hero__inner { flex-direction: column; align-items: flex-start; gap: 48px; }
+  .hero__inner { flex-direction: column; align-items: stretch; gap: 48px; }
 }
 
-.hero__content { max-width: 680px; }
+.hero__content { max-width: 680px; width: 100%; }
 
 .hero__eyebrow {
   opacity: 0;
