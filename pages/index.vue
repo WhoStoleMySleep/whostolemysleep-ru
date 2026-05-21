@@ -199,19 +199,18 @@ onMounted(() => {
 
 .hero__title-line {
   display: block;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.7s ease, transform 0.7s var(--ease-out);
+  transform: translateY(16px);
+  transition: transform 0.7s var(--ease-out);
   color: var(--text);
 }
 
 .hero__title-line--accent { font-style: italic; color: var(--accent); }
 
-.hero__title-line:nth-child(1) { transition-delay: 0.2s; }
-.hero__title-line:nth-child(2) { transition-delay: 0.32s; }
-.hero__title-line:nth-child(3) { transition-delay: 0.44s; }
+.hero__title-line:nth-child(1) { transition-delay: 0.1s; }
+.hero__title-line:nth-child(2) { transition-delay: 0.2s; }
+.hero__title-line:nth-child(3) { transition-delay: 0.3s; }
 
-.hero--visible .hero__title-line { opacity: 1; transform: none; }
+.hero--visible .hero__title-line { transform: none; }
 
 .hero__title-counter {
   display: flex;
@@ -219,8 +218,8 @@ onMounted(() => {
   gap: 8px;
   color: var(--text);
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.7s ease 0.56s, transform 0.7s var(--ease-out) 0.56s;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease 0.4s, transform 0.6s var(--ease-out) 0.4s;
 }
 
 .hero--visible .hero__title-counter { opacity: 1; transform: none; }

@@ -9,8 +9,8 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
     langDir: 'locales/',
     locales: [
-      { code: 'ru', name: 'Русский', file: 'ru.json' },
-      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'ru', language: 'ru-RU', name: 'Русский', file: 'ru.json' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json' },
     ],
     detectBrowserLanguage: false,
   },
@@ -40,27 +40,14 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       titleTemplate: '%s — whostolemysleep',
       link: [
-        {
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href: '/fonts/cormorant-300-normal-cyrillic.woff2',
-          crossorigin: '',
-        },
-        {
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href: '/fonts/cormorant-300-normal-latin.woff2',
-          crossorigin: '',
-        },
-        {
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href: '/fonts/martian-mono-300-normal-latin.woff2',
-          crossorigin: '',
-        },
+        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
+          href: '/fonts/cormorant-400-italic-latin.woff2' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
+          href: '/fonts/cormorant-400-normal-latin.woff2' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
+          href: '/fonts/martian-mono-300-normal-latin.woff2' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
+          href: '/fonts/martian-mono-400-normal-latin.woff2' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
       script: [
@@ -85,6 +72,10 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: false,
+  },
+
+  experimental: {
+    inlineSSRStyles: true,
   },
 
   nitro: {
