@@ -212,14 +212,6 @@ body {
   transition: var(--theme-transition);
 }
 
-/* ── Light theme: heavier heading weight for contrast on warm bg ── */
-:root.light h1,
-:root.light h2,
-:root.light h3 {
-  font-weight: 500;
-  color: var(--text);
-}
-
 
 /* ── Typography ── */
 h1, h2, h3, h4, h5 {
