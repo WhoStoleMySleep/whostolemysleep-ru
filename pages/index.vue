@@ -308,27 +308,27 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border: 1px solid rgba(74, 222, 128, 0.2);
-  background: rgba(74, 222, 128, 0.05);
+  border: 1px solid var(--green-border);
+  background: var(--green-bg);
 }
 
 .hero__status-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #4ade80;
+  background: var(--green);
   animation: pulse-dot 2s ease infinite;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--green-pulse); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px transparent; }
 }
 
 .hero__status-text {
   font-size: 11px;
   letter-spacing: 0.05em;
-  color: #4ade80;
+  color: var(--green);
 }
 
 .hero__scroll-hint {

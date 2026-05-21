@@ -58,7 +58,7 @@ defineProps<{
   color: var(--bg);
 }
 
-.btn--primary:hover { background: #f8d080; }
+.btn--primary:hover { filter: brightness(1.12); }
 .btn--primary:active { transform: scale(0.98); }
 
 .btn--ghost {

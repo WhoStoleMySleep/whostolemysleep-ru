@@ -34,7 +34,7 @@ const isExternal = computed(() => !!props.item.url)
           <span class="card__type">{{ item.type === 'blog' ? t('card.blog') : t('card.project') }}</span>
           <span v-if="item.published_at" class="card__date">{{ format(item.published_at) }}</span>
         </div>
-        <h3 class="card__title">{{ item.title }}</h3>
+        <h2 class="card__title">{{ item.title }}</h2>
         <p class="card__descr">{{ item.excerpt }}</p>
         <ul v-if="item.tags.length" class="card__tags">
           <li v-for="tag in item.tags.slice(0, 4)" :key="tag.id" class="card__tag">

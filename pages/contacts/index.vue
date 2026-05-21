@@ -67,7 +67,7 @@ async function submit() {
           <Transition name="fade" mode="out-in">
             <div v-if="status === 'success'" class="form-success">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17L4 12" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20 6L9 17L4 12" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <p class="form-success__text">{{ t('contacts.success') }}</p>
             </div>
@@ -171,17 +171,17 @@ a.contact-block__value:hover { color: var(--accent); }
 
 .contact-status__dot {
   width: 7px; height: 7px;
-  background: #4ade80;
+  background: var(--green);
   border-radius: 50%;
   animation: pulse-dot 2s ease infinite;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
-  50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--green-pulse); }
+  50% { box-shadow: 0 0 0 4px transparent; }
 }
 
-.contact-status__text { font-size: 13px; color: #4ade80; }
+.contact-status__text { font-size: 13px; color: var(--green); }
 
 .contact-form { width: 100%; }
 
@@ -225,8 +225,8 @@ a.contact-block__value:hover { color: var(--accent); }
   align-items: center;
   gap: 20px;
   padding: 32px;
-  border: 1px solid rgba(74, 222, 128, 0.2);
-  background: rgba(74, 222, 128, 0.04);
+  border: 1px solid var(--green-border);
+  background: var(--green-bg);
 }
 
 .form-success__text { font-size: 14px; color: var(--text-2); }

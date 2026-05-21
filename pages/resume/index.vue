@@ -49,7 +49,7 @@ const { formatPeriod } = useFormatDate()
             <div v-for="item in experience" :key="item.id" class="resume-item">
               <div class="resume-item__header">
                 <div>
-                  <h3 class="resume-item__title">{{ item.position }}</h3>
+                  <h2 class="resume-item__title">{{ item.position }}</h2>
                   <p class="resume-item__place">{{ item.company }}</p>
                 </div>
                 <span class="resume-item__date">{{ formatPeriod(item.date_from, item.date_to) }}</span>
@@ -71,7 +71,7 @@ const { formatPeriod } = useFormatDate()
             <div v-for="item in education" :key="item.id" class="resume-item">
               <div class="resume-item__header">
                 <div>
-                  <h3 class="resume-item__title">{{ item.specialization }}</h3>
+                  <h2 class="resume-item__title">{{ item.specialization }}</h2>
                   <p class="resume-item__place">{{ item.institution }}</p>
                 </div>
                 <span class="resume-item__date">{{ formatPeriod(item.date_from, item.date_to) }}</span>
