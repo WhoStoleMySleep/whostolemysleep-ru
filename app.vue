@@ -8,6 +8,13 @@ const TRANSITION_INSTANT = { name: 'page', mode: 'out-in' as const, duration: 0 
 const pageTransition = computed(() =>
   isFading.value ? TRANSITION_INSTANT : TRANSITION_NORMAL
 )
+
+const head = useLocaleHead({ addSeoAttributes: true })
+useHead(() => ({
+  htmlAttrs: head.value.htmlAttrs,
+  link:      head.value.link,
+  meta:      head.value.meta,
+}))
 </script>
 
 <template>
