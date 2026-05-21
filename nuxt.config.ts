@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
 
   i18n: {
+    baseUrl: 'https://whostolemysleep.ru',
     strategy: 'prefix',
     defaultLocale: 'en',
     langDir: 'locales/',

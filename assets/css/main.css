@@ -182,10 +182,10 @@
   --accent-glow:  rgba(140, 82, 8, 0.05);
   --blue:         #1a6aaa;
   --red:          #c03030;
-  --green:        #15803d;
-  --green-bg:     rgba(21, 128, 61, 0.06);
-  --green-border: rgba(21, 128, 61, 0.25);
-  --green-pulse:  rgba(21, 128, 61, 0.4);
+  --green:        #166534;
+  --green-bg:     rgba(22, 101, 52, 0.07);
+  --green-border: rgba(22, 101, 52, 0.28);
+  --green-pulse:  rgba(22, 101, 52, 0.4);
 
   --header-scrolled-bg: rgba(244, 239, 230, 0.92);
   --overlay-bg:         rgba(244, 239, 230, 0.85);

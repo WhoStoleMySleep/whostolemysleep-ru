@@ -9,9 +9,10 @@ const pageTransition = computed(() =>
   isFading.value ? TRANSITION_INSTANT : TRANSITION_NORMAL
 )
 
+const { locale } = useI18n()
 const head = useLocaleHead({ addSeoAttributes: true })
 useHead(() => ({
-  htmlAttrs: head.value.htmlAttrs,
+  htmlAttrs: { ...head.value.htmlAttrs, lang: locale.value },
   link:      head.value.link,
   meta:      head.value.meta,
 }))
