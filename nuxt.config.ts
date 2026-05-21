@@ -74,10 +74,6 @@ export default defineNuxtConfig({
     typeCheck: false,
   },
 
-  experimental: {
-    inlineSSRStyles: true,
-  },
-
   nitro: {
     experimental: {
       asyncContext: true,
