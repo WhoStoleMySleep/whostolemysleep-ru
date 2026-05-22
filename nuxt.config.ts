@@ -52,7 +52,7 @@ export default defineNuxtConfig({
       ],
       script: [
         {
-          children: `try{const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='light'||(!t&&!p))document.documentElement.classList.add('light')}catch(e){}`,
+          innerHTML: `try{const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='light'||(!t&&!p))document.documentElement.classList.add('light')}catch(e){}`,
           tagPriority: 'critical',
         },
       ],
@@ -83,9 +83,7 @@ export default defineNuxtConfig({
   vite: {
     css: {
       preprocessorOptions: {
-        scss: {
-          api: 'modern-compiler',
-        },
+        scss: {},
       },
     },
   },

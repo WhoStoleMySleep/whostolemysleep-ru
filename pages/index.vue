@@ -16,7 +16,7 @@ const { data: projects } = await useAsyncData(() => `posts-project-${locale.valu
 
 const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]
-  return all.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()).slice(0, 6)
+  return all.sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()).slice(0, 6)
 })
 
 const isVisible = ref(false)

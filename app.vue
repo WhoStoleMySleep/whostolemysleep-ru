@@ -10,7 +10,7 @@ const pageTransition = computed(() =>
 )
 
 const { locale } = useI18n()
-const head = useLocaleHead({ addSeoAttributes: true })
+const head = useLocaleHead({ seo: true })
 useHead(() => ({
   htmlAttrs: { ...head.value.htmlAttrs, lang: locale.value },
   link:      head.value.link,
