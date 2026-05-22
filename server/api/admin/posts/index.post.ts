@@ -1,7 +1,7 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
-import { markDirty, postPaths } from '~/server/utils/pending'
-import { sanitizeHtml } from '~/server/utils/sanitize'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
+import { markDirty, postPaths } from '~~/server/utils/pending'
+import { sanitizeHtml } from '~~/server/utils/sanitize'
 
 interface CreateBody {
   slug:        string
@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
   fields.text_en = sanitizeHtml(fields.text_en)
 
   const [created] = await db.insert(schema.post).values(fields).returning()
+  if (!created) throw createError({ statusCode: 500, message: 'Insert failed' })
 
   if (tag_ids?.length) {
     await db.insert(schema.postTag)

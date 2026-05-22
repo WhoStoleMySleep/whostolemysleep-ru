@@ -2,7 +2,7 @@ import {
   checkAdminPassword, signAdminToken,
   isRateLimited, recordFailure, clearFailures,
   getClientIp, ADMIN_COOKIE,
-} from '~/server/utils/auth'
+} from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const ip    = getClientIp(event)

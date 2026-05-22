@@ -1,7 +1,7 @@
-import { db } from '~/server/db'
-import { settings } from '~/server/db/schema'
+import { db } from '~~/server/db'
+import { settings } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~/server/utils/pending'
+import { markDirty } from '~~/server/utils/pending'
 
 const ALLOWED = ['open_to_work', 'show_search', 'github_url', 'telegram_url', 'email'] as const
 

@@ -1,6 +1,6 @@
-import { db } from '~/server/db'
-import { education } from '~/server/db/schema'
-import { markDirty } from '~/server/utils/pending'
+import { db } from '~~/server/db'
+import { education } from '~~/server/db/schema'
+import { markDirty } from '~~/server/utils/pending'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{

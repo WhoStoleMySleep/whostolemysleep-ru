@@ -1,4 +1,9 @@
 export default defineNuxtConfig({
+  future: { compatibilityVersion: 4 },
+  compatibilityDate: '2026-05-22',
+
+  alias: { '~/server': './server' },
+
   devtools: { enabled: true },
 
   modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
@@ -81,6 +86,9 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    optimizeDeps: {
+      include: ['@vercel/analytics', '@vercel/speed-insights', 'fuse.js'],
+    },
     css: {
       preprocessorOptions: {
         scss: {},

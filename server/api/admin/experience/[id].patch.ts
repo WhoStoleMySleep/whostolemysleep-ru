@@ -1,7 +1,7 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~/server/utils/pending'
+import { markDirty } from '~~/server/utils/pending'
 
 interface Bullet { text_ru: string; text_en: string }
 

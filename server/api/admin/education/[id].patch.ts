@@ -1,7 +1,7 @@
-import { db } from '~/server/db'
-import { education } from '~/server/db/schema'
+import { db } from '~~/server/db'
+import { education } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~/server/utils/pending'
+import { markDirty } from '~~/server/utils/pending'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))

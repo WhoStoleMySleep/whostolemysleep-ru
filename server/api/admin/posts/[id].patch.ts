@@ -1,8 +1,8 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty, postPaths } from '~/server/utils/pending'
-import { sanitizeHtml } from '~/server/utils/sanitize'
+import { markDirty, postPaths } from '~~/server/utils/pending'
+import { sanitizeHtml } from '~~/server/utils/sanitize'
 
 interface PatchBody {
   title_ru?:    string;  title_en?:   string

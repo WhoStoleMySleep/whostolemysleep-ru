@@ -1,5 +1,5 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
 import { eq, count } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{ url: string; alt_ru?: string; alt_en?: string }>(event)
   if (!body.url) throw createError({ statusCode: 400, message: 'url required' })
 
-  const [{ total }] = await db
+  const [{ total } = { total: 0 }] = await db
     .select({ total: count() })
     .from(schema.image)
     .where(eq(schema.image.post_id, postId))

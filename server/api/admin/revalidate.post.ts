@@ -1,5 +1,5 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
 
 export default defineEventHandler(async () => {
   const pending = await db.select().from(schema.pendingRevalidation)

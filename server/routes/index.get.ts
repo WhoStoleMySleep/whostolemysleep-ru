@@ -7,7 +7,7 @@ export default defineEventHandler((event) => {
   }
 
   const accept = getHeader(event, 'accept-language') ?? ''
-  const langs = accept.toLowerCase().split(',').map((l) => l.trim().split(/[-;]/)[0])
+  const langs = accept.toLowerCase().split(',').map((l) => l.trim().split(/[-;]/)[0] ?? '')
   const locale = langs.some((code) => CIS_CODES.includes(code)) ? 'ru' : 'en'
 
   setCookie(event, 'locale', locale, { maxAge: 365 * 24 * 3600, path: '/', sameSite: 'lax' })

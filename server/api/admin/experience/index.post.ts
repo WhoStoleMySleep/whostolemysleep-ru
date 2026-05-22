@@ -1,6 +1,6 @@
-import { db } from '~/server/db'
-import * as schema from '~/server/db/schema'
-import { markDirty } from '~/server/utils/pending'
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
+import { markDirty } from '~~/server/utils/pending'
 
 interface Bullet { text_ru: string; text_en: string }
 interface Body {
