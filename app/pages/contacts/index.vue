@@ -15,7 +15,7 @@ const VALIDATORS = {
   message: (v: string) => v.trim().length >= 10,
 }
 
-const form    = reactive({ name: '', email: '', message: '' })
+const form    = reactive({ name: '', email: '', message: '', website: '' })
 const touched = reactive({ name: false, email: false, message: false })
 const status  = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const sendError = ref('')
@@ -44,9 +44,10 @@ async function submit() {
     status.value = 'success'
     Object.assign(form, { name: '', email: '', message: '' })
     Object.assign(touched, { name: false, email: false, message: false })
-  } catch {
+  } catch (e: unknown) {
     status.value    = 'error'
-    sendError.value = t('contacts.sendError')
+    const code = (e as { statusCode?: number })?.statusCode
+    sendError.value = code === 429 ? t('contacts.rateLimit') : t('contacts.sendError')
   }
 }
 </script>
@@ -82,6 +83,10 @@ async function submit() {
         </div>
 
         <form class="contact-form" @submit.prevent="submit" novalidate>
+          <div class="form-honeypot" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" v-model="form.website" type="text" name="website" autocomplete="off" tabindex="-1" />
+          </div>
           <Transition name="fade" mode="out-in">
             <div v-if="status === 'success'" class="form-success">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -207,7 +212,17 @@ a.contact-block__value:hover { color: var(--accent); }
 
 .contact-status__text { font-size: 13px; color: var(--green); }
 
-.contact-form { width: 100%; }
+.contact-form { width: 100%; position: relative; }
+
+.form-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
 
 .form-fields { display: flex; flex-direction: column; gap: 24px; }
 

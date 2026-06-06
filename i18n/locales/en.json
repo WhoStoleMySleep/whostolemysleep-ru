@@ -55,7 +55,8 @@
     "sendError": "Send error. Please try again later.",
     "err_name": "Enter your name (at least 2 characters)",
     "err_email": "Enter a valid email address",
-    "err_message": "Message is too short (at least 10 characters)"
+    "err_message": "Message is too short (at least 10 characters)",
+    "rateLimit": "Too many attempts. Please try again in an hour."
   },
   "search": {
     "placeholder": "Search blog and projects...",
