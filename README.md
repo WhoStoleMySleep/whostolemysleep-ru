@@ -4,6 +4,10 @@ Personal portfolio site with a built-in CMS. Blog, projects, resume — all mana
 
 > Built for personal use and as a technical showcase. The stack is deliberately full — serverless DB, blob storage, JWT auth, ISR, i18n — because it is itself a project in the portfolio.
 
+<p align="center">
+  <img src="screenshots/hero.png" width="600" alt="Home" />
+</p>
+
 ## Features
 
 - Bilingual — EN / RU, auto-detected from URL prefix (`/en/*`, `/ru/*`)
