@@ -16,10 +16,15 @@ const VALIDATORS = {
   message: (v: string) => v.trim().length >= 10,
 }
 
-const form    = reactive({ name: '', email: '', message: '', website: '', consent: false })
+const savedForm = useState('contact-form', () => ({ name: '', email: '', message: '', consent: false }))
+const form    = reactive({ ...savedForm.value, website: '' })
 const touched = reactive({ name: false, email: false, message: false, consent: false })
 const status  = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const sendError = ref('')
+
+watch(() => ({ name: form.name, email: form.email, message: form.message, consent: form.consent }), (val) => {
+  Object.assign(savedForm.value, val)
+})
 
 const errors = computed(() => ({
   name:    touched.name    && !VALIDATORS.name(form.name)       ? t('contacts.err_name')    : '',
@@ -44,7 +49,9 @@ async function submit() {
   try {
     await $fetch('/api/contact', { method: 'POST', body: form })
     status.value = 'success'
-    Object.assign(form, { name: '', email: '', message: '', consent: false })
+    const empty = { name: '', email: '', message: '', consent: false }
+    Object.assign(form, empty)
+    Object.assign(savedForm.value, empty)
     Object.assign(touched, { name: false, email: false, message: false, consent: false })
   } catch (e: unknown) {
     status.value    = 'error'
