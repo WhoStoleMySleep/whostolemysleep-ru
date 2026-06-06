@@ -63,6 +63,15 @@
     "empty": "Nothing found for \"{q}\"",
     "hint": "Type to search by titles, descriptions and tags"
   },
+  "error": {
+    "404_eyebrow": "Page not found",
+    "404_title": "404",
+    "404_desc": "This page doesn't exist or has been removed",
+    "500_eyebrow": "Server error",
+    "500_title": "500",
+    "500_desc": "Something went wrong. Try refreshing the page.",
+    "back": "Back to home"
+  },
   "footer": { "dev": "Frontend Developer" },
   "seo": {
     "home_title": "Frontend Developer",
