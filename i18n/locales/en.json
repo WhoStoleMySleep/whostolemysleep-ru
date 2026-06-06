@@ -52,7 +52,10 @@
     "submit": "Send message",
     "success": "Message sent. I will contact you shortly.",
     "required": "Please fill all fields",
-    "sendError": "Send error. Please try again later."
+    "sendError": "Send error. Please try again later.",
+    "err_name": "Enter your name (at least 2 characters)",
+    "err_email": "Enter a valid email address",
+    "err_message": "Message is too short (at least 10 characters)"
   },
   "search": {
     "placeholder": "Search blog and projects...",

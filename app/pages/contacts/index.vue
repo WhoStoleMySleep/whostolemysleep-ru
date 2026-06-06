@@ -7,28 +7,46 @@ useSeoMeta({
   description: () => t('seo.contacts_desc'),
 })
 
-const form = reactive({ name: '', email: '', message: '' })
-const status = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
-const errorMsg = ref('')
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const VALIDATORS = {
+  name:    (v: string) => v.trim().length >= 2,
+  email:   (v: string) => EMAIL_RE.test(v.trim()),
+  message: (v: string) => v.trim().length >= 10,
+}
+
+const form    = reactive({ name: '', email: '', message: '' })
+const touched = reactive({ name: false, email: false, message: false })
+const status  = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
+const sendError = ref('')
+
+const errors = computed(() => ({
+  name:    touched.name    && !VALIDATORS.name(form.name)       ? t('contacts.err_name')    : '',
+  email:   touched.email   && !VALIDATORS.email(form.email)     ? t('contacts.err_email')   : '',
+  message: touched.message && !VALIDATORS.message(form.message) ? t('contacts.err_message') : '',
+}))
+
+const isValid = computed(() =>
+  VALIDATORS.name(form.name) && VALIDATORS.email(form.email) && VALIDATORS.message(form.message)
+)
+
+function touch(field: keyof typeof touched) { touched[field] = true }
 
 async function submit() {
-  if (!form.name || !form.email || !form.message) {
-    errorMsg.value = t('contacts.required')
-    return
-  }
+  touched.name = touched.email = touched.message = true
+  if (!isValid.value) return
 
-  status.value = 'loading'
-  errorMsg.value = ''
+  status.value  = 'loading'
+  sendError.value = ''
 
   try {
     await $fetch('/api/contact', { method: 'POST', body: form })
     status.value = 'success'
-    form.name = ''
-    form.email = ''
-    form.message = ''
+    Object.assign(form, { name: '', email: '', message: '' })
+    Object.assign(touched, { name: false, email: false, message: false })
   } catch {
-    status.value = 'error'
-    errorMsg.value = t('contacts.sendError')
+    status.value    = 'error'
+    sendError.value = t('contacts.sendError')
   }
 }
 </script>
@@ -78,11 +96,13 @@ async function submit() {
                 <input
                   id="name"
                   v-model="form.name"
-                  class="form-input"
+                  :class="['form-input', { 'form-input--error': errors.name }]"
                   type="text"
                   :placeholder="t('contacts.namePlaceholder')"
                   autocomplete="name"
+                  @blur="touch('name')"
                 />
+                <p v-if="errors.name" class="form-error">{{ errors.name }}</p>
               </div>
 
               <div class="form-group">
@@ -90,11 +110,13 @@ async function submit() {
                 <input
                   id="email"
                   v-model="form.email"
-                  class="form-input"
+                  :class="['form-input', { 'form-input--error': errors.email }]"
                   type="email"
                   placeholder="ivan@example.com"
                   autocomplete="email"
+                  @blur="touch('email')"
                 />
+                <p v-if="errors.email" class="form-error">{{ errors.email }}</p>
               </div>
 
               <div class="form-group">
@@ -102,13 +124,15 @@ async function submit() {
                 <textarea
                   id="message"
                   v-model="form.message"
-                  class="form-input form-input--textarea"
+                  :class="['form-input form-input--textarea', { 'form-input--error': errors.message }]"
                   :placeholder="t('contacts.messagePlaceholder')"
                   rows="6"
+                  @blur="touch('message')"
                 />
+                <p v-if="errors.message" class="form-error">{{ errors.message }}</p>
               </div>
 
-              <p v-if="errorMsg" class="form-error">{{ errorMsg }}</p>
+              <p v-if="sendError" class="form-error">{{ sendError }}</p>
 
               <UiButton type="submit" :loading="status === 'loading'">
                 {{ t('contacts.submit') }}
@@ -212,6 +236,8 @@ a.contact-block__value:hover { color: var(--accent); }
 
 .form-input::placeholder { color: var(--text-3); }
 .form-input:focus { border-color: var(--accent); }
+.form-input--error { border-color: var(--red); }
+.form-input--error:focus { border-color: var(--red); }
 .form-input--textarea { resize: vertical; min-height: 140px; }
 
 .form-error {
