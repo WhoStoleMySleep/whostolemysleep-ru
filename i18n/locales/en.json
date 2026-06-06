@@ -1,5 +1,5 @@
 {
-  "nav": { "blog": "Blog", "projects": "Projects", "resume": "Resume", "contacts": "Contacts" },
+  "nav": { "blog": "Blog", "projects": "Projects", "resume": "Resume", "contacts": "Contacts", "privacy": "Privacy" },
   "hero": {
     "eyebrow": "Frontend Development",
     "line1": "Main focus —",
@@ -56,7 +56,10 @@
     "err_name": "Enter your name (at least 2 characters)",
     "err_email": "Enter a valid email address",
     "err_message": "Message is too short (at least 10 characters)",
-    "rateLimit": "Too many attempts. Please try again in an hour."
+    "err_consent": "You must agree to the privacy policy",
+    "rateLimit": "Too many attempts. Please try again in an hour.",
+    "consent_before": "I agree to the processing of personal data per the",
+    "consent_link": "privacy policy"
   },
   "search": {
     "placeholder": "Search blog and projects...",
@@ -83,6 +86,28 @@
     "resume_title": "Resume",
     "resume_desc": "Work experience, education and technical skills of a frontend developer.",
     "contacts_title": "Contacts",
-    "contacts_desc": "Contact a frontend developer. Feedback form."
+    "contacts_desc": "Contact a frontend developer. Feedback form.",
+    "privacy_title": "Privacy Policy",
+    "privacy_desc": "Personal data processing policy in compliance with Russian Federal Law No. 152-FZ."
+  },
+  "privacy": {
+    "eyebrow": "Legal",
+    "title": "Privacy Policy",
+    "updated": "Updated: June 6, 2026",
+    "s1_title": "1. General",
+    "s1_text": "This privacy policy is drawn up in accordance with the requirements of Federal Law No. 152-FZ of 27.07.2006 «On Personal Data» and defines the procedure for processing personal data submitted via the contact form on whostolemysleep.ru.",
+    "s2_title": "2. Data Controller",
+    "s2_text": "The controller is an individual — the owner of whostolemysleep.ru. Contact address: whostolemysleep{'@'}gmail.com.",
+    "s3_title": "3. Data Collected",
+    "s3_text": "The following data is processed: name (display name entered by the user) and email address. This data is submitted exclusively through the contact form.",
+    "s4_title": "4. Purpose of Processing",
+    "s4_text": "Data is used solely to respond to user inquiries. Data is not shared with third parties and is not used for newsletters or advertising.",
+    "s5_title": "5. Storage & Security",
+    "s5_text": "Data is stored in a secured database (Neon PostgreSQL). Only the controller has access to the data. Data is retained for no more than 1 year from the date of the inquiry.",
+    "s6_title": "6. Your Rights",
+    "s6_text": "You have the right to request clarification, blocking, or deletion of your data by contacting whostolemysleep{'@'}gmail.com. Requests will be processed within 30 days.",
+    "s7_title": "7. Consent",
+    "s7_text": "By submitting the form, you confirm that you have read this policy and consent to the processing of your personal data for the stated purposes.",
+    "back": "Back"
   }
 }

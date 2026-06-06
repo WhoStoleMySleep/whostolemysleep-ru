@@ -17,6 +17,7 @@ const localePath = useLocalePath()
         <NuxtLink :to="localePath('/projects')" class="footer__link">{{ t('nav.projects') }}</NuxtLink>
         <NuxtLink :to="localePath('/resume')"   class="footer__link">{{ t('nav.resume') }}</NuxtLink>
         <NuxtLink :to="localePath('/contacts')" class="footer__link">{{ t('nav.contacts') }}</NuxtLink>
+        <NuxtLink :to="localePath('/privacy')"  class="footer__link">{{ t('nav.privacy') }}</NuxtLink>
         <a href="https://t.me/WhoStoleMySleepDev"       target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
         <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
       </nav>

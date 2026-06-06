@@ -9,6 +9,25 @@ useSeoMeta({
   description: () => t('seo.home_desc'),
 })
 
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: 'whostolemysleep',
+      url: 'https://whostolemysleep.ru',
+      jobTitle: 'Frontend Developer',
+      email: 'whostolemysleep@gmail.com',
+      sameAs: [
+        'https://github.com/WhoStoleMySleepDev',
+        'https://t.me/WhoStoleMySleepDev',
+      ],
+      knowsAbout: ['Vue', 'Nuxt', 'React', 'Next.js', 'TypeScript'],
+    }),
+  }],
+})
+
 const { data: siteSettings } = await useSettings()
 const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }))
 const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }))

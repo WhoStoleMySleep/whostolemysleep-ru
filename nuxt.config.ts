@@ -35,6 +35,8 @@ export default defineNuxtConfig({
     '/ru/contacts':  { ssr: true },
     '/en/contacts':  { ssr: true },
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },
+    '/ru/privacy':   { isr: 86400 },
+    '/en/privacy':   { isr: 86400 },
   },
 
   css: ['~/assets/css/main.css'],
@@ -70,6 +72,11 @@ export default defineNuxtConfig({
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'whostolemysleep' },
+        { property: 'og:image', content: 'https://whostolemysleep.ru/og-image.png' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:image', content: 'https://whostolemysleep.ru/og-image.png' },
       ],
     },
   },
@@ -87,7 +94,7 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['@vercel/analytics', '@vercel/speed-insights', 'fuse.js'],
+      include: ['fuse.js'],
     },
     css: {
       preprocessorOptions: {

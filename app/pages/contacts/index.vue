@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t } = useLocale()
+const localePath = useLocalePath()
 const { data: siteSettings } = await useSettings()
 
 useSeoMeta({
@@ -15,8 +16,8 @@ const VALIDATORS = {
   message: (v: string) => v.trim().length >= 10,
 }
 
-const form    = reactive({ name: '', email: '', message: '', website: '' })
-const touched = reactive({ name: false, email: false, message: false })
+const form    = reactive({ name: '', email: '', message: '', website: '', consent: false })
+const touched = reactive({ name: false, email: false, message: false, consent: false })
 const status  = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const sendError = ref('')
 
@@ -24,16 +25,17 @@ const errors = computed(() => ({
   name:    touched.name    && !VALIDATORS.name(form.name)       ? t('contacts.err_name')    : '',
   email:   touched.email   && !VALIDATORS.email(form.email)     ? t('contacts.err_email')   : '',
   message: touched.message && !VALIDATORS.message(form.message) ? t('contacts.err_message') : '',
+  consent: touched.consent && !form.consent                     ? t('contacts.err_consent') : '',
 }))
 
 const isValid = computed(() =>
-  VALIDATORS.name(form.name) && VALIDATORS.email(form.email) && VALIDATORS.message(form.message)
+  VALIDATORS.name(form.name) && VALIDATORS.email(form.email) && VALIDATORS.message(form.message) && form.consent
 )
 
 function touch(field: keyof typeof touched) { touched[field] = true }
 
 async function submit() {
-  touched.name = touched.email = touched.message = true
+  touched.name = touched.email = touched.message = touched.consent = true
   if (!isValid.value) return
 
   status.value  = 'loading'
@@ -42,8 +44,8 @@ async function submit() {
   try {
     await $fetch('/api/contact', { method: 'POST', body: form })
     status.value = 'success'
-    Object.assign(form, { name: '', email: '', message: '' })
-    Object.assign(touched, { name: false, email: false, message: false })
+    Object.assign(form, { name: '', email: '', message: '', consent: false })
+    Object.assign(touched, { name: false, email: false, message: false, consent: false })
   } catch (e: unknown) {
     status.value    = 'error'
     const code = (e as { statusCode?: number })?.statusCode
@@ -135,6 +137,22 @@ async function submit() {
                   @blur="touch('message')"
                 />
                 <p v-if="errors.message" class="form-error">{{ errors.message }}</p>
+              </div>
+
+              <div class="form-group form-group--consent">
+                <label class="form-consent">
+                  <input
+                    v-model="form.consent"
+                    type="checkbox"
+                    class="form-consent__checkbox"
+                    @change="touch('consent')"
+                  />
+                  <span class="form-consent__text">
+                    {{ t('contacts.consent_before') }}
+                    <NuxtLink :to="localePath('/privacy')" class="form-consent__link">{{ t('contacts.consent_link') }}</NuxtLink>
+                  </span>
+                </label>
+                <p v-if="errors.consent" class="form-error">{{ errors.consent }}</p>
               </div>
 
               <p v-if="sendError" class="form-error">{{ sendError }}</p>
@@ -260,6 +278,39 @@ a.contact-block__value:hover { color: var(--accent); }
   color: var(--red);
   letter-spacing: 0.02em;
 }
+
+.form-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.form-consent__checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.form-consent__text {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.form-consent__link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.2s;
+}
+
+.form-consent__link:hover { opacity: 0.75; }
 
 .form-success {
   display: flex;
