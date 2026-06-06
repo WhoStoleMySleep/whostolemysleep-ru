@@ -142,6 +142,44 @@ function goHome() {
 
 .error-page--visible .error-page__digit { opacity: 1; transform: none; }
 
+.error-page--visible .error-page__digit--outline {
+  animation: neon-die 5s ease 1.5s forwards;
+}
+
+@keyframes neon-die {
+  /* alive — solid fill, hot glow */
+  0%   { color: var(--accent); filter: drop-shadow(0 0 12px var(--accent)) drop-shadow(0 0 28px var(--accent)); opacity: 1; }
+  8%   { color: var(--accent); filter: drop-shadow(0 0 7px var(--accent)); }
+  /* flicker 1 — quick blink */
+  18%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 9px var(--accent)); }
+  19%  { opacity: 0.05; filter: none; }
+  20%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 16px var(--accent)); }
+  /* flicker 2 — double tap */
+  32%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 7px var(--accent)); }
+  33%  { opacity: 0.1; filter: none; }
+  34%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 11px var(--accent)); }
+  35%  { opacity: 0.2; }
+  36%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 8px var(--accent)); }
+  /* calm, dimming */
+  50%  { color: var(--accent); filter: drop-shadow(0 0 5px var(--accent)); opacity: 1; }
+  /* flicker 3 — long stutter */
+  58%  { color: var(--accent); opacity: 1; }
+  59%  { opacity: 0.12; filter: none; }
+  60%  { color: var(--accent); opacity: 0.5; filter: drop-shadow(0 0 4px var(--accent)); }
+  61%  { opacity: 0.08; }
+  62%  { color: var(--accent); opacity: 1; filter: drop-shadow(0 0 6px var(--accent)); }
+  /* death flash — solid and blazing, then SNAP to hollow */
+  70%  { color: var(--accent); filter: drop-shadow(0 0 22px var(--accent)) drop-shadow(0 0 44px var(--accent)); opacity: 1; }
+  72%  { opacity: 0.03; filter: none; }
+  /* hollow from here — burned out, only outline shell remains */
+  73%  { color: transparent; opacity: 1; filter: drop-shadow(0 0 20px var(--accent)); }
+  82%  { opacity: 0.35; filter: drop-shadow(0 0 2px var(--accent)); }
+  88%  { opacity: 1; filter: drop-shadow(0 0 2px var(--accent)); }
+  94%  { opacity: 0.65; filter: none; }
+  /* dead — hollow, barely twitching */
+  100% { color: transparent; opacity: 1; filter: drop-shadow(0 0 1px var(--accent)); }
+}
+
 .error-page__sep {
   width: 100%;
   height: 1px;
