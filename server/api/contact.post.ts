@@ -16,11 +16,14 @@ export default defineEventHandler(async (event) => {
     },
   })
 
+  const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
   await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: process.env.EMAIL,
+    from:    process.env.EMAIL,
+    to:      process.env.EMAIL,
+    replyTo: email,
     subject: `Сообщение от ${name} <${email}>`,
-    html: `<p><strong>Имя:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Сообщение:</strong></p><p>${message}</p>`,
+    html: `<p><strong>Имя:</strong> ${escape(name)}</p><p><strong>Email:</strong> ${escape(email)}</p><p><strong>Сообщение:</strong></p><p>${escape(message)}</p>`,
   })
 
   return { ok: true }
