@@ -58,8 +58,9 @@
     "err_message": "Message is too short (at least 10 characters)",
     "err_consent": "You must agree to the privacy policy",
     "rateLimit": "Too many attempts. Please try again in an hour.",
-    "consent_before": "I agree to the processing of personal data per the",
-    "consent_link": "privacy policy"
+    "consent_before": "I have read the",
+    "consent_link": "privacy policy",
+    "consent_after": "and consent to the processing of my personal data, including its transfer to Google servers (Gmail)"
   },
   "search": {
     "placeholder": "Search blog and projects...",
@@ -103,13 +104,17 @@
     "s4_title": "4. Purpose of Processing",
     "s4_text": "Data is used solely to respond to user inquiries. Data is not shared with third parties and is not used for newsletters or advertising.",
     "s5_title": "5. Storage & Security",
-    "s5_text": "Data is not stored in a database. Upon form submission, the name, email, and message are transmitted to the controller via a secured channel (Gmail) and reside only in the controller's mailbox. The controller undertakes not to share this data with third parties and to delete it upon request within 30 days.",
+    "s5_text": "Data is not stored in a database. Upon form submission, the name, email, and message are transmitted to the controller via a secured channel (Gmail) and reside only in the controller's mailbox. The controller applies reasonable security measures, including a strong password and two-factor authentication for mailbox access. The controller undertakes not to share this data with third parties and to delete the email from their mailbox within 7 days of receiving a deletion request. The controller is not responsible for the retention period of data in the mail service's backup systems.",
     "s6_title": "6. Your Rights",
-    "s6_text": "You have the right to request clarification, blocking, or deletion of your data by contacting whostolemysleep{'@'}gmail.com. Requests will be processed within 30 days. You may also withdraw your consent to personal data processing at any time by sending a message to the same address with the subject «Withdrawal of Consent». In this case, the controller will cease processing and delete your data within 30 days.",
+    "s6_intro": "You have the right to:",
+    "s6_item1": "obtain information about which of your personal data is being processed, as well as the purposes, retention periods, and legal bases of such processing",
+    "s6_item2": "request correction, blocking, or deletion of your data if it is incomplete, inaccurate, or processed in violation of the law",
+    "s6_item3": "withdraw your consent to personal data processing at any time",
+    "s6_outro": "To exercise your rights, send a request to whostolemysleep{'@'}gmail.com. Requests will be processed within 10 business days. Upon withdrawal of consent, the controller will delete the data from their mailbox within 7 days.",
     "s7_title": "7. Consent",
-    "s7_text": "By submitting the form, you confirm that you have read this policy and consent to the processing of your personal data for the stated purposes.",
+    "s7_text": "The form can only be submitted after the user checks the box «I have read the privacy policy and consent to the processing of my personal data, including its transfer to Google servers (Gmail)». Without this confirmation the form cannot be submitted.",
     "s8_title": "8. Cross-border Transfer",
-    "s8_text": "Use of the Gmail service implies transfer of personal data to Google servers, which may be located outside the Russian Federation (including in the United States). By submitting the form, you confirm your consent to such cross-border transfer.",
+    "s8_text": "Use of the Gmail service implies transfer of personal data to Google servers, which may be located outside the Russian Federation (including in the United States). The transfer is carried out solely to the extent necessary for the controller to receive and respond to the inquiry. By submitting the form, you confirm your consent to such cross-border transfer.",
     "back": "Back"
   }
 }

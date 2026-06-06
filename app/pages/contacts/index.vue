@@ -157,6 +157,7 @@ async function submit() {
                   <span class="form-consent__text">
                     {{ t('contacts.consent_before') }}
                     <NuxtLink :to="localePath('/privacy')" class="form-consent__link">{{ t('contacts.consent_link') }}</NuxtLink>
+                    {{ t('contacts.consent_after') }}
                   </span>
                 </label>
                 <p v-if="errors.consent" class="form-error">{{ errors.consent }}</p>

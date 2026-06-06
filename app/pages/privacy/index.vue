@@ -25,7 +25,16 @@ const SECTIONS = [
       <div class="privacy-body">
         <section v-for="s in SECTIONS" :key="s" class="privacy-section">
           <h2 class="privacy-section__title">{{ t(`privacy.${s}_title`) }}</h2>
-          <p class="privacy-section__text">{{ t(`privacy.${s}_text`) }}</p>
+          <template v-if="s === 's6'">
+            <p class="privacy-section__text">{{ t('privacy.s6_intro') }}</p>
+            <ul class="privacy-section__list">
+              <li class="privacy-section__item">{{ t('privacy.s6_item1') }}</li>
+              <li class="privacy-section__item">{{ t('privacy.s6_item2') }}</li>
+              <li class="privacy-section__item">{{ t('privacy.s6_item3') }}</li>
+            </ul>
+            <p class="privacy-section__text">{{ t('privacy.s6_outro') }}</p>
+          </template>
+          <p v-else class="privacy-section__text">{{ t(`privacy.${s}_text`) }}</p>
         </section>
       </div>
 
@@ -80,6 +89,21 @@ const SECTIONS = [
   font-size: 14px;
   line-height: 1.7;
   color: var(--text-2);
+}
+
+.privacy-section__list {
+  margin: 12px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.privacy-section__item {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-2);
+  list-style: disc;
 }
 
 .privacy-back {
