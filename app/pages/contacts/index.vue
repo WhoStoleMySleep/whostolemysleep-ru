@@ -2,6 +2,7 @@
 const { t } = useLocale()
 const localePath = useLocalePath()
 const { data: siteSettings } = await useSettings()
+const { public: { contactForm } } = useRuntimeConfig()
 
 useSeoMeta({
   title:       () => t('seo.contacts_title'),
@@ -59,6 +60,24 @@ async function submit() {
     sendError.value = code === 429 ? t('contacts.rateLimit') : t('contacts.sendError')
   }
 }
+
+const contactLinks = computed(() => [
+  siteSettings.value?.email && {
+    label: 'Email',
+    href: `mailto:${siteSettings.value.email}`,
+    value: siteSettings.value.email,
+  },
+  siteSettings.value?.telegram_url && {
+    label: 'Telegram',
+    href: siteSettings.value.telegram_url,
+    value: '@whostolemysleep',
+  },
+  siteSettings.value?.github_url && {
+    label: 'GitHub',
+    href: siteSettings.value.github_url,
+    value: 'github.com/whostolemysleep',
+  },
+].filter(Boolean))
 </script>
 
 <template>
@@ -91,7 +110,27 @@ async function submit() {
           </div>
         </div>
 
-        <form class="contact-form" @submit.prevent="submit" novalidate>
+        <div v-if="!contactForm" class="contact-links">
+          <p class="contact-links__hint">{{ t('contacts.links_hint') }}</p>
+          <div class="contact-links__list">
+            <a
+              v-for="link in contactLinks"
+              :key="link.label"
+              :href="link.href"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="contact-link"
+            >
+              <span class="contact-link__label">{{ link.label }}</span>
+              <span class="contact-link__value">{{ link.value }}</span>
+              <svg class="contact-link__arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <form v-else class="contact-form" @submit.prevent="submit" novalidate>
           <div class="form-honeypot" aria-hidden="true">
             <label for="website">Website</label>
             <input id="website" v-model="form.website" type="text" name="website" autocomplete="off" tabindex="-1" />
@@ -199,6 +238,7 @@ async function submit() {
   grid-template-columns: 280px 1fr;
   gap: 80px;
   align-items: start;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) { .contacts-grid { grid-template-columns: 1fr; gap: 48px; } }
@@ -237,6 +277,51 @@ a.contact-block__value:hover { color: var(--accent); }
 }
 
 .contact-status__text { font-size: 13px; color: var(--green); }
+
+.contact-links { width: 100%; min-width: 0; overflow: hidden; }
+
+.contact-links__hint {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 32px;
+  overflow-wrap: break-word;
+}
+
+.contact-links__list { display: flex; flex-direction: column; gap: 1px; background: var(--border); width: 100%; overflow: hidden; }
+
+.contact-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--bg-1);
+  color: var(--text-2);
+  transition: background 0.2s, color 0.2s;
+}
+
+.contact-link:hover { background: var(--bg-2); color: var(--accent); }
+
+.contact-link__label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.contact-link__value {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.contact-link__arrow { flex-shrink: 0; opacity: 0.4; transition: opacity 0.2s, transform 0.2s; }
+.contact-link:hover .contact-link__arrow { opacity: 1; transform: translate(2px, -2px); }
 
 .contact-form { width: 100%; position: relative; }
 

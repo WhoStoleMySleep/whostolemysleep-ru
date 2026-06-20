@@ -60,7 +60,8 @@
     "rateLimit": "Too many attempts. Please try again in an hour.",
     "consent_before": "I have read the",
     "consent_link": "privacy policy",
-    "consent_after": "and consent to the processing of my personal data, including its transfer to Google servers (Gmail)"
+    "consent_after": "and consent to the processing of my personal data, including its transfer to Google servers (Gmail)",
+    "links_hint": "Choose a convenient way to get in touch"
   },
   "search": {
     "placeholder": "Search blog and projects...",
