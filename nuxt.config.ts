@@ -81,6 +81,12 @@ export default defineNuxtConfig({
     },
   },
 
+  runtimeConfig: {
+    public: {
+      contactForm: process.env.NUXT_PUBLIC_CONTACT_FORM !== 'false',
+    },
+  },
+
   typescript: {
     strict: true,
     typeCheck: false,
