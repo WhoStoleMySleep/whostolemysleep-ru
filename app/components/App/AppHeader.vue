@@ -162,7 +162,9 @@ function isActive(key: string) {
 
 .head__name {
   font-size: 15px;
-  font-weight: 700;
+  /* 500, а не 700: это было единственное место с моноширинным 700 на
+     всём сайте, и ради одного слова тянулся отдельный файл на 21.6 КБ. */
+  font-weight: 500;
   letter-spacing: 0.08em;
   transition: color 0.2s;
 }
