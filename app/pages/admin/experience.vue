@@ -226,33 +226,33 @@ function formatDate(d: string | null) {
 </template>
 
 <style scoped>
-.dash-title { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: #e2e2e8; }
+.dash-title { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
 .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 
-.exp-list { display: flex; flex-direction: column; gap: 1px; background: #14141e; }
-.exp-item { background: #0d0d14; }
+.exp-list { display: flex; flex-direction: column; gap: 1px; background: var(--bg-3); }
+.exp-item { background: var(--bg-1); }
 .exp-item__row { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; gap: 16px; }
 .exp-item__info { display: flex; flex-direction: column; gap: 4px; }
-.exp-item__company { font-size: 13px; color: #e2e2e8; }
-.exp-item__pos { font-size: 11px; color: #888; }
-.exp-item__dates { font-size: 10px; color: #444460; letter-spacing: 0.05em; }
+.exp-item__company { font-size: 13px; color: var(--text); }
+.exp-item__pos { font-size: 11px; color: var(--text-4); }
+.exp-item__dates { font-size: 10px; color: var(--text-4); letter-spacing: 0.05em; }
 .exp-item__actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-.exp-form { border-top: 1px solid #1e1e2e; padding: 20px; background: #0a0a12; }
-.exp-form--new { border: 1px solid #1e1e2e; background: #0a0a12; margin-bottom: 16px; padding: 20px; }
-.form-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #666680; margin-bottom: 16px; }
+.exp-form { border-top: 1px solid var(--border); padding: 20px; background: var(--bg); }
+.exp-form--new { border: 1px solid var(--border); background: var(--bg); margin-bottom: 16px; padding: 20px; }
+.form-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin-bottom: 16px; }
 
 .form-fields { display: flex; flex-direction: column; gap: 16px; }
 .field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #666680; }
+.field-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
 
 .admin-input {
-  background: #14141e; border: 1px solid #2a2a3e; color: #a0a0b8;
-  font-family: 'Martian Mono', monospace; font-size: 12px; padding: 8px 12px;
+  background: var(--bg-3); border: 1px solid var(--border-s); color: var(--text-3);
+  font-family: var(--font-mono); font-size: 12px; padding: 8px 12px;
   outline: none; transition: border-color 0.15s; width: 100%;
 }
-.admin-input:focus { border-color: #f0c060; color: #e2e2e8; }
+.admin-input:focus { border-color: var(--accent); color: var(--text); }
 
 .bullets-section { display: flex; flex-direction: column; gap: 8px; }
 .bullets-head { display: flex; align-items: center; justify-content: space-between; }
@@ -260,14 +260,14 @@ function formatDate(d: string | null) {
 .bullet-fields { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 
 .act-btn {
-  font-family: 'Martian Mono', monospace; font-size: 11px; letter-spacing: 0.05em;
-  padding: 5px 10px; border: 1px solid #2a2a3e; background: transparent;
-  color: #888; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
+  padding: 5px 10px; border: 1px solid var(--border-s); background: transparent;
+  color: var(--text-4); cursor: pointer; transition: border-color 0.15s, color 0.15s;
 }
-.act-btn:hover { border-color: #f0c060; color: #f0c060; }
-.act-btn--del:hover { border-color: #f06060; color: #f06060; }
+.act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.act-btn--del:hover { border-color: var(--red); color: var(--red); }
 
-.err-msg { font-size: 11px; color: #f06060; }
+.err-msg { font-size: 11px; color: var(--red); }
 .form-actions { display: flex; gap: 10px; }
-.empty-state { padding: 40px 20px; text-align: center; color: #444460; font-size: 12px; }
+.empty-state { padding: 40px 20px; text-align: center; color: var(--text-4); font-size: 12px; }
 </style>

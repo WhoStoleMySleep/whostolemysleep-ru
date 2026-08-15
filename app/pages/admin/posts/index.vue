@@ -88,7 +88,7 @@ function fmtDate(d: string | null) {
   margin-bottom: 24px;
 }
 
-.page-title { font-size: 22px; font-weight: 300; color: #e2e2e8; letter-spacing: -0.02em; }
+.page-title { font-size: 22px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; }
 
 .filter-row { display: flex; gap: 4px; margin-bottom: 20px; }
 
@@ -98,30 +98,30 @@ function fmtDate(d: string | null) {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 5px 12px;
-  border: 1px solid #1e1e2e;
+  border: 1px solid var(--border);
   background: transparent;
-  color: #666680;
+  color: var(--text-4);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.filter-btn:hover { color: #a0a0b8; }
-.filter-btn--active { color: #f0c060; border-color: rgba(240,192,96,0.4); background: rgba(240,192,96,0.06); }
+.filter-btn:hover { color: var(--text-3); }
+.filter-btn--active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
 
 .posts-table {
-  border: 1px solid #1e1e2e;
-  background: #0d0d14;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
 }
 
 .table-head {
   display: grid;
   grid-template-columns: 1fr 80px 90px 110px 200px;
   padding: 10px 20px;
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid var(--border);
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #444460;
+  color: var(--text-4);
   gap: 16px;
 }
 
@@ -129,16 +129,16 @@ function fmtDate(d: string | null) {
   display: grid;
   grid-template-columns: 1fr 80px 90px 110px 200px;
   padding: 12px 20px;
-  border-bottom: 1px solid #14141e;
+  border-bottom: 1px solid var(--border);
   align-items: center;
   gap: 16px;
   transition: background 0.1s;
 }
 
 .table-row:last-child { border-bottom: none; }
-.table-row:hover { background: #10101a; }
+.table-row:hover { background: var(--bg-2); }
 
-.row-title { font-size: 12px; color: #c0c0d0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-title { font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .row-type {
   font-size: 9px;
@@ -148,18 +148,18 @@ function fmtDate(d: string | null) {
   border: 1px solid;
 }
 
-.row-type--blog    { color: #60a0f0; border-color: rgba(96,160,240,0.3); background: rgba(96,160,240,0.06); }
-.row-type--project { color: #a060f0; border-color: rgba(160,96,240,0.3); background: rgba(160,96,240,0.06); }
+.row-type--blog    { color: var(--blue); border-color: var(--border-s); background: var(--soft); }
+.row-type--project { color: var(--purple); border-color: var(--border-s); background: var(--soft); }
 
-.row-status { font-size: 10px; letter-spacing: 0.06em; color: #444460; }
-.row-status--published { color: #4ade80; }
+.row-status { font-size: 10px; letter-spacing: 0.06em; color: var(--text-4); }
+.row-status--published { color: var(--green); }
 
-.row-date { font-size: 10px; color: #444460; }
+.row-date { font-size: 10px; color: var(--text-4); }
 
 .row-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
 
 .confirm-delete { display: flex; align-items: center; gap: 6px; }
-.confirm-delete span { font-size: 10px; color: #ff6b6b; }
+.confirm-delete span { font-size: 10px; color: var(--red); }
 
-.table-empty { padding: 40px 20px; text-align: center; font-size: 11px; color: #444460; }
+.table-empty { padding: 40px 20px; text-align: center; font-size: 11px; color: var(--text-4); }
 </style>

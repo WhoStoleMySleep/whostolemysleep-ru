@@ -58,7 +58,7 @@ async function logout() {
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body { background: #0a0a0f; color: #e2e2e8; font-family: 'Martian Mono', monospace; font-size: 13px; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 13px; }
 
 .admin-shell { min-height: 100dvh; display: flex; flex-direction: column; }
 
@@ -68,8 +68,8 @@ body { background: #0a0a0f; color: #e2e2e8; font-family: 'Martian Mono', monospa
   gap: 32px;
   padding: 0 32px;
   height: 56px;
-  border-bottom: 1px solid #1e1e2e;
-  background: #0d0d14;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -79,25 +79,29 @@ body { background: #0a0a0f; color: #e2e2e8; font-family: 'Martian Mono', monospa
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 500;
-  color: #e2e2e8;
-  letter-spacing: -0.02em;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-decoration: none;
   flex-shrink: 0;
 }
 
-.admin-logo__dot  { color: #f0c060; }
+.admin-logo__dot  { color: var(--accent); }
 
 .admin-logo__badge {
+  font-family: var(--font-mono);
   font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  font-weight: 400;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #f0c060;
-  background: rgba(240,192,96,0.1);
-  border: 1px solid rgba(240,192,96,0.25);
-  padding: 2px 6px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  padding: 3px 9px;
 }
 
 .admin-nav {
@@ -107,17 +111,18 @@ body { background: #0a0a0f; color: #e2e2e8; font-family: 'Martian Mono', monospa
 }
 
 .admin-nav__link {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: #666680;
-  padding: 6px 12px;
-  border-radius: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
   transition: color 0.15s, background 0.15s;
   text-decoration: none;
 }
 
-.admin-nav__link:hover { color: #a0a0b8; background: #14141e; }
-.admin-nav__link--active { color: #f0c060; background: rgba(240,192,96,0.08); }
+.admin-nav__link:hover { color: var(--text-3); background: var(--bg-3); }
+.admin-nav__link--active { color: var(--accent); background: var(--accent-dim); }
 
 .admin-header__right { display: flex; align-items: center; gap: 8px; }
 
@@ -126,40 +131,59 @@ body { background: #0a0a0f; color: #e2e2e8; font-family: 'Martian Mono', monospa
   align-items: center;
   gap: 6px;
   font-family: inherit;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 5px 12px;
-  border-radius: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 7px 15px;
+  border-radius: var(--r-pill);
   cursor: pointer;
   transition: all 0.15s;
   text-decoration: none;
 }
 
 .admin-btn--ghost {
-  color: #666680;
-  border: 1px solid #1e1e2e;
+  color: var(--text-4);
+  border: 1px solid var(--border);
   background: transparent;
 }
 
-.admin-btn--ghost:hover { color: #a0a0b8; border-color: #333350; background: #14141e; }
+.admin-btn--ghost:hover { color: var(--text-3); border-color: var(--border-s); background: var(--bg-3); }
 
 .admin-btn--primary {
-  color: #0a0a0f;
-  background: #f0c060;
-  border: 1px solid #f0c060;
+  color: var(--on-accent);
+  background: var(--accent-flat);
+  border: 1px solid var(--accent-flat);
   font-weight: 500;
 }
 
-.admin-btn--primary:hover { background: #e8b848; }
+.admin-btn--primary:hover { filter: brightness(1.08); }
 .admin-btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .admin-btn--danger {
-  color: #ff6b6b;
-  border: 1px solid #3a1a1a;
+  color: var(--red);
+  border: 1px solid var(--red-border);
   background: transparent;
 }
 
-.admin-btn--danger:hover { background: #1e0f0f; border-color: #ff6b6b; }
+.admin-btn--danger:hover { background: var(--red-bg); border-color: var(--red); }
 
 .admin-main { flex: 1; padding: 32px; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+/* ── Геометрия контролов ──
+   Классы объявлены на самих страницах, но радиусы задаются здесь:
+   иначе их пришлось бы держать в синхроне по девяти файлам. Сами
+   страницы border-radius не задают, поэтому scoped-стили не конфликтуют. */
+.admin-input,
+.field-input,
+.text-pane,
+.text-preview,
+.quick-card,
+.empty-state { border-radius: var(--r-s); }
+
+.act-btn,
+.lang-tab,
+.preview-toggle { border-radius: var(--r-pill); }
+
+.admin-input:focus,
+.field-input:focus { border-color: var(--accent); outline: none; }
 </style>

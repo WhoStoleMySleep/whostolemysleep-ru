@@ -88,12 +88,12 @@ async function save() {
   margin-bottom: 24px;
 }
 
-.editor-title { font-size: 22px; font-weight: 300; color: #e2e2e8; letter-spacing: -0.02em; flex: 1; }
+.editor-title { font-size: 22px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; flex: 1; }
 
 .editor-head__right { display: flex; align-items: center; gap: 10px; }
 
-.save-msg   { font-size: 11px; color: #4ade80; }
-.save-error { font-size: 11px; color: #ff6b6b; }
+.save-msg   { font-size: 11px; color: var(--green); }
+.save-error { font-size: 11px; color: var(--red); }
 
 .lang-tabs { display: flex; gap: 4px; }
 
@@ -102,15 +102,15 @@ async function save() {
   font-size: 10px;
   letter-spacing: 0.1em;
   padding: 5px 14px;
-  border: 1px solid #1e1e2e;
+  border: 1px solid var(--border);
   background: transparent;
-  color: #666680;
+  color: var(--text-4);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.lang-tab:hover { color: #a0a0b8; }
-.lang-tab--active { color: #f0c060; border-color: rgba(240,192,96,0.4); background: rgba(240,192,96,0.06); }
+.lang-tab:hover { color: var(--text-3); }
+.lang-tab--active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 
@@ -121,16 +121,16 @@ async function save() {
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #666680;
+  color: var(--text-4);
 }
 
 .field-input {
-  background: #0d0d14;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
   padding: 9px 12px;
-  font-family: 'Martian Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: #e2e2e8;
+  color: var(--text);
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
@@ -138,14 +138,14 @@ async function save() {
   line-height: 1.6;
 }
 
-.field-input:focus { border-color: #f0c060; }
+.field-input:focus { border-color: var(--accent); }
 .field-input--text { min-height: 480px; }
 
 .preview-toggle {
   font-family: inherit;
   font-size: 9px;
   letter-spacing: 0.08em;
-  color: #f0c060;
+  color: var(--accent);
   background: none;
   border: none;
   cursor: pointer;
@@ -158,11 +158,11 @@ async function save() {
 .text-preview {
   flex: 1;
   padding: 16px 20px;
-  border: 1px solid #1e1e2e;
-  background: #0a0a0f;
+  border: 1px solid var(--border);
+  background: var(--bg);
   font-size: 14px;
   line-height: 1.7;
-  color: #a0a0b8;
+  color: var(--text-3);
   overflow-y: auto;
   max-height: 480px;
 }
