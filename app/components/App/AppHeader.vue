@@ -5,270 +5,248 @@ const { isDark, toggle } = useTheme()
 const { locale, setLocale, t } = useLocale()
 const { data: siteSettings } = await useSettings()
 const localePath = useLocalePath()
-const scrolled   = ref(false)
+const nav = useNav()
+
 const mobileOpen = ref(false)
-
-const nav = computed(() => [
-  { label: t('nav.blog'),     to: localePath('/blog') },
-  { label: t('nav.projects'), to: localePath('/projects') },
-  { label: t('nav.resume'),   to: localePath('/resume') },
-  { label: t('nav.contacts'), to: localePath('/contacts') },
-])
-
-onMounted(() => {
-  const onScroll = () => { scrolled.value = window.scrollY > 40 }
-  window.addEventListener('scroll', onScroll, { passive: true })
-  onUnmounted(() => window.removeEventListener('scroll', onScroll))
-})
 
 watch(() => route.path, () => { mobileOpen.value = false })
 
 function toggleLocale() {
   setLocale(locale.value === 'ru' ? 'en' : 'ru')
 }
+
+function isActive(key: string) {
+  const path = route.path.replace(/^\/(ru|en)/, '') || '/'
+  return key === 'home' ? path === '/' : path.startsWith(`/${key}`)
+}
 </script>
 
 <template>
-  <header class="header" :class="{ 'header--scrolled': scrolled }">
-    <div class="container header__inner">
-      <NuxtLink :to="localePath('/')" class="header__logo" aria-label="На главную">
-        <span class="logo-text">wms<span class="logo-dot">.</span></span>
+  <header class="head">
+    <div class="head__bar">
+      <NuxtLink :to="localePath('/')" class="head__logo" aria-label="whostolemysleep">
+        <span class="head__dots" aria-hidden="true">
+          <span class="head__dot head__dot--on" />
+          <span class="head__dot" />
+          <span class="head__dot" />
+          <span class="head__dot head__dot--on" />
+        </span>
+        <span class="head__name">whostolemysleep</span>
       </NuxtLink>
 
-      <nav class="header__nav">
-        <NuxtLink
-          v-for="item in nav"
-          :key="item.to"
-          :to="item.to"
-          class="header__link"
-          :class="{ 'header__link--active': route.path.startsWith(item.to) }"
+      <!-- Порядок как в макете: Hire me → тема → язык → бургер.
+           Поиск — функция сайта, которой в макете нет, поэтому он
+           стоит перед этой группой и не разрывает её. -->
+      <div class="head__actions">
+        <button
+          v-if="siteSettings?.show_search"
+          class="head__btn"
+          type="button"
+          :aria-label="t('search.placeholder')"
+          @click="search.open()"
         >
-          {{ item.label }}
-        </NuxtLink>
-      </nav>
-
-      <div class="header__actions">
-        <button v-if="siteSettings?.show_search" class="header__search-btn" @click="search.open()" aria-label="Search">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </button>
 
-        <button
-          class="header__lang-btn"
-          @click="toggleLocale()"
-          :title="locale === 'ru' ? 'Switch to English' : 'Переключить на русский'"
-        >
-          {{ locale === 'ru' ? 'EN' : 'RU' }}
-        </button>
+        <NuxtLink :to="localePath('/contacts')" class="head__cta">
+          {{ t('nav.hire') }}
+        </NuxtLink>
 
-        <button class="header__theme-btn" @click="toggle()" :aria-label="isDark ? 'Light theme' : 'Dark theme'">
+        <button
+          class="head__btn"
+          type="button"
+          :aria-label="isDark ? 'Light theme' : 'Dark theme'"
+          @click="toggle()"
+        >
           <Transition name="theme-icon" mode="out-in">
-            <svg v-if="isDark" key="sun" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <svg v-if="isDark" key="sun" width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+              <path
+                d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              />
             </svg>
-            <svg v-else key="moon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6.002 6.002 0 1 0 7 7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg v-else key="moon" width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6.002 6.002 0 1 0 7 7z"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              />
             </svg>
           </Transition>
         </button>
 
         <button
-          class="header__burger"
-          :class="{ 'header__burger--open': mobileOpen }"
-          @click="mobileOpen = !mobileOpen"
+          class="head__btn head__btn--text"
+          type="button"
+          :title="locale === 'ru' ? 'Switch to English' : 'Переключить на русский'"
+          @click="toggleLocale()"
+        >
+          {{ locale === 'ru' ? 'EN' : 'RU' }}
+        </button>
+
+        <button
+          class="head__btn head__burger"
+          type="button"
           :aria-expanded="mobileOpen"
           aria-label="Menu"
+          @click="mobileOpen = !mobileOpen"
         >
-          <span /><span /><span />
+          <span /><span />
         </button>
       </div>
     </div>
 
     <Transition name="mobile-nav">
-      <div v-if="mobileOpen" class="header__mobile">
-        <nav class="header__mobile-nav">
-          <NuxtLink
-            v-for="item in nav"
-            :key="item.to"
-            :to="item.to"
-            class="header__mobile-link"
-          >
-            {{ item.label }}
-          </NuxtLink>
-        </nav>
-      </div>
+      <nav v-if="mobileOpen" class="head__mobile" aria-label="Основная навигация">
+        <NuxtLink
+          v-for="item in nav"
+          :key="item.key"
+          :to="item.to"
+          class="head__mobile-link"
+          :class="{ 'head__mobile-link--active': isActive(item.key) }"
+        >
+          <span class="head__mobile-num">{{ item.num }}</span>
+          {{ item.label }}
+        </NuxtLink>
+      </nav>
     </Transition>
   </header>
 </template>
 
 <style scoped>
-.header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  height: 72px;
-  transition: background 0.3s ease, border-color 0.3s ease;
-  border-bottom: 1px solid transparent;
-}
+.head { border-bottom: 1px solid var(--border); }
 
-.header--scrolled {
-  background: var(--header-scrolled-bg);
-  backdrop-filter: blur(16px);
-  border-bottom-color: var(--border);
-}
-
-@media (pointer: coarse) {
-  .header--scrolled { backdrop-filter: none; }
-}
-
-.header__inner {
+.head__bar {
   display: flex;
   align-items: center;
-  height: 100%;
-  gap: 40px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(18px, 2.4vw, 30px) clamp(18px, 3vw, 46px);
 }
 
-.header__logo { flex-shrink: 0; margin-right: auto; }
+/* ── Логотип ── */
+.head__logo { display: flex; align-items: center; gap: 12px; }
 
-.logo-text {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  transition: color 0.2s;
+.head__dots {
+  display: grid;
+  grid-template-columns: 4px 4px;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
-.logo-dot { color: var(--accent); }
-.header__logo:hover .logo-text { color: var(--accent); }
-
-.header__nav { display: flex; gap: 32px; }
-
-@media (max-width: 640px) { .header__nav { display: none; } }
-
-.header__link {
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  color: var(--text-2);
-  transition: color 0.2s;
-  position: relative;
-  padding-bottom: 2px;
+.head__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--dash);
 }
 
-.header__link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px; left: 0; right: 0;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s var(--ease-out);
-}
+.head__dot--on { background: var(--accent); }
 
-.header__link:hover { color: var(--text); }
-.header__link:hover::after { transform: scaleX(1); }
-.header__link--active { color: var(--accent); }
-.header__link--active::after { transform: scaleX(1); }
-
-.header__actions { display: flex; align-items: center; gap: 8px; }
-
-.header__search-btn,
-.header__theme-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--text-2);
-  border-radius: var(--r-s);
-  transition: color 0.2s, background 0.2s;
-}
-
-.header__search-btn:hover,
-.header__theme-btn:hover {
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.header__lang-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  padding: 0 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+.head__name {
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--text-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-s);
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
-}
-
-.header__lang-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.header__burger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  width: 36px;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-}
-
-@media (max-width: 640px) { .header__burger { display: flex; } }
-
-.header__burger span {
-  display: block;
-  width: 18px;
-  height: 1px;
-  background: var(--text-2);
-  transition: transform 0.3s var(--ease-out), opacity 0.2s;
-  transform-origin: center;
-}
-
-.header__burger--open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-.header__burger--open span:nth-child(2) { opacity: 0; }
-.header__burger--open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-
-.header__mobile {
-  background: var(--bg-1);
-  border-bottom: 1px solid var(--border);
-}
-
-.header__mobile-nav {
-  display: flex;
-  flex-direction: column;
-  padding: 16px 24px 24px;
-}
-
-.header__mobile-link {
-  font-size: 13px;
-  color: var(--text-2);
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
   transition: color 0.2s;
 }
 
-.header__mobile-link:last-child { border-bottom: none; }
-.header__mobile-link:hover { color: var(--accent); }
+.head__logo:hover .head__name { color: var(--accent); }
+
+/* ── Действия ── */
+.head__actions { display: flex; align-items: center; gap: 10px; }
+
+.head__cta {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--accent-flat);
+  color: var(--on-accent);
+  border-radius: var(--r-pill);
+  padding: 11px 22px;
+  transition: transform 0.25s;
+}
+
+.head__cta:hover { transform: translateY(-2px); color: var(--on-accent); }
+
+@media (max-width: 900px) {
+  .head__cta { display: none; }
+}
+
+.head__btn {
+  display: grid;
+  place-content: center;
+  width: 44px;
+  height: 40px;
+  color: var(--text);
+  background: var(--soft);
+  border: 1px solid var(--border-s);
+  border-radius: var(--r-pill);
+  transition: color 0.25s, border-color 0.25s;
+}
+
+.head__btn:hover { color: var(--accent); border-color: var(--accent); }
+
+.head__btn--text { font-size: 11px; letter-spacing: 0.14em; }
+
+/* ── Бургер ── */
+.head__burger {
+  display: none;
+  gap: 5px;
+  border-radius: var(--r-s);
+}
+
+@media (max-width: 900px) {
+  .head__burger { display: grid; }
+}
+
+.head__burger span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.head__burger span:last-child { background: var(--accent); }
+
+/* ── Мобильное меню ── */
+.head__mobile {
+  padding: 8px clamp(18px, 3vw, 46px) 24px;
+  border-top: 1px solid var(--border);
+  animation: fade 0.3s both;
+}
+
+.head__mobile-link {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px dotted var(--dot);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(20px, 6vw, 26px);
+  text-transform: uppercase;
+  color: var(--text-4);
+  transition: color 0.2s;
+}
+
+.head__mobile-link:hover,
+.head__mobile-link--active { color: var(--accent); }
+
+.head__mobile-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
 
 .mobile-nav-enter-active,
-.mobile-nav-leave-active { transition: opacity 0.2s ease, transform 0.2s var(--ease-out); }
+.mobile-nav-leave-active { transition: opacity 0.25s ease; }
 .mobile-nav-enter-from,
-.mobile-nav-leave-to { opacity: 0; transform: translateY(-8px); }
+.mobile-nav-leave-to { opacity: 0; }
 
 .theme-icon-enter-active,
 .theme-icon-leave-active { transition: opacity 0.15s ease, transform 0.15s var(--ease-out); }

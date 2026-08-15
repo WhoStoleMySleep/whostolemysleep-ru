@@ -24,161 +24,185 @@ const { formatLong } = useFormatDate()
 </script>
 
 <template>
-  <div v-if="post" class="page post-page">
-    <div class="container post-container">
+  <article v-if="post" class="post">
+    <NuxtLink :to="localePath('/blog')" class="post__back">← {{ t('post.back') }}</NuxtLink>
 
-      <header class="post-header">
-        <NuxtLink :to="localePath('/blog')" class="post-back">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M10 7H4M6 4L3 7L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          {{ t('post.back') }}
-        </NuxtLink>
+    <header class="post__head">
+      <p class="post__meta">
+        <span v-if="post.published_at">{{ formatLong(post.published_at) }}</span>
+        <template v-if="post.published_at && post.tags[0]"> · </template>
+        <span v-if="post.tags[0]">{{ post.tags[0].name }}</span>
+      </p>
 
-        <div class="post-meta">
-          <span v-if="post.published_at" class="post-date">{{ formatLong(post.published_at) }}</span>
-        </div>
+      <h1 class="post__title">{{ post.title }}</h1>
 
-        <h1 class="post-title">{{ post.title }}</h1>
+      <ul v-if="post.tags.length > 1" class="post__tags">
+        <li v-for="tag in post.tags" :key="tag.id" class="post__tag">{{ tag.name }}</li>
+      </ul>
+    </header>
 
-        <ul v-if="post.tags.length" class="post-tags">
-          <li v-for="tag in post.tags" :key="tag.id" class="post-tag">{{ tag.name }}</li>
-        </ul>
-      </header>
+    <img
+      v-if="post.images[0]?.url"
+      :src="post.images[0].url"
+      :alt="post.images[0].alt ?? post.title"
+      class="post__cover"
+    >
 
-      <div v-if="post.images[0]?.url" class="post-cover">
-        <img :src="post.images[0].url" :alt="post.images[0].alt ?? post.title" />
-      </div>
+    <div class="post__body" v-html="post.text" />
 
-      <div class="post-body" v-html="post.text" />
-
-      <div v-if="post.url" class="post-external">
-        <a :href="post.url" target="_blank" rel="noopener noreferrer" class="post-external__link">
-          {{ t('post.source') }}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-      </div>
-
-    </div>
-  </div>
+    <p v-if="post.url" class="post__source">
+      <a :href="post.url" target="_blank" rel="noopener noreferrer" class="post__source-link">
+        {{ t('post.source') }} ↗
+      </a>
+    </p>
+  </article>
 </template>
 
 <style scoped>
-.post-page { padding: 64px 0 120px; }
-.post-container { max-width: 760px; }
+.post {
+  max-width: 720px;
+  margin: 0 auto;
+}
 
-.post-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
+.post__back {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--text-3);
-  letter-spacing: 0.05em;
-  margin-bottom: 48px;
   transition: color 0.2s;
 }
-.post-back:hover { color: var(--accent); }
 
-.post-header { margin-bottom: 48px; }
+.post__back:hover { color: var(--accent); }
 
-.post-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-.post-date { font-size: 12px; color: var(--text-3); }
-
-.post-title {
-  font-family: var(--font-display);
-  font-size: clamp(32px, 5vw, 56px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-bottom: 24px;
+.post__head {
+  padding: clamp(22px, 3vw, 38px) 0 0;
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.post-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-
-.post-tag {
-  font-size: 10px;
-  letter-spacing: 0.1em;
+.post__meta {
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  padding: 4px 10px;
-  border: 1px solid var(--border-s);
-  color: var(--text-3);
+  color: var(--accent);
 }
 
-.post-cover { margin-bottom: 48px; border: 1px solid var(--border); }
-.post-cover img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
-
-.post-body { font-size: 15px; line-height: 1.8; color: var(--text-2); }
-
-.post-body :deep(h2),
-.post-body :deep(h3) {
+.post__title {
   font-family: var(--font-display);
-  font-weight: 400;
-  color: var(--text);
-  margin: 40px 0 16px;
-  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-size: clamp(28px, 4.4vw, 54px);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  margin: 18px 0 0;
 }
 
-.post-body :deep(h2) { font-size: clamp(22px, 3vw, 32px); }
-.post-body :deep(h3) { font-size: clamp(18px, 2.5vw, 24px); }
-.post-body :deep(p)  { margin-bottom: 20px; }
+.post__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 
-.post-body :deep(a) {
+.post__tag {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  border: 1px solid var(--border-s);
+  border-radius: var(--r-pill);
+  padding: 6px 13px;
+}
+
+.post__cover {
+  width: 100%;
+  height: clamp(180px, 26vw, 300px);
+  object-fit: cover;
+  margin: clamp(26px, 3vw, 42px) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg-3);
+  animation: fade 0.9s 0.1s both;
+}
+
+/* ── Тело статьи ── */
+.post__body {
+  font-size: 14.5px;
+  line-height: 1.8;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+.post__body :deep(h2),
+.post__body :deep(h3) {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: 0.01em;
+  margin: 38px 0 14px;
+}
+
+.post__body :deep(h2) { font-size: clamp(21px, 2.6vw, 30px); }
+.post__body :deep(h3) { font-size: clamp(19px, 2.2vw, 26px); }
+.post__body :deep(p)  { margin-bottom: 22px; }
+
+.post__body :deep(a) {
   color: var(--accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition: opacity 0.2s;
 }
-.post-body :deep(a:hover) { opacity: 0.75; }
 
-.post-body :deep(code) {
+.post__body :deep(a:hover) { opacity: 0.75; }
+
+.post__body :deep(code) {
   font-family: var(--font-mono);
   font-size: 0.88em;
-  background: var(--bg-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   padding: 2px 6px;
-  border: 1px solid var(--border);
 }
 
-.post-body :deep(pre) {
-  background: var(--bg-1);
+.post__body :deep(pre) {
+  background: var(--bg-3);
   border: 1px solid var(--border);
-  padding: 24px;
+  border-radius: var(--r-s);
+  padding: 22px;
   overflow-x: auto;
-  margin: 32px 0;
+  margin: 30px 0;
 }
 
-.post-body :deep(pre code) { background: none; border: none; padding: 0; font-size: 13px; }
+.post__body :deep(pre code) { background: none; border: none; padding: 0; font-size: 13px; }
 
-.post-body :deep(ul),
-.post-body :deep(ol) { padding-left: 24px; margin-bottom: 20px; }
-.post-body :deep(ul) { list-style: disc; }
-.post-body :deep(ol) { list-style: decimal; }
-.post-body :deep(li) { margin-bottom: 6px; }
+.post__body :deep(ul),
+.post__body :deep(ol) { padding-left: 24px; margin-bottom: 22px; }
+.post__body :deep(ul) { list-style: disc; }
+.post__body :deep(ol) { list-style: decimal; }
+.post__body :deep(li) { margin-bottom: 6px; }
 
-.post-body :deep(blockquote) {
+.post__body :deep(blockquote) {
+  margin: 30px 0;
+  padding: 4px 0 4px 22px;
   border-left: 2px solid var(--accent);
-  padding-left: 20px;
-  margin: 32px 0;
-  font-style: italic;
-  color: var(--text-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(17px, 1.9vw, 23px);
+  line-height: 1.4;
+  color: var(--text);
 }
 
-.post-external {
-  margin-top: 64px;
-  padding-top: 32px;
-  border-top: 1px solid var(--border);
+.post__body :deep(img) {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin: 26px 0;
 }
 
-.post-external__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+.post__source {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px dotted var(--dot);
+}
+
+.post__source-link {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--accent);
-  transition: gap 0.2s;
 }
-
-.post-external__link:hover { gap: 12px; }
 </style>

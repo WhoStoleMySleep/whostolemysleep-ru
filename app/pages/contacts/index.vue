@@ -40,6 +40,15 @@ const isValid = computed(() =>
 
 function touch(field: keyof typeof touched) { touched[field] = true }
 
+function resetForm() {
+  const empty = { name: '', email: '', message: '', consent: false }
+  Object.assign(form, empty)
+  Object.assign(savedForm.value, empty)
+  Object.assign(touched, { name: false, email: false, message: false, consent: false })
+  status.value = 'idle'
+  sendError.value = ''
+}
+
 async function submit() {
   touched.name = touched.email = touched.message = touched.consent = true
   if (!isValid.value) return
@@ -49,11 +58,11 @@ async function submit() {
 
   try {
     await $fetch('/api/contact', { method: 'POST', body: form })
-    status.value = 'success'
     const empty = { name: '', email: '', message: '', consent: false }
     Object.assign(form, empty)
     Object.assign(savedForm.value, empty)
     Object.assign(touched, { name: false, email: false, message: false, consent: false })
+    status.value = 'success'
   } catch (e: unknown) {
     status.value    = 'error'
     const code = (e as { statusCode?: number })?.statusCode
@@ -61,271 +70,214 @@ async function submit() {
   }
 }
 
-const contactLinks = computed(() => [
-  siteSettings.value?.email && {
-    label: 'Email',
-    href: `mailto:${siteSettings.value.email}`,
-    value: siteSettings.value.email,
-  },
-  siteSettings.value?.telegram_url && {
-    label: 'Telegram',
-    href: siteSettings.value.telegram_url,
-    value: '@whostolemysleep',
-  },
-  siteSettings.value?.github_url && {
-    label: 'GitHub',
-    href: siteSettings.value.github_url,
-    value: 'github.com/whostolemysleep',
-  },
-].filter(Boolean))
+/**
+ * Три способа связи показываются всегда, как в макете. Значения берутся
+ * из настроек, если они заданы, иначе — постоянные: раньше блок целиком
+ * исчезал, когда настройки не загрузились.
+ */
+const EMAIL    = 'whostolemysleep@gmail.com'
+const TELEGRAM = 'https://t.me/WhoStoleMySleepDev'
+const GITHUB   = 'https://github.com/WhoStoleMySleepDev'
+
+const contactLinks = computed(() => {
+  const email = siteSettings.value?.email ?? EMAIL
+  return [
+    { label: 'Email',    value: email,                          href: `mailto:${email}` },
+    { label: 'Telegram', value: '@whostolemysleep',             href: siteSettings.value?.telegram_url ?? TELEGRAM },
+    { label: 'GitHub',   value: 'github.com/whostolemysleep',   href: siteSettings.value?.github_url ?? GITHUB },
+  ]
+})
 </script>
 
 <template>
-  <div class="page contacts-page">
-    <div class="container">
-      <header class="page-header">
-        <p class="eyebrow">{{ t('contacts.eyebrow') }}</p>
-        <h1 class="page-title">{{ t('contacts.title1') }}<br /><em>{{ t('contacts.title2') }}</em></h1>
-        <p class="page-subtitle">{{ t('contacts.subtitle') }}</p>
-      </header>
+  <div class="contacts">
+    <UiPageHeader
+      large
+      :eyebrow="t('contacts.eyebrow')"
+      num="04"
+      :title="`${t('contacts.title1')} ${t('contacts.title2')}`"
+      :subtitle="t('contacts.subtitle')"
+    />
 
-      <div class="contacts-grid">
-        <div class="contacts-info">
-          <div v-if="siteSettings?.email" class="contact-block">
-            <p class="contact-block__label">{{ t('contacts.email') }}</p>
-            <a :href="`mailto:${siteSettings.email}`" class="contact-block__value">
-              {{ siteSettings.email }}
-            </a>
-          </div>
-          <div v-if="siteSettings?.open_to_work" class="contact-block">
-            <p class="contact-block__label">{{ t('contacts.status') }}</p>
-            <div class="contact-status">
-              <span class="contact-status__dot" />
-              <span class="contact-status__text">{{ t('contacts.statusText') }}</span>
-            </div>
-          </div>
-          <div class="contact-block">
-            <p class="contact-block__label">{{ t('contacts.response') }}</p>
-            <p class="contact-block__value">{{ t('contacts.responseVal') }}</p>
-          </div>
-        </div>
+    <section class="methods">
+      <a
+        v-for="link in contactLinks"
+        :key="link.label"
+        :href="link.href"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="method"
+      >
+        <span class="method__label">{{ link.label }}</span>
+        <span class="method__value">{{ link.value }}</span>
+      </a>
+    </section>
 
-        <div v-if="!contactForm" class="contact-links">
-          <p class="contact-links__hint">{{ t('contacts.links_hint') }}</p>
-          <div class="contact-links__list">
-            <a
-              v-for="link in contactLinks"
-              :key="link.label"
-              :href="link.href"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="contact-link"
-            >
-              <span class="contact-link__label">{{ link.label }}</span>
-              <span class="contact-link__value">{{ link.value }}</span>
-              <svg class="contact-link__arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-
-        <form v-else class="contact-form" @submit.prevent="submit" novalidate>
-          <div class="form-honeypot" aria-hidden="true">
-            <label for="website">Website</label>
-            <input id="website" v-model="form.website" type="text" name="website" autocomplete="off" tabindex="-1" />
-          </div>
-          <Transition name="fade" mode="out-in">
-            <div v-if="status === 'success'" class="form-success">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17L4 12" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <p class="form-success__text">{{ t('contacts.success') }}</p>
-            </div>
-
-            <div v-else class="form-fields">
-              <div class="form-group">
-                <label class="form-label" for="name">{{ t('contacts.name') }}</label>
-                <input
-                  id="name"
-                  v-model="form.name"
-                  :class="['form-input', { 'form-input--error': errors.name }]"
-                  type="text"
-                  :placeholder="t('contacts.namePlaceholder')"
-                  autocomplete="name"
-                  @blur="touch('name')"
-                />
-                <p v-if="errors.name" class="form-error">{{ errors.name }}</p>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="email">Email</label>
-                <input
-                  id="email"
-                  v-model="form.email"
-                  :class="['form-input', { 'form-input--error': errors.email }]"
-                  type="email"
-                  placeholder="ivan@example.com"
-                  autocomplete="email"
-                  @blur="touch('email')"
-                />
-                <p v-if="errors.email" class="form-error">{{ errors.email }}</p>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="message">{{ t('contacts.message') }}</label>
-                <textarea
-                  id="message"
-                  v-model="form.message"
-                  :class="['form-input form-input--textarea', { 'form-input--error': errors.message }]"
-                  :placeholder="t('contacts.messagePlaceholder')"
-                  rows="6"
-                  @blur="touch('message')"
-                />
-                <p v-if="errors.message" class="form-error">{{ errors.message }}</p>
-              </div>
-
-              <div class="form-group form-group--consent">
-                <label class="form-consent">
-                  <input
-                    v-model="form.consent"
-                    type="checkbox"
-                    class="form-consent__checkbox"
-                    @change="touch('consent')"
-                  />
-                  <span class="form-consent__text">
-                    {{ t('contacts.consent_before') }}
-                    <NuxtLink :to="localePath('/privacy')" class="form-consent__link">{{ t('contacts.consent_link') }}</NuxtLink>
-                    {{ t('contacts.consent_after') }}
-                  </span>
-                </label>
-                <p v-if="errors.consent" class="form-error">{{ errors.consent }}</p>
-              </div>
-
-              <p v-if="sendError" class="form-error">{{ sendError }}</p>
-
-              <UiButton type="submit" :loading="status === 'loading'">
-                {{ t('contacts.submit') }}
-              </UiButton>
-            </div>
-          </Transition>
-        </form>
+    <section v-if="contactForm" class="form-section">
+      <div class="form-section__intro">
+        <h2 class="form-section__title">{{ t('contacts.form_title') }}</h2>
+        <p class="form-section__desc">{{ t('contacts.form_desc') }}</p>
+        <span class="form-section__rule" aria-hidden="true" />
       </div>
-    </div>
+
+      <div class="form-section__body">
+        <Transition name="fade" mode="out-in">
+          <div v-if="status === 'success'" class="sent">
+            <p class="sent__title">{{ t('contacts.success') }}</p>
+            <button class="sent__again" type="button" @click="resetForm()">
+              {{ t('contacts.sendAnother') }}
+            </button>
+          </div>
+
+          <form v-else class="form" novalidate @submit.prevent="submit">
+            <div class="form__honeypot" aria-hidden="true">
+              <label for="website">Website</label>
+              <input id="website" v-model="form.website" type="text" name="website" autocomplete="off" tabindex="-1">
+            </div>
+
+            <label class="field">
+              <span class="field__label">{{ t('contacts.name') }}</span>
+              <input
+                v-model="form.name"
+                class="field__input"
+                :class="{ 'field__input--error': errors.name }"
+                type="text"
+                :placeholder="t('contacts.namePlaceholder')"
+                autocomplete="name"
+                @blur="touch('name')"
+              >
+              <span v-if="errors.name" class="field__error">{{ errors.name }}</span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Email</span>
+              <input
+                v-model="form.email"
+                class="field__input"
+                :class="{ 'field__input--error': errors.email }"
+                type="email"
+                placeholder="ivan@example.com"
+                autocomplete="email"
+                @blur="touch('email')"
+              >
+              <span v-if="errors.email" class="field__error">{{ errors.email }}</span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">{{ t('contacts.message') }}</span>
+              <textarea
+                v-model="form.message"
+                class="field__input field__input--area"
+                :class="{ 'field__input--error': errors.message }"
+                rows="5"
+                :placeholder="t('contacts.messagePlaceholder')"
+                @blur="touch('message')"
+              />
+              <span v-if="errors.message" class="field__error">{{ errors.message }}</span>
+            </label>
+
+            <div class="field">
+              <label class="consent">
+                <input
+                  v-model="form.consent"
+                  class="consent__box"
+                  type="checkbox"
+                  @change="touch('consent')"
+                >
+                <span class="consent__text">
+                  {{ t('contacts.consent_before') }}
+                  <NuxtLink :to="localePath('/privacy')" class="consent__link">{{ t('contacts.consent_link') }}</NuxtLink>
+                  {{ t('contacts.consent_after') }}
+                </span>
+              </label>
+              <span v-if="errors.consent" class="field__error">{{ errors.consent }}</span>
+            </div>
+
+            <p v-if="sendError" class="field__error">{{ sendError }}</p>
+
+            <button class="submit" type="submit" :disabled="status === 'loading'">
+              {{ t('contacts.submit') }}
+            </button>
+          </form>
+        </Transition>
+      </div>
+    </section>
+
+    <p v-else class="links-hint">{{ t('contacts.links_hint') }}</p>
   </div>
 </template>
 
 <style scoped>
-.page { padding: 64px 0 120px; }
-.page-header { margin-bottom: 80px; }
-.eyebrow { margin-bottom: 20px; }
+/* ── Способы связи ── */
+.methods { display: flex; flex-wrap: wrap; gap: 10px; }
 
-.page-title {
-  font-family: var(--font-display);
-  font-size: clamp(44px, 7vw, 80px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.0;
-  margin-bottom: 24px;
-}
-
-.page-title em { font-style: italic; color: var(--accent); }
-
-.page-subtitle { font-size: 14px; color: var(--text-2); }
-
-.contacts-grid {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 80px;
-  align-items: start;
-  overflow: hidden;
-}
-
-@media (max-width: 768px) { .contacts-grid { grid-template-columns: 1fr; gap: 48px; } }
-
-.contacts-info { display: flex; flex-direction: column; gap: 40px; }
-
-.contact-block__label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 8px;
-}
-
-.contact-block__value {
-  font-size: 13px;
-  color: var(--text-2);
-  transition: color 0.2s;
-}
-
-a.contact-block__value:hover { color: var(--accent); }
-
-.contact-status { display: flex; align-items: center; gap: 8px; }
-
-.contact-status__dot {
-  width: 7px; height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  animation: pulse-dot 2s ease infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 var(--green-pulse); }
-  50% { box-shadow: 0 0 0 4px transparent; }
-}
-
-.contact-status__text { font-size: 13px; color: var(--green); }
-
-.contact-links { width: 100%; min-width: 0; overflow: hidden; }
-
-.contact-links__hint {
-  font-size: 14px;
-  color: var(--text-2);
-  margin-bottom: 32px;
-  overflow-wrap: break-word;
-}
-
-.contact-links__list { display: flex; flex-direction: column; gap: 1px; background: var(--border); width: 100%; overflow: hidden; }
-
-.contact-link {
+.method {
+  flex: 1 1 240px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: var(--bg-1);
-  color: var(--text-2);
-  transition: background 0.2s, color 0.2s;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--border-s);
+  border-radius: var(--r);
+  transition: border-color 0.3s, transform 0.3s;
 }
 
-.contact-link:hover { background: var(--bg-2); color: var(--accent); }
+.method:hover { border-color: var(--accent); transform: translateY(-3px); }
 
-.contact-link__label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
+.method__label {
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.method__value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+/* ── Форма ── */
+.form-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(24px, 3vw, 52px);
+  padding: clamp(34px, 4vw, 64px) 0 0;
+}
+
+.form-section__intro { flex: 1 1 min(100%, 300px); }
+
+.form-section__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 2.6vw, 32px);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.form-section__desc {
+  margin-top: 16px;
+  font-size: 13.5px;
+  line-height: 1.7;
   color: var(--text-3);
-  width: 72px;
-  flex-shrink: 0;
+  text-wrap: pretty;
 }
 
-.contact-link__value {
-  flex: 1;
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+.form-section__rule {
+  display: block;
+  margin-top: 22px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--dash) 0 3px, transparent 3px 8px);
 }
 
-.contact-link__arrow { flex-shrink: 0; opacity: 0.4; transition: opacity 0.2s, transform 0.2s; }
-.contact-link:hover .contact-link__arrow { opacity: 1; transform: translate(2px, -2px); }
+.form-section__body { flex: 1 1 min(100%, 340px); min-width: 0; }
 
-.contact-form { width: 100%; position: relative; }
+/* position: relative нужен ханипоту ниже — он уезжает за левый край
+   и без опоры создавал бы горизонтальную прокрутку страницы. */
+.form { position: relative; display: flex; flex-direction: column; gap: 14px; }
 
-.form-honeypot {
+.form__honeypot {
   position: absolute;
   left: -9999px;
   width: 1px;
@@ -335,86 +287,104 @@ a.contact-block__value:hover { color: var(--accent); }
   pointer-events: none;
 }
 
-.form-fields { display: flex; flex-direction: column; gap: 24px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
 
-.form-group { display: flex; flex-direction: column; gap: 8px; }
-
-.form-label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
+.field__label {
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--text-3);
+  color: var(--text-4);
 }
 
-.form-input {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  padding: 14px 16px;
+.field__input {
+  background: var(--bg-3);
+  border: 1px solid var(--border-s);
+  border-radius: var(--r-s);
+  padding: 13px 15px;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text);
   outline: none;
-  transition: border-color 0.2s;
-  resize: none;
   width: 100%;
+  transition: border-color 0.25s;
 }
 
-.form-input::placeholder { color: var(--text-3); }
-.form-input:focus { border-color: var(--accent); }
-.form-input--error { border-color: var(--red); }
-.form-input--error:focus { border-color: var(--red); }
-.form-input--textarea { resize: vertical; min-height: 140px; }
+.field__input:focus { border-color: var(--accent); }
+.field__input--error { border-color: var(--red); }
+.field__input--area { resize: vertical; min-height: 130px; }
 
-.form-error {
-  font-size: 12px;
-  color: var(--red);
-  letter-spacing: 0.02em;
-}
+.field__error { font-size: 10.5px; color: var(--red); }
 
-.form-consent {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  cursor: pointer;
-}
+.consent { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
 
-.form-consent__checkbox {
+.consent__box {
   width: 16px;
   height: 16px;
-  border: 1px solid var(--border);
-  background: var(--bg-1);
-  accent-color: var(--accent);
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
-.form-consent__text {
-  font-size: 12px;
-  color: var(--text-3);
-  line-height: 1.5;
-}
+.consent__text { font-size: 12px; line-height: 1.55; color: var(--text-4); }
 
-.form-consent__link {
+.consent__link {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
-  transition: opacity 0.2s;
 }
 
-.form-consent__link:hover { opacity: 0.75; }
-
-.form-success {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 32px;
-  border: 1px solid var(--green-border);
-  background: var(--green-bg);
+.submit {
+  align-self: start;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--accent-flat);
+  color: var(--on-accent);
+  border-radius: var(--r-pill);
+  padding: 15px 28px;
+  transition: transform 0.25s, opacity 0.25s;
 }
 
-.form-success__text { font-size: 14px; color: var(--text-2); }
+.submit:hover:not(:disabled) { transform: translateY(-2px); }
+.submit:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Успех ── */
+.sent {
+  border: 1px solid var(--accent-line);
+  background: var(--accent-dim);
+  border-radius: var(--r);
+  padding: 28px;
+  animation: rise 0.5s both;
+}
+
+.sent__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-wrap: pretty;
+}
+
+.sent__again {
+  margin-top: 20px;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  padding: 11px 20px;
+  transition: background 0.25s;
+}
+
+.sent__again:hover { background: var(--accent-dim); }
+
+.links-hint {
+  padding-top: 26px;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
