@@ -90,6 +90,17 @@ useHead(() => ({
 <style scoped>
 .shell {
   --shell-pad: clamp(10px, 2.2vw, 30px);
+  /* Высота панели = экран минус отступы оболочки. Тем же значением
+     задаётся высота рейла: если у него оставить 100vh, он как флекс-
+     элемент растянет панель до целого экрана, к ней прибавятся отступы
+     и страница станет выше экрана — на коротких страницах это заметно
+     обрезанным низом панели. */
+  --panel-h: calc(100dvh - var(--shell-pad) * 2);
+  /* Рейл лежит внутри панели, а её внутренняя область на 2px меньше
+     из-за верхней и нижней рамки. Без вычитания он не помещается и
+     растягивает панель на эти же 2px за пределы экрана. */
+  --rail-h:  calc(var(--panel-h) - 2px);
+
   padding: var(--shell-pad);
 }
 
@@ -134,7 +145,7 @@ useHead(() => ({
   overflow: clip;
   max-width: 1420px;
   margin: 0 auto;
-  min-height: calc(100vh - var(--shell-pad) * 2);
+  min-height: var(--panel-h);
   display: flex;
   background: var(--bg-1);
   border: 1px solid var(--border);
@@ -153,10 +164,9 @@ useHead(() => ({
   padding: 28px 0;
   border-right: 1px solid var(--border);
   position: sticky;
-  top: 0;
+  top: var(--shell-pad);
   align-self: flex-start;
-  height: 100vh;
-  max-height: 100vh;
+  height: var(--rail-h);
 }
 
 @media (max-width: 900px) {
