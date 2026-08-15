@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
-import Fuse from 'fuse.js'
+import type FuseType from 'fuse.js'
 import type { Post } from '~/types'
+
+const FUSE_OPTIONS = {
+  keys:         ['title', 'excerpt', 'tags.name'],
+  threshold:    0.4,
+  includeScore: true,
+}
 
 export const useSearchStore = defineStore('search', () => {
   const isOpen   = ref(false)
@@ -9,11 +15,15 @@ export const useSearchStore = defineStore('search', () => {
   const allItems = ref<Post[]>([])
   const isLoaded = ref(false)
 
+  /** Индекс строится один раз на набор записей, а не на каждое нажатие. */
+  let index: FuseType<Post> | null = null
+
   const { locale } = useLocale()
 
   watch(locale, () => {
     isLoaded.value = false
     allItems.value = []
+    index = null
     if (isOpen.value) loadItems()
   })
 
@@ -34,18 +44,35 @@ export const useSearchStore = defineStore('search', () => {
       $fetch<Post[]>('/api/posts/project', { query: { locale: locale.value } }),
     ])
     allItems.value = [...(blog ?? []), ...(projects ?? [])]
+    index = null
     isLoaded.value = true
   }
 
-  function search(q: string) {
+  /**
+   * fuse.js подгружается динамически. При статическом импорте он попадал
+   * во входной чанк и весил ~34 КБ на каждой странице сайта — даже там,
+   * где поиск отключён настройкой и не может быть открыт.
+   */
+  async function ensureIndex() {
+    if (index) return index
+    const { default: Fuse } = await import('fuse.js')
+    index = new Fuse(allItems.value, FUSE_OPTIONS)
+    return index
+  }
+
+  async function search(q: string) {
     query.value = q
-    if (!q.trim()) { results.value = []; return }
-    const fuse = new Fuse(allItems.value, {
-      keys:         ['title', 'excerpt', 'tags.name'],
-      threshold:    0.4,
-      includeScore: true,
-    })
-    results.value = fuse.search(q).map((r) => r.item)
+    if (!q.trim()) {
+      results.value = []
+      return
+    }
+
+    const idx = await ensureIndex()
+    // Пока грузился индекс, пользователь мог дописать запрос — тогда
+    // этот результат уже неактуален и перетирать им свежий нельзя.
+    if (query.value !== q) return
+
+    results.value = idx.search(q).map((r) => r.item)
   }
 
   return { isOpen, query, results, open, close, search }
