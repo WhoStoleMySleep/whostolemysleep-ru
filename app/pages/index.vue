@@ -3,6 +3,8 @@ import type { Post, AboutMe } from '~/types'
 
 const { locale, t } = useLocale()
 const localePath = useLocalePath()
+const { format } = useFormatDate()
+const { linkFor } = usePostLink()
 
 useSeoMeta({
   title:       () => t('seo.home_title'),
@@ -29,133 +31,135 @@ useHead({
 })
 
 const { data: siteSettings } = await useSettings()
-const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }))
-const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }))
-const { data: projects } = await useAsyncData(() => `posts-project-${locale.value}`, () => $fetch<Post[]>('/api/posts/project',   { query: { locale: locale.value } }))
+const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }), { lazy: true })
+const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }), { lazy: true })
+const { data: projects } = await useAsyncData(() => `posts-project-${locale.value}`, () => $fetch<Post[]>('/api/posts/project',   { query: { locale: locale.value } }), { lazy: true })
 
 const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]
-  return all.sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()).slice(0, 6)
+  return all
+    .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
+    .slice(0, 6)
+    .map(post => ({ ...post, ...linkFor(post) }))
 })
 
-const isVisible = ref(false)
-onMounted(() => {
-  requestAnimationFrame(() => { isVisible.value = true })
-})
+/** Стаж живёт только здесь — в заголовке его больше нет, чтобы не дублировать. */
+const years = computed(() => siteSettings.value?.years_experience ?? 4)
+
+const stack = computed(() => [
+  { k: t('stack.f1_k'), v: t('stack.f1_v') },
+  { k: t('stack.f2_k'), v: t('stack.f2_v') },
+  { k: t('stack.f3_k'), v: t('stack.f3_v') },
+  { k: t('stack.f4_k'), v: t('stack.f4_v') },
+])
+
+const brings = computed(() => [
+  { num: '01', text: t('brings.b1') },
+  { num: '02', text: t('brings.b2') },
+  { num: '03', text: t('brings.b3') },
+])
 </script>
 
 <template>
   <div class="home">
 
-    <!-- Hero -->
-    <section class="hero" :class="{ 'hero--visible': isVisible }">
-      <div class="hero__bg-glow" aria-hidden="true" />
-      <div class="container hero__inner">
-        <div class="hero__content">
-          <p class="eyebrow hero__eyebrow">{{ t('hero.eyebrow') }}</p>
-          <h1 class="hero__title">
-            <span class="hero__title-line">{{ t('hero.line1') }}</span>
-            <span class="hero__title-line hero__title-line--accent">{{ t('hero.line2') }}</span>
-            <span class="hero__title-line">{{ t('hero.line3') }}</span>
-            <span class="hero__title-counter">
-              {{ siteSettings?.years_experience ?? 4 }}<span class="hero__title-plus">+</span>
-              <span class="hero__title-years">{{ t('hero.years') }}</span>
-            </span>
-          </h1>
+    <!-- Герой -->
+    <section class="hero">
+      <div class="hero__blob" aria-hidden="true" />
 
-          <div class="hero__nav">
-            <NuxtLink :to="localePath('/blog')" class="hero__nav-item">
-              <span class="hero__nav-num">01</span>
-              <span class="hero__nav-label">{{ t('nav.blog') }}</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </NuxtLink>
-            <NuxtLink :to="localePath('/projects')" class="hero__nav-item">
-              <span class="hero__nav-num">02</span>
-              <span class="hero__nav-label">{{ t('nav.projects') }}</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </NuxtLink>
-            <NuxtLink :to="localePath('/resume')" class="hero__nav-item">
-              <span class="hero__nav-num">03</span>
-              <span class="hero__nav-label">{{ t('nav.resume') }}</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </NuxtLink>
-            <NuxtLink :to="localePath('/contacts')" class="hero__nav-item">
-              <span class="hero__nav-num">04</span>
-              <span class="hero__nav-label">{{ t('nav.contacts') }}</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </NuxtLink>
-          </div>
+      <div class="hero__inner">
+        <p class="hero__eyebrow eyebrow">
+          <span class="hero__pulse" aria-hidden="true" />
+          {{ t('hero.eyebrow') }}
+        </p>
+
+        <h1 class="hero__title">
+          {{ t('hero.line1') }}<br>
+          {{ t('hero.line2') }}<span class="hero__stop">.</span>
+        </h1>
+
+        <div class="hero__lede-row">
+          <span class="hero__rule" aria-hidden="true" />
+          <i18n-t keypath="hero.lede" tag="p" class="hero__lede" scope="global">
+            <template #years>
+              <span class="hero__years">{{ years }}+ {{ t('hero.years') }}</span>
+            </template>
+          </i18n-t>
         </div>
 
-        <div class="hero__aside">
-          <div v-if="siteSettings?.open_to_work" class="hero__status">
-            <span class="hero__status-dot" aria-hidden="true" />
-            <span class="hero__status-text">{{ t('hero.status') }}</span>
-          </div>
-          <div class="hero__socials">
-            <a
-              v-if="siteSettings?.telegram_url"
-              :href="siteSettings.telegram_url"
-              target="_blank" rel="noopener noreferrer"
-              class="hero__social-link" aria-label="Telegram"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M21.8 2.3L1.4 10.1c-1.3.5-1.3 1.3-.2 1.6l5.1 1.6 11.8-7.5c.6-.3 1.1-.1.7.2L8.5 15.5l-.4 5.3c.6 0 .9-.3 1.2-.6l2.9-2.8 6 4.4c1.1.6 1.9.3 2.1-.9l3.8-17.9c.5-1.5-.6-2.2-1.8-1.7z" fill="currentColor"/>
-              </svg>
-              <span>@whostolemysleep</span>
-            </a>
-            <a
-              v-if="siteSettings?.github_url"
-              :href="siteSettings.github_url"
-              target="_blank" rel="noopener noreferrer"
-              class="hero__social-link" aria-label="GitHub"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7C6.73 19.9 6.14 18 6.14 18c-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0 1 12 6.8c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12c0-5.52-4.48-10-10-10z" fill="currentColor"/>
-              </svg>
-              <span>GitHub</span>
-            </a>
-          </div>
-        </div>
-      </div>
+        <div class="hero__cta">
+          <NuxtLink :to="localePath('/resume')" class="btn-solid">{{ t('hero.cta_cv') }}</NuxtLink>
+          <NuxtLink :to="localePath('/projects')" class="btn-outline">{{ t('hero.cta_projects') }}</NuxtLink>
 
-      <div class="hero__scroll-hint" aria-hidden="true">
-        <span class="hero__scroll-line" />
+          <span v-if="siteSettings?.open_to_work" class="hero__status">
+            <span class="hero__pulse" aria-hidden="true" />
+            {{ t('hero.status') }}
+          </span>
+        </div>
       </div>
     </section>
 
-    <!-- About -->
+    <!-- Стек -->
+    <section class="stack">
+      <div v-for="row in stack" :key="row.k" class="stack__cell">
+        <span class="stack__k">{{ row.k }}</span>
+        <span class="stack__v">{{ row.v }}</span>
+      </div>
+    </section>
+
+    <!-- Обо мне -->
     <section v-if="about" class="section about">
-      <div class="container">
-        <p class="eyebrow section__eyebrow">{{ t('about.eyebrow') }}</p>
-        <div class="about__grid">
-          <div class="about__text" v-html="about.text" />
-          <div class="about__links">
-            <UiButton :to="localePath('/resume')">{{ t('about.resume') }}</UiButton>
-            <UiButton :to="localePath('/contacts')" variant="ghost">{{ t('about.contact') }}</UiButton>
-          </div>
+      <p class="eyebrow section__eyebrow">{{ t('about.eyebrow') }}</p>
+      <div class="about__grid">
+        <div class="about__text" v-html="about.text" />
+        <div class="about__links">
+          <UiButton :to="localePath('/resume')">{{ t('about.resume') }}</UiButton>
+          <UiButton :to="localePath('/contacts')" variant="ghost">{{ t('about.contact') }}</UiButton>
         </div>
       </div>
     </section>
 
-    <!-- News -->
-    <section v-if="news.length" class="section news">
-      <div class="container">
-        <div class="section__header">
-          <p class="eyebrow section__eyebrow">{{ t('news.eyebrow') }}</p>
-          <NuxtLink :to="localePath('/blog')" class="section__more">{{ t('news.all') }}</NuxtLink>
+    <!-- Последнее -->
+    <section v-if="news.length" class="section">
+      <div class="section__head">
+        <h2 class="section__title">{{ t('news.eyebrow') }}</h2>
+        <NuxtLink :to="localePath('/blog')" class="section__more">{{ t('news.all') }}</NuxtLink>
+      </div>
+
+      <div class="rows">
+        <NuxtLink
+          v-for="item in news"
+          :key="item.id"
+          :to="item.href"
+          :target="item.isExternal ? '_blank' : undefined"
+          :rel="item.isExternal ? 'noopener noreferrer' : undefined"
+          class="row"
+        >
+          <span class="row__meta">
+            {{ item.type === 'blog' ? t('card.blog') : t('card.project') }}
+            <template v-if="item.published_at"> · {{ format(item.published_at) }}</template>
+          </span>
+          <span class="row__title">{{ item.title }}</span>
+          <span class="row__desc">{{ item.excerpt }}</span>
+        </NuxtLink>
+      </div>
+    </section>
+
+    <!-- Что приношу проекту -->
+    <section class="section brings">
+      <div class="brings__list-col">
+        <p class="brings__title">{{ t('brings.title') }}</p>
+        <div class="brings__list">
+          <div v-for="b in brings" :key="b.num" class="brings__item">
+            <span class="brings__num">{{ b.num }}</span>
+            <p class="brings__text">{{ b.text }}</p>
+          </div>
         </div>
-        <div class="news__grid">
-          <UiCard v-for="item in news" :key="item.id" :item="item" />
-        </div>
+      </div>
+
+      <div class="brings__aside">
+        <p class="brings__looking">{{ t('brings.looking') }}</p>
+        <NuxtLink :to="localePath('/contacts')" class="brings__cta">{{ t('brings.cta') }}</NuxtLink>
       </div>
     </section>
 
@@ -163,253 +167,211 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Hero */
+/* ═══ Герой ═══
+   overflow: clip живёт здесь, а не на .panel в лейауте: у панели он
+   сломал бы position: sticky у бокового рейла. Обрезать нужно только
+   круг, который намеренно выходит за край. */
+/* Без своего overflow: круг намеренно выходит за секцию и обрезается
+   панелью по скруглённому углу — так же, как в макете. */
 .hero {
   position: relative;
-  min-height: calc(100dvh - 72px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
+  padding: clamp(12px, 3vw, 40px) 0 clamp(30px, 4vw, 56px);
 }
 
-.hero__bg-glow {
+.hero__blob {
   position: absolute;
-  top: -20%;
-  left: -10%;
-  width: 70%;
-  height: 80%;
-  background: radial-gradient(ellipse at 30% 40%, var(--accent-glow) 0%, transparent 60%);
-  pointer-events: none;
+  top: -6%;
+  right: -3%;
+  width: min(34vw, 330px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--accent-flat);
+  animation: grow 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.hero__inner {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 60px;
-  padding-top: 80px;
-  padding-bottom: 80px;
-}
-
-@media (max-width: 768px) {
-  .hero__inner { flex-direction: column; align-items: stretch; gap: 48px; }
-}
-
-.hero__content { max-width: 680px; width: 100%; }
+.hero__inner { position: relative; }
 
 .hero__eyebrow {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.6s ease 0.1s, transform 0.6s var(--ease-out) 0.1s;
-  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-3);
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.hero--visible .hero__eyebrow { opacity: 1; transform: none; }
+.hero__pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: pulse 2.4s infinite;
+}
 
 .hero__title {
   font-family: var(--font-display);
-  font-size: clamp(44px, 7vw, 96px);
-  font-weight: 400;
-  line-height: 1.0;
-  letter-spacing: -0.03em;
-  margin-bottom: 48px;
+  font-weight: 900;
+  font-size: var(--hero-size);
+  line-height: var(--display-lh);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: clamp(20px, 3vw, 36px) 0 0;
+  text-shadow: var(--display-shadow);
+  animation:
+    rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both,
+    glitch 9s 2s infinite;
 }
 
-.hero__title-line {
-  display: block;
-  transform: translateY(16px);
-  transition: transform 0.7s var(--ease-out);
-  color: var(--text);
-}
+.hero__stop { color: var(--text-strong); }
 
-.hero__title-line--accent { font-style: italic; color: var(--accent); }
-
-.hero__title-line:nth-child(1) { transition-delay: 0.1s; }
-.hero__title-line:nth-child(2) { transition-delay: 0.2s; }
-.hero__title-line:nth-child(3) { transition-delay: 0.3s; }
-
-.hero--visible .hero__title-line { transform: none; }
-
-.hero__title-counter {
+.hero__lede-row {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--text);
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.6s ease 0.4s, transform 0.6s var(--ease-out) 0.4s;
-}
-
-.hero--visible .hero__title-counter { opacity: 1; transform: none; }
-
-.hero__title-plus { color: var(--accent); font-size: 0.6em; }
-.hero__title-years { font-size: 0.4em; color: var(--text-2); font-family: var(--font-mono); font-weight: 300; letter-spacing: 0.05em; align-self: center; }
-
-.hero__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-top: 1px solid var(--border);
-  opacity: 0;
-  transition: opacity 0.6s ease 0.7s;
-}
-
-.hero--visible .hero__nav { opacity: 1; }
-
-.hero__nav-item {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
+  gap: 18px 28px;
+  margin-top: clamp(24px, 3vw, 40px);
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.16s both;
+}
+
+.hero__rule {
+  height: 1px;
+  flex: 1 1 60px;
+  background: repeating-linear-gradient(90deg, var(--dash) 0 3px, transparent 3px 8px);
+}
+
+.hero__lede {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 1.75;
   color: var(--text-2);
-  transition: color 0.2s, padding-left 0.3s var(--ease-out);
+  text-wrap: pretty;
 }
 
-.hero__nav-item:hover {
-  color: var(--accent);
-  padding-left: 8px;
-}
+.hero__years { color: var(--accent); }
 
-.hero__nav-num {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--text-3);
-  width: 20px;
-  flex-shrink: 0;
-}
-
-.hero__nav-label { flex: 1; font-size: 13px; letter-spacing: 0.05em; }
-
-.hero__aside {
+.hero__cta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 16px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease 0.8s;
-}
-
-.hero--visible .hero__aside { opacity: 1; }
-
-@media (max-width: 768px) {
-  .hero__aside { align-items: flex-start; }
-}
-
-.hero__socials {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-@media (max-width: 768px) {
-  .hero__socials { align-items: flex-start; }
-}
-
-.hero__social-link {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  color: var(--text-3);
-  letter-spacing: 0.08em;
-  transition: color 0.2s;
+  gap: 12px;
+  margin-top: clamp(26px, 3vw, 40px);
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.24s both;
 }
 
-.hero__social-link:hover { color: var(--accent); }
+.btn-solid,
+.btn-outline {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-radius: var(--r-pill);
+  padding: 15px 28px;
+  transition: transform 0.25s, border-color 0.25s;
+}
+
+.btn-solid { background: var(--accent-flat); color: var(--on-accent); }
+.btn-solid:hover { transform: translateY(-2px); color: var(--on-accent); }
+
+.btn-outline { border: 1px solid var(--border-s); }
+.btn-outline:hover { border-color: var(--accent); transform: translateY(-2px); }
 
 .hero__status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid var(--green-border);
-  background: var(--green-bg);
-}
-
-.hero__status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  animation: pulse-dot 2s ease infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--green-pulse); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 4px transparent; }
-}
-
-.hero__status-text {
+  gap: 10px;
+  padding-left: 6px;
   font-size: 11px;
-  letter-spacing: 0.05em;
-  color: var(--green);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
 }
 
-.hero__scroll-hint {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: scroll-fade 3s ease infinite;
-}
-
-@keyframes scroll-fade {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.5; }
-}
-
-.hero__scroll-line {
-  display: block;
-  width: 1px;
-  height: 48px;
-  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
-}
-
-/* Sections */
-.section { padding: 96px 0; }
-
-.section__eyebrow { margin-bottom: 32px; }
-
-.section__header {
+/* ═══ Стек ═══ */
+.stack {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.stack__cell {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(20px, 2.4vw, 30px);
+  background: var(--bg-1);
+  transition: background 0.3s;
+}
+
+.stack__cell:hover { background: var(--bg-2); }
+
+.stack__k {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.stack__v {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+/* ═══ Секции ═══ */
+.section { padding: clamp(34px, 4.4vw, 68px) 0 0; }
+
+.section__eyebrow { margin-bottom: 22px; }
+
+.section__head {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 32px;
+  gap: 20px;
+  padding-bottom: 22px;
+}
+
+.section__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 2.8vw, 36px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .section__more {
-  font-size: 12px;
-  letter-spacing: 0.05em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--text-3);
   transition: color 0.2s;
 }
 
 .section__more:hover { color: var(--accent); }
 
-/* About */
+/* ═══ Обо мне ═══ */
 .about__grid {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 64px;
+  gap: 48px;
   align-items: start;
 }
 
-@media (max-width: 768px) {
-  .about__grid { grid-template-columns: 1fr; gap: 32px; }
+@media (max-width: 900px) {
+  .about__grid { grid-template-columns: 1fr; gap: 28px; }
 }
 
 .about__text {
-  font-family: var(--font-display);
-  font-size: clamp(20px, 2.5vw, 28px);
-  font-weight: 300;
-  line-height: 1.55;
-  color: var(--text-2);
   max-width: 640px;
+  font-size: 14.5px;
+  line-height: 1.8;
+  color: var(--text-2);
+  text-wrap: pretty;
 }
+
+.about__text :deep(p + p) { margin-top: 18px; }
 
 .about__links {
   display: flex;
@@ -418,19 +380,121 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* News */
-.news__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* ═══ Что приношу проекту ═══ */
+.brings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(24px, 3vw, 48px);
+}
+
+.brings__list-col { flex: 1 1 min(100%, 380px); min-width: 0; }
+
+.brings__title {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-bottom: 18px;
+}
+
+.brings__list {
+  display: flex;
+  flex-direction: column;
   gap: 1px;
   background: var(--border);
+  border: 1px solid var(--border);
 }
 
-@media (max-width: 1024px) {
-  .news__grid { grid-template-columns: repeat(2, 1fr); }
+.brings__item {
+  display: flex;
+  gap: 16px;
+  padding: clamp(18px, 2vw, 26px);
+  background: var(--bg-1);
 }
 
-@media (max-width: 640px) {
-  .news__grid { grid-template-columns: 1fr; }
+.brings__num {
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+.brings__text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+.brings__aside {
+  flex: 1 1 min(100%, 320px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 22px;
+}
+
+.brings__looking {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 2.1vw, 26px);
+  line-height: 1.35;
+  letter-spacing: 0.005em;
+  text-wrap: pretty;
+}
+
+.brings__cta {
+  align-self: start;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
+  color: var(--accent);
+  padding: 14px 26px;
+  transition: background 0.25s, color 0.25s;
+}
+
+.brings__cta:hover { background: var(--accent-flat); color: var(--on-accent); }
+
+/* ═══ Последнее ═══ */
+.rows { border-top: 1px dotted var(--dot); }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 28px;
+  padding: clamp(16px, 2vw, 24px) clamp(4px, 1.2vw, 14px);
+  border-bottom: 1px dotted var(--dot);
+  transition: background 0.3s;
+}
+
+.row:hover { background: var(--accent-dim); }
+
+.row__meta {
+  flex: 0 0 auto;
+  min-width: 130px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.row__title {
+  flex: 1 1 220px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(17px, 1.8vw, 22px);
+  letter-spacing: 0.01em;
+}
+
+.row__desc {
+  flex: 1 1 220px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-4);
+  text-wrap: pretty;
 }
 </style>

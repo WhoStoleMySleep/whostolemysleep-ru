@@ -1,14 +1,35 @@
 {
-  "nav": { "blog": "Blog", "projects": "Projects", "resume": "Resume", "contacts": "Contacts", "privacy": "Privacy" },
+  "nav": { "home": "Home", "blog": "Blog", "projects": "Projects", "resume": "Resume", "contacts": "Contacts", "privacy": "Privacy", "hire": "Hire me" },
   "hero": {
-    "eyebrow": "Frontend Development",
+    "eyebrow": "Frontend Development · R-04",
     "line1": "Main focus —",
     "line2": "building websites",
     "line3": "with over",
     "years": "years",
-    "status": "Open to opportunities"
+    "status": "Open to opportunities",
+    "lede": "Frontend Developer with over {years} of experience building high-load UIs for fintech. Performant, accurate, reliable interfaces that move business metrics.",
+    "cta_cv": "Download CV",
+    "cta_projects": "View projects"
+  },
+  "stack": {
+    "f1_k": "Next.js / Nuxt.js",
+    "f1_v": "Architecture, SSR/ISR/SSG, optimization.",
+    "f2_k": "React / Vue",
+    "f2_v": "Ecosystem: TypeScript, Zustand/Pinia, TanStack Query.",
+    "f3_k": "Performance",
+    "f3_v": "Core Web Vitals optimization, working with large datasets.",
+    "f4_k": "UI",
+    "f4_v": "Tailwind CSS, Shadcn/ui, working with design systems."
   },
   "about": { "eyebrow": "About me", "resume": "View resume", "contact": "Contact me" },
+  "brings": {
+    "title": "What I bring to the project",
+    "b1": "Full autonomy. Perfect for remote teams: streamlined workflow, asynchronous communication, proactivity.",
+    "b2": "I quickly learn new technologies and adjacent areas (e.g., basic DevOps for setting up CI/CD) to promptly address project needs.",
+    "b3": "I understand backend (Node.js/Nest.js), which allows me to work efficiently with APIs and design frontend mindfully.",
+    "looking": "I am looking for: Challenging Next.js projects where quality and results matter. Open to long-term remote collaboration.",
+    "cta": "Let's talk"
+  },
   "news": { "eyebrow": "Latest posts", "all": "All posts →" },
   "blog": {
     "eyebrow": "Blog",
@@ -39,7 +60,7 @@
     "eyebrow": "Contacts",
     "title1": "Let's",
     "title2": "talk",
-    "subtitle": "Open to new projects, questions and interesting opportunities",
+    "subtitle": "Open to new projects, questions and interesting opportunities. Response time ~24 hours.",
     "email": "Email",
     "status": "Status",
     "statusText": "Open to opportunities",
@@ -61,7 +82,10 @@
     "consent_before": "I have read the",
     "consent_link": "privacy policy",
     "consent_after": "and consent to the processing of my personal data, including its transfer to Google servers (Gmail)",
-    "links_hint": "Choose a convenient way to get in touch"
+    "links_hint": "Choose a convenient way to get in touch",
+    "form_title": "Feedback form",
+    "form_desc": "Tell me about the project in a couple of sentences — stack, timeline, what needs solving. I reply within about 24 hours.",
+    "sendAnother": "Send another"
   },
   "search": {
     "placeholder": "Search blog and projects...",

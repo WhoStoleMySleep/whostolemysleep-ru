@@ -54,8 +54,9 @@ defineProps<{
 }
 
 .btn--primary {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--accent-flat);
+  color: var(--on-accent);
+  border-radius: var(--r-pill);
 }
 
 .btn--primary:hover { filter: brightness(1.12); }
@@ -65,6 +66,7 @@ defineProps<{
   background: transparent;
   color: var(--text-2);
   border: 1px solid var(--border-s);
+  border-radius: var(--r-pill);
 }
 
 .btn--ghost:hover {

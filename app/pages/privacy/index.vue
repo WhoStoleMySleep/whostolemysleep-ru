@@ -14,84 +14,62 @@ const SECTIONS = [
 </script>
 
 <template>
-  <div class="page privacy-page">
-    <div class="container">
-      <header class="page-header">
-        <p class="eyebrow">{{ t('privacy.eyebrow') }}</p>
-        <h1 class="page-title">{{ t('privacy.title') }}</h1>
-        <p class="page-updated">{{ t('privacy.updated') }}</p>
-      </header>
+  <div class="privacy">
+    <UiPageHeader
+      :eyebrow="t('privacy.eyebrow')"
+      :title="t('privacy.title')"
+      :subtitle="t('privacy.updated')"
+    />
 
-      <div class="privacy-body">
-        <section v-for="s in SECTIONS" :key="s" class="privacy-section">
-          <h2 class="privacy-section__title">{{ t(`privacy.${s}_title`) }}</h2>
-          <template v-if="s === 's6'">
-            <p class="privacy-section__text">{{ t('privacy.s6_intro') }}</p>
-            <ul class="privacy-section__list">
-              <li class="privacy-section__item">{{ t('privacy.s6_item1') }}</li>
-              <li class="privacy-section__item">{{ t('privacy.s6_item2') }}</li>
-              <li class="privacy-section__item">{{ t('privacy.s6_item3') }}</li>
-            </ul>
-            <p class="privacy-section__text">{{ t('privacy.s6_outro') }}</p>
-          </template>
-          <p v-else class="privacy-section__text">{{ t(`privacy.${s}_text`) }}</p>
-        </section>
-      </div>
+    <div class="body">
+      <section v-for="s in SECTIONS" :key="s" class="block">
+        <h2 class="block__title">{{ t(`privacy.${s}_title`) }}</h2>
 
-      <NuxtLink :to="localePath('/contacts')" class="privacy-back">
-        ← {{ t('privacy.back') }}
-      </NuxtLink>
+        <template v-if="s === 's6'">
+          <p class="block__text">{{ t('privacy.s6_intro') }}</p>
+          <ul class="block__list">
+            <li class="block__item">{{ t('privacy.s6_item1') }}</li>
+            <li class="block__item">{{ t('privacy.s6_item2') }}</li>
+            <li class="block__item">{{ t('privacy.s6_item3') }}</li>
+          </ul>
+          <p class="block__text">{{ t('privacy.s6_outro') }}</p>
+        </template>
+
+        <p v-else class="block__text">{{ t(`privacy.${s}_text`) }}</p>
+      </section>
     </div>
+
+    <NuxtLink :to="localePath('/contacts')" class="back">← {{ t('privacy.back') }}</NuxtLink>
   </div>
 </template>
 
 <style scoped>
-.page { padding: 64px 0 120px; }
-
-.page-header { margin-bottom: 64px; }
-
-.eyebrow { margin-bottom: 20px; }
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 64px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-bottom: 16px;
-}
-
-.page-updated {
-  font-size: 11px;
-  color: var(--text-3);
-  letter-spacing: 0.08em;
-  font-family: var(--font-mono);
-}
-
-.privacy-body {
+.body {
   max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  margin-bottom: 64px;
+  gap: clamp(26px, 3vw, 40px);
+  padding: clamp(20px, 2.6vw, 34px) 0 clamp(34px, 4vw, 56px);
+  border-top: 1px dotted var(--dot);
 }
 
-.privacy-section__title {
+.block__title {
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 400;
+  font-weight: 800;
+  font-size: clamp(16px, 1.8vw, 20px);
   letter-spacing: 0.02em;
   color: var(--text);
   margin-bottom: 12px;
 }
 
-.privacy-section__text {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-2);
+.block__text {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-3);
+  text-wrap: pretty;
 }
 
-.privacy-section__list {
+.block__list {
   margin: 12px 0;
   padding-left: 20px;
   display: flex;
@@ -99,19 +77,21 @@ const SECTIONS = [
   gap: 8px;
 }
 
-.privacy-section__item {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-2);
+.block__item {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-3);
   list-style: disc;
+  text-wrap: pretty;
 }
 
-.privacy-back {
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  color: var(--text-3);
+.back {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-4);
   transition: color 0.2s;
 }
 
-.privacy-back:hover { color: var(--accent); }
+.back:hover { color: var(--accent); }
 </style>

@@ -42,19 +42,20 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   app: {
+    // Классы .page-* лежат в main.css, но без этой настройки Nuxt их
+    // не применял — переходов между страницами не было вовсе.
+    pageTransition: { name: 'page', mode: 'out-in' },
+
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       titleTemplate: '%s — whostolemysleep',
       link: [
+        // Базовый шрифт текста, нужен в обеих локалях. Дисплейный и
+        // кириллический подгружаются из layouts/default.vue по локали,
+        // чтобы не тянуть лишний файл на каждый визит.
         { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
-          href: '/fonts/cormorant-400-italic-latin.woff2' },
-        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
-          href: '/fonts/cormorant-400-normal-latin.woff2' },
-        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
-          href: '/fonts/martian-mono-300-normal-latin.woff2' },
-        { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
-          href: '/fonts/martian-mono-400-normal-latin.woff2' },
+          href: '/fonts/jetbrains-mono-400-normal-latin.woff2' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
       script: [
@@ -64,8 +65,10 @@ export default defineNuxtConfig({
         },
       ],
       meta: [
-        { name: 'theme-color', content: '#07070a' },
-        { name: 'color-scheme', content: 'dark' },
+        { name: 'theme-color', content: '#0a0a0c' },
+        // Конкретную схему задаёт CSS-свойство color-scheme в main.css —
+        // оно переключается вместе с классом .light на <html>.
+        { name: 'color-scheme', content: 'dark light' },
         {
           name: 'description',
           content: 'Frontend developer with 4+ years of experience. React, Vue, Next.js, Nuxt, TypeScript.',

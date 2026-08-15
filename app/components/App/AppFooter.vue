@@ -2,70 +2,61 @@
 const year = new Date().getFullYear()
 const { t } = useLocale()
 const localePath = useLocalePath()
+const { data: siteSettings } = await useSettings()
+
+/** Набор и порядок ссылок — как в макете: Telegram, GitHub, Email, Privacy. */
+const links = computed(() => [
+  { label: 'Telegram', href: siteSettings.value?.telegram_url ?? 'https://t.me/WhoStoleMySleepDev', external: true },
+  { label: 'GitHub',   href: siteSettings.value?.github_url   ?? 'https://github.com/WhoStoleMySleepDev', external: true },
+  { label: 'Email',    href: `mailto:${siteSettings.value?.email ?? 'whostolemysleep@gmail.com'}`, external: true },
+])
 </script>
 
 <template>
-  <footer class="footer">
-    <div class="container footer__inner">
-      <div class="footer__left">
-        <span class="footer__logo">wms<span class="footer__dot">.</span></span>
-        <p class="footer__copy">© {{ year }} — {{ t('footer.dev') }}</p>
-      </div>
+  <footer class="foot">
+    <p class="foot__copy">© {{ year }} — {{ t('footer.dev') }}</p>
 
-      <nav class="footer__nav" aria-label="Links">
-        <NuxtLink :to="localePath('/blog')"     class="footer__link">{{ t('nav.blog') }}</NuxtLink>
-        <NuxtLink :to="localePath('/projects')" class="footer__link">{{ t('nav.projects') }}</NuxtLink>
-        <NuxtLink :to="localePath('/resume')"   class="footer__link">{{ t('nav.resume') }}</NuxtLink>
-        <NuxtLink :to="localePath('/contacts')" class="footer__link">{{ t('nav.contacts') }}</NuxtLink>
-        <NuxtLink :to="localePath('/privacy')"  class="footer__link">{{ t('nav.privacy') }}</NuxtLink>
-        <a href="https://t.me/WhoStoleMySleepDev"       target="_blank" rel="noopener noreferrer" class="footer__link">TG</a>
-        <a href="https://github.com/WhoStoleMySleepDev" target="_blank" rel="noopener noreferrer" class="footer__link">GitHub</a>
-      </nav>
-    </div>
+    <nav class="foot__nav" aria-label="Links">
+      <a
+        v-for="link in links"
+        :key="link.label"
+        :href="link.href"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="foot__link"
+      >{{ link.label }}</a>
+      <NuxtLink :to="localePath('/privacy')" class="foot__link">{{ t('nav.privacy') }}</NuxtLink>
+    </nav>
   </footer>
 </template>
 
 <style scoped>
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 40px 0;
-  margin-top: 80px;
-}
-
-.footer__inner {
+.foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
+  gap: 14px 24px;
+  padding: clamp(16px, 2vw, 24px) clamp(18px, 3vw, 56px);
+  border-top: 1px dotted var(--border-s);
 }
 
-.footer__left { display: flex; align-items: baseline; gap: 20px; }
-
-.footer__logo {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-2);
+.foot__copy {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-4);
 }
 
-.footer__dot { color: var(--accent); }
+.foot__nav { display: flex; flex-wrap: wrap; gap: 12px 20px; }
 
-.footer__copy {
-  font-size: 11px;
-  color: var(--text-3);
-  letter-spacing: 0.05em;
-}
-
-.footer__nav { display: flex; gap: 24px; flex-wrap: wrap; }
-
-.footer__link {
-  font-size: 11px;
-  letter-spacing: 0.08em;
+.foot__link {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-3);
   transition: color 0.2s;
 }
 
-.footer__link:hover { color: var(--accent); }
+.foot__link:hover { color: var(--accent); }
 </style>
