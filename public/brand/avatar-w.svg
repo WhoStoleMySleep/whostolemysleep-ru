@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" shape-rendering="geometricPrecision">
-<rect width="1000" height="1000" fill="#0a0a0c"/>
-<g transform="translate(86.767 722.461) scale(0.646688 -0.646688)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" shape-rendering="geometricPrecision">
+<rect width="1024" height="1024" fill="#0a0a0c"/>
+<g transform="translate(202.377 678.683) scale(0.484543 -0.484543)">
 <path transform="translate(0 0)" d="M166 0 5 688H235L295 394Q297 386 300.0 369.5Q303 353 307.0 333.5Q311 314 314 298H318Q320 307 322.5 319.5Q325 332 327.5 345.0Q330 358 332.5 371.0Q335 384 337 394L396 688H614L677 394Q679 384 682.5 367.0Q686 350 690.0 331.5Q694 313 697 298H701Q703 308 705.5 320.5Q708 333 710.0 346.0Q712 359 714.5 371.5Q717 384 719 394L775 688H995L834 0H591L523 322Q521 335 517.0 352.5Q513 370 509.0 388.0Q505 406 502 419H498Q495 407 491.5 389.5Q488 372 484.0 354.5Q480 337 477 322L409 0Z" fill="#ffffff"/>
 <path transform="translate(1000 0)" d="M61 0V199H273V0Z" fill="#ff4d1c"/>
 </g></svg>

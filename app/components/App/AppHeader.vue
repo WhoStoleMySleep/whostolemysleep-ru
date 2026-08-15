@@ -32,6 +32,7 @@ function isActive(key: string) {
           <span class="head__dot head__dot--on" />
         </span>
         <span class="head__name">whostolemysleep</span>
+        <span class="head__name head__name--short">wms.</span>
       </NuxtLink>
 
       <!-- Порядок как в макете: Hire me → тема → язык → бургер.
@@ -217,6 +218,16 @@ function isActive(key: string) {
   .head__actions { gap: 6px; }
   .head__btn { width: 38px; height: 36px; }
   .head__name { font-size: 13px; letter-spacing: 0.04em; }
+}
+
+/* На 320px полное имя уже не оставляет места кнопкам — бургер срезало
+   краем панели. Подменяем коротким знаком. */
+.head__name--short { display: none; }
+
+@media (max-width: 360px) {
+  .head__bar { padding-inline: 14px; }
+  .head__name { display: none; }
+  .head__name--short { display: inline; }
 }
 
 /* ── Бургер ── */
