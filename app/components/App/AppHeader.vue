@@ -40,7 +40,7 @@ function isActive(key: string) {
       <div class="head__actions">
         <button
           v-if="siteSettings?.show_search"
-          class="head__btn"
+          class="head__btn head__btn--search"
           type="button"
           :aria-label="t('search.placeholder')"
           @click="search.open()"
@@ -101,6 +101,19 @@ function isActive(key: string) {
 
     <Transition name="mobile-nav">
       <nav v-if="mobileOpen" class="head__mobile" aria-label="Основная навигация">
+        <button
+          v-if="siteSettings?.show_search"
+          class="head__mobile-search"
+          type="button"
+          @click="mobileOpen = false; search.open()"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          {{ t('search.placeholder') }}
+        </button>
+
         <NuxtLink
           v-for="item in nav"
           :key="item.key"
@@ -191,6 +204,21 @@ function isActive(key: string) {
 
 .head__btn--text { font-size: 11px; letter-spacing: 0.14em; }
 
+/* Ниже 900px появляется бургер, и четыре кнопки рядом с логотипом
+   перестают помещаться — бургер срезало краем панели. Поиск (его в
+   макете нет вовсе, это функция сайта) уезжает в мобильное меню,
+   в баре остаются тема, язык и бургер — как в макете. */
+@media (max-width: 900px) {
+  .head__btn--search { display: none; }
+}
+
+@media (max-width: 480px) {
+  .head__bar { gap: 10px; }
+  .head__actions { gap: 6px; }
+  .head__btn { width: 38px; height: 36px; }
+  .head__name { font-size: 13px; letter-spacing: 0.04em; }
+}
+
 /* ── Бургер ── */
 .head__burger {
   display: none;
@@ -217,6 +245,22 @@ function isActive(key: string) {
   border-top: 1px solid var(--border);
   animation: fade 0.3s both;
 }
+
+.head__mobile-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 0;
+  border-bottom: 1px dotted var(--dot);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.head__mobile-search:hover { color: var(--accent); }
 
 .head__mobile-link {
   display: flex;
