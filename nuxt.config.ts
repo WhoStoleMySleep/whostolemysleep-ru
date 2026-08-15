@@ -56,7 +56,12 @@ export default defineNuxtConfig({
         // чтобы не тянуть лишний файл на каждый визит.
         { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
           href: '/fonts/jetbrains-mono-400-normal-latin.woff2' },
+        // SVG тянется под любой размер, PNG — запасной вариант для
+        // браузеров без поддержки svg-фавикона.
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
       ],
       script: [
         {
