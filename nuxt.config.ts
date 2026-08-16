@@ -6,7 +6,7 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt'],
 
   i18n: {
     baseUrl: 'https://whostolemysleep.ru',
