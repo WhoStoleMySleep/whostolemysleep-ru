@@ -32,7 +32,7 @@
   "news": { "eyebrow": "Latest posts", "all": "All posts →" },
   "blog": {
     "eyebrow": "Blog",
-    "title": "Posts & Thoughts",
+    "title": "Posts\u00a0& Thoughts",
     "subtitle": "Articles about development, architecture, tools and experience",
     "filter": "Filter by topic...",
     "empty": "No posts found"
@@ -41,14 +41,14 @@
   "post": { "back": "Back to blog", "source": "Open source" },
   "projects": {
     "eyebrow": "Projects",
-    "title": "Works & Experiments",
+    "title": "Works\u00a0& Experiments",
     "subtitle": "Commercial projects, pet projects and open-source",
     "all": "All",
     "empty": "No projects found"
   },
   "resume": {
     "eyebrow": "Resume",
-    "title": "Experience & Skills",
+    "title": "Experience\u00a0& Skills",
     "about": "About me",
     "experience": "Experience",
     "education": "Education",
