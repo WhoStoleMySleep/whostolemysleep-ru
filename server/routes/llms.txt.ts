@@ -66,7 +66,7 @@ export default defineCachedEventHandler(async (event) => {
   const start = firstJob[0]?.date_from
   const years = start
     ? Math.floor((Date.now() - new Date(start).getTime()) / (365.25 * 24 * 3600 * 1000))
-    : 4
+    : 5
 
   const sorted = [...posts].sort((a, b) =>
     new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()
@@ -99,8 +99,9 @@ export default defineCachedEventHandler(async (event) => {
   const md = [
     '# whostolemysleep',
     '',
-    `> Frontend developer with ${years}+ years of experience building high-load interfaces `
-      + 'for fintech. Vue, Nuxt, React, Next.js, TypeScript.',
+    `> Full-stack developer with ${years}+ years of experience. Production web apps in Nuxt `
+      + 'and Vue, native desktop and mobile apps in Rust with Tauri. Previously built '
+      + "high-load interfaces for two of Russia's largest banks. Open to remote work worldwide.",
     '',
     'Personal site and portfolio. Every page exists in two languages: English under `/en` '
       + 'and Russian under `/ru`. The content is identical, only the language differs — '
@@ -120,10 +121,10 @@ export default defineCachedEventHandler(async (event) => {
     '',
     '## Focus',
     '',
-    '- **Next.js / Nuxt.js** — architecture, SSR/ISR/SSG, optimization',
-    '- **React / Vue** — TypeScript, Zustand/Pinia, TanStack Query',
-    '- **Performance** — Core Web Vitals, working with large datasets',
-    '- **UI** — Tailwind CSS, Shadcn/ui, design systems',
+    '- **Nuxt / Vue** — architecture, SSR/ISR/SSG, Nitro, i18n; also React and Next.js',
+    '- **Rust / Tauri** — cross-platform desktop and mobile, native plugins, system APIs',
+    '- **TypeScript / Node** — REST and GraphQL APIs, tooling, published npm packages',
+    '- **Performance** — Core Web Vitals as a budget; this site scores 100/100 on mobile',
     '',
     ...(Object.keys(skills).length
       ? [

@@ -76,7 +76,7 @@ export default defineNuxtConfig({
         { name: 'color-scheme', content: 'dark light' },
         {
           name: 'description',
-          content: 'Frontend developer with 4+ years of experience. React, Vue, Next.js, Nuxt, TypeScript.',
+          content: 'Full-stack developer. Nuxt, Vue and TypeScript on the web, Rust and Tauri for native desktop and mobile apps. Open to remote work worldwide.',
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'whostolemysleep' },

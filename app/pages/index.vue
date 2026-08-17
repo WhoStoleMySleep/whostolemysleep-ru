@@ -19,13 +19,13 @@ useHead({
       '@type': 'Person',
       name: 'whostolemysleep',
       url: 'https://whostolemysleep.ru',
-      jobTitle: 'Frontend Developer',
+      jobTitle: 'Full-Stack Developer',
       email: 'whostolemysleep@gmail.com',
       sameAs: [
         'https://github.com/WhoStoleMySleepDev',
         'https://t.me/WhoStoleMySleepDev',
       ],
-      knowsAbout: ['Vue', 'Nuxt', 'React', 'Next.js', 'TypeScript'],
+      knowsAbout: ['Nuxt', 'Vue', 'TypeScript', 'Rust', 'Tauri', 'React', 'Next.js', 'Node.js'],
     }),
   }],
 })
@@ -44,7 +44,7 @@ const news = computed(() => {
 })
 
 /** Стаж живёт только здесь — в заголовке его больше нет, чтобы не дублировать. */
-const years = computed(() => siteSettings.value?.years_experience ?? 4)
+const years = computed(() => siteSettings.value?.years_experience ?? 5)
 
 const stack = computed(() => [
   { k: t('stack.f1_k'), v: t('stack.f1_v') },

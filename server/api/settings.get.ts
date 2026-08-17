@@ -14,7 +14,7 @@ async function fetchSettings() {
   const startDate = earliest[0]?.date_from
   const years = startDate
     ? Math.floor((Date.now() - new Date(startDate).getTime()) / (365.25 * 24 * 3600 * 1000))
-    : 4
+    : 5
 
   return {
     open_to_work:     row?.open_to_work     ?? true,
