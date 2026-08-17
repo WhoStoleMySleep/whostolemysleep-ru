@@ -339,7 +339,7 @@ const contactLinks = computed(() => {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  background: var(--accent-flat);
+  background: var(--accent-btn);
   color: var(--on-accent);
   border-radius: var(--r-pill);
   padding: 15px 28px;

@@ -57,26 +57,24 @@ function isActive(key: string) {
         </NuxtLink>
 
         <button
-          class="head__btn"
+          class="head__btn head__btn--theme"
           type="button"
           :aria-label="isDark ? 'Light theme' : 'Dark theme'"
           @click="toggle()"
         >
-          <Transition name="theme-icon" mode="out-in">
-            <svg v-if="isDark" key="sun" width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
-              <path
-                d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-              />
-            </svg>
-            <svg v-else key="moon" width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6.002 6.002 0 1 0 7 7z"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-              />
-            </svg>
-          </Transition>
+          <svg class="ico ico--sun" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            />
+          </svg>
+          <svg class="ico ico--moon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6.002 6.002 0 1 0 7 7z"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            />
+          </svg>
         </button>
 
         <button
@@ -178,7 +176,7 @@ function isActive(key: string) {
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  background: var(--accent-flat);
+  background: var(--accent-btn);
   color: var(--on-accent);
   border-radius: var(--r-pill);
   padding: 11px 22px;
@@ -305,8 +303,7 @@ function isActive(key: string) {
 .mobile-nav-enter-from,
 .mobile-nav-leave-to { opacity: 0; }
 
-.theme-icon-enter-active,
-.theme-icon-leave-active { transition: opacity 0.15s ease, transform 0.15s var(--ease-out); }
-.theme-icon-enter-from   { opacity: 0; transform: rotate(-30deg) scale(0.7); }
-.theme-icon-leave-to     { opacity: 0; transform: rotate(30deg) scale(0.7); }
+/* Обе иконки стопкой в одной ячейке; какая видна — решают правила
+   в main.css, они завязаны на класс .light у <html>. */
+.head__btn--theme .ico { grid-column: 1; grid-row: 1; }
 </style>
