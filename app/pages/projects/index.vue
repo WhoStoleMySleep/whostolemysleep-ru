@@ -95,8 +95,8 @@ const filtered = computed(() => {
 .filters__pill:hover { border-color: var(--accent); color: var(--accent); }
 
 .filters__pill--active {
-  background: var(--accent-flat);
-  border-color: var(--accent-flat);
+  background: var(--accent-btn);
+  border-color: var(--accent-btn);
   color: var(--on-accent);
 }
 

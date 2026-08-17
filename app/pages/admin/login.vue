@@ -133,7 +133,7 @@ async function submit() {
 
 .login-submit {
   width: 100%;
-  background: var(--accent-flat);
+  background: var(--accent-btn);
   border: none;
   border-radius: var(--r-pill);
   padding: 14px;

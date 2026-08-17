@@ -268,7 +268,7 @@ const brings = computed(() => [
   transition: transform 0.25s, border-color 0.25s;
 }
 
-.btn-solid { background: var(--accent-flat); color: var(--on-accent); }
+.btn-solid { background: var(--accent-btn); color: var(--on-accent); }
 .btn-solid:hover { transform: translateY(-2px); color: var(--on-accent); }
 
 .btn-outline { border: 1px solid var(--border-s); }
@@ -456,7 +456,7 @@ const brings = computed(() => [
   transition: background 0.25s, color 0.25s;
 }
 
-.brings__cta:hover { background: var(--accent-flat); color: var(--on-accent); }
+.brings__cta:hover { background: var(--accent-btn); color: var(--on-accent); }
 
 /* ═══ Последнее ═══ */
 .rows { border-top: 1px dotted var(--dot); }

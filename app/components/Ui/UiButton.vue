@@ -54,7 +54,7 @@ defineProps<{
 }
 
 .btn--primary {
-  background: var(--accent-flat);
+  background: var(--accent-btn);
   color: var(--on-accent);
   border-radius: var(--r-pill);
 }

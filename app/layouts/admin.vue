@@ -151,8 +151,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-btn--primary {
   color: var(--on-accent);
-  background: var(--accent-flat);
-  border: 1px solid var(--accent-flat);
+  background: var(--accent-btn);
+  border: 1px solid var(--accent-btn);
   font-weight: 500;
 }
 
