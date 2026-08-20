@@ -1,14 +1,16 @@
 import {
   checkAdminPassword, signAdminToken,
-  isRateLimited, recordFailure, clearFailures,
+  hitLoginAttempt, clearFailures,
   getClientIp, ADMIN_COOKIE,
 } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const ip    = getClientIp(event)
-  const limit = isRateLimited(ip)
+  const ip = getClientIp(event)
 
-  if (limit.limited) {
+  // Попытку засчитываем до проверки пароля: иначе неудачные запросы,
+  // оборванные на полпути, не попадали бы в счётчик.
+  const limit = await hitLoginAttempt(ip)
+  if (!limit.allowed) {
     throw createError({ statusCode: 429, message: `Too many attempts. Retry after ${limit.retryAfter}s` })
   }
 
@@ -16,11 +18,10 @@ export default defineEventHandler(async (event) => {
   const valid = await checkAdminPassword(password ?? '')
 
   if (!valid) {
-    recordFailure(ip)
     throw createError({ statusCode: 401, message: 'Invalid password' })
   }
 
-  clearFailures(ip)
+  await clearFailures(ip)
   const token = await signAdminToken()
 
   setCookie(event, ADMIN_COOKIE, token, {

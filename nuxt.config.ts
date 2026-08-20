@@ -21,6 +21,30 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    // Заголовки на всё, что отдаётся: CSP оставляет ровно те источники, которыми сайт пользуется —
+    // свой домен, картинки из Vercel Blob и телеметрия Vercel. Inline-стили и скрипты нужны Nuxt
+    // для гидрации, поэтому они разрешены явно, а не по недосмотру.
+    '/**': {
+      headers: {
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "base-uri 'self'",
+          "object-src 'none'",
+          "frame-ancestors 'none'",
+          "form-action 'self'",
+          "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
+          "font-src 'self' data:",
+          "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+          'upgrade-insecure-requests',
+        ].join('; '),
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy':        'strict-origin-when-cross-origin',
+        'X-Frame-Options':        'DENY',
+        'Permissions-Policy':     'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+      },
+    },
     '/':             { ssr: true },
     '/ru':           { isr: 3600 },
     '/en':           { isr: 3600 },

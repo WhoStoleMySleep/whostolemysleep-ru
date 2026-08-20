@@ -4,7 +4,8 @@ const RATE_LIMIT  = 3
 const RATE_WINDOW = 60 * 60 * 1000
 
 export default defineEventHandler(async (event) => {
-  const ip = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
+  // clientIp берёт адрес из заголовка платформы, а не из того, что прислал клиент.
+  const ip = clientIp(event)
   const allowed = await checkRateLimit(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW)
   if (!allowed) throw createError({ statusCode: 429, message: 'rate_limit' })
 

@@ -15,12 +15,26 @@
       "when": 1779286971184,
       "tag": "0001_dashing_masque",
       "breakpoints": true
-    }
-    ,{
+    },
+    {
       "idx": 2,
       "version": "7",
       "when": 1748102400000,
       "tag": "0002_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787192935986,
+      "tag": "0003_curvy_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787194136109,
+      "tag": "0004_foamy_daredevil",
       "breakpoints": true
     }
   ]
