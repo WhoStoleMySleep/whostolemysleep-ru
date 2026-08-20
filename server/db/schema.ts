@@ -13,6 +13,14 @@ import { relations } from 'drizzle-orm'
 
 /* ── Enums ── */
 
+/* Счётчик попыток для лимитеров. В памяти инстанса его держать нельзя:
+   на Vercel их много, и каждый холодный старт обнуляет ограничение. */
+export const rateLimit = pgTable('rate_limit', {
+  key:      varchar('key', { length: 200 }).primaryKey(),
+  count:    integer('count').notNull().default(0),
+  reset_at: timestamp('reset_at', { mode: 'string' }).notNull(),
+})
+
 export const postTypeEnum  = pgEnum('post_type',  ['blog', 'project'])
 export const userRoleEnum  = pgEnum('user_role',  ['admin', 'viewer'])
 
@@ -21,6 +29,8 @@ export const userRoleEnum  = pgEnum('user_role',  ['admin', 'viewer'])
 export const post = pgTable('post', {
   id:           serial('id').primaryKey(),
   slug:         varchar('slug', { length: 255 }).notNull().unique(),
+  /* id поста во внешнем публикаторе: по нему повторная отправка обновляет, а не дублирует */
+  external_id:  varchar('external_id', { length: 64 }).unique(),
   type:         postTypeEnum('type').notNull(),
   title_ru:     varchar('title_ru', { length: 500 }).notNull(),
   title_en:     varchar('title_en', { length: 500 }).notNull().default(''),

@@ -1,15 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
 import type { H3Event } from 'h3'
+import { clearRateLimit, clientIp, hitRateLimit, type RateVerdict } from './rateLimit'
 
 export const ADMIN_COOKIE = 'wms_admin'
 
-const ALG         = 'HS256'
-const TTL         = '7d'
-const MAX_TRIES   = 5
-const WINDOW_MS   = 15 * 60 * 1000
-
-const attempts = new Map<string, { count: number; since: number }>()
+const ALG       = 'HS256'
+const TTL       = '7d'
+const MAX_TRIES = 5
+const WINDOW_MS = 15 * 60 * 1000
 
 function jwtSecret() {
   const s = process.env.ADMIN_JWT_SECRET
@@ -40,31 +39,15 @@ export async function checkAdminPassword(plain: string): Promise<boolean> {
   return bcrypt.compare(plain, hash)
 }
 
-export function isRateLimited(ip: string): { limited: boolean; retryAfter?: number } {
-  const now   = Date.now()
-  const entry = attempts.get(ip)
-  if (!entry) return { limited: false }
-  if (now - entry.since >= WINDOW_MS) { attempts.delete(ip); return { limited: false } }
-  if (entry.count < MAX_TRIES) return { limited: false }
-  return { limited: true, retryAfter: Math.ceil((entry.since + WINDOW_MS - now) / 1000) }
+/** Проверяет и сразу засчитывает попытку входа: состояние общее для всех инстансов. */
+export async function hitLoginAttempt(ip: string): Promise<RateVerdict> {
+  return hitRateLimit(`login:${ip}`, MAX_TRIES, WINDOW_MS)
 }
 
-export function recordFailure(ip: string) {
-  const now   = Date.now()
-  const entry = attempts.get(ip)
-  if (!entry || now - entry.since >= WINDOW_MS) {
-    attempts.set(ip, { count: 1, since: now })
-  } else {
-    entry.count++
-  }
-}
-
-export function clearFailures(ip: string) {
-  attempts.delete(ip)
+export async function clearFailures(ip: string): Promise<void> {
+  await clearRateLimit(`login:${ip}`)
 }
 
 export function getClientIp(event: H3Event): string {
-  return getRequestHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim()
-    ?? getRequestHeader(event, 'x-real-ip')
-    ?? '0.0.0.0'
+  return clientIp(event)
 }
