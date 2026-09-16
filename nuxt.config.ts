@@ -89,7 +89,10 @@ export default defineNuxtConfig({
       ],
       script: [
         {
-          innerHTML: `try{const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='light'||(!t&&!p))document.documentElement.classList.add('light')}catch(e){}`,
+          // wms-ext-dark ставит useTheme, когда на странице замечен Dark Reader
+          // или похожее расширение: при следующей загрузке сайт сразу рисует
+          // свою тёмную тему, а не мигает светлой до появления расширения.
+          innerHTML: `try{const x=sessionStorage.getItem('wms-ext-dark')==='1';const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(!x&&(t==='light'||(!t&&!p)))document.documentElement.classList.add('light')}catch(e){}`,
           tagPriority: 'critical',
         },
       ],

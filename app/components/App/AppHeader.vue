@@ -60,7 +60,7 @@ function isActive(key: string) {
           class="head__btn head__btn--theme"
           type="button"
           :aria-label="isDark ? 'Light theme' : 'Dark theme'"
-          @click="toggle()"
+          @click="toggle($event)"
         >
           <svg class="ico ico--sun" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
