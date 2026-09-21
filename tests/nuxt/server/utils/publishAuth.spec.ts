@@ -31,7 +31,6 @@ describe('requirePublishToken', () => {
   })
 
   test('токен короче настоящего тоже 401, а не падение сравнения', async () => {
-    // timingSafeEqual требует одинаковой длины — потому сравниваются хеши.
     withHeader('Bearer x')
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')
     expect(() => requirePublishToken(event)).toThrow(/Unauthorized/)

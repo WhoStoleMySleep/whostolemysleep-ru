@@ -1,9 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
-/**
- * Состояние «базы» для diffSnapshot. Живёт снаружи мока, потому что
- * vi.mock поднимается наверх файла и обычную переменную ещё не видит.
- */
 const dbState = vi.hoisted(() => ({
   about:      null as { id: number; text_ru: string; text_en: string } | null,
   experience: [] as Record<string, unknown>[],
@@ -160,7 +156,6 @@ describe('diffSnapshot', () => {
       experience: [{ company: ' ACME ', position_ru: 'Разработчик', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
     })
 
-    // Компания та же запись, но написана иначе — это update поля, а не add+remove.
     expect(out.map((b) => b.change.kind)).toEqual(['update'])
     expect(out[0]?.targetId).toBe(7)
     expect(out[0]?.change.field).toBe('company')
@@ -195,7 +190,6 @@ describe('diffSnapshot', () => {
 
     expect(out).toHaveLength(1)
     expect(out[0]?.change.field).toBe('bullets')
-    // Список правится целиком, поэтому чинить его построчно в интерфейсе нельзя.
     expect(out[0]?.change.editable).toBe(false)
   })
 

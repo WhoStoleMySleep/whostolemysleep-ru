@@ -1,6 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 
-/** Ответ системы на медиа-запросы: тема и настройка «меньше анимаций». */
 function stubMatchMedia({ dark = false, reduced = false } = {}) {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches:             query.includes('prefers-color-scheme: dark') ? dark : reduced,
@@ -11,8 +10,6 @@ function stubMatchMedia({ dark = false, reduced = false } = {}) {
 }
 
 beforeEach(() => {
-  // Модуль держит защёлку расширения в переменных файла — между тестами
-  // она должна обнуляться, иначе один тест диктует результат следующему.
   vi.resetModules()
   localStorage.clear()
   sessionStorage.clear()
@@ -60,7 +57,6 @@ describe('useTheme.init', () => {
 
     expect(theme.isDark.value).toBe(true)
     expect(document.querySelector('meta[name="darkreader-lock"]')).not.toBeNull()
-    // Флаг переживает перезагрузку вкладки, но не закрытие браузера.
     expect(sessionStorage.getItem('wms-ext-dark')).toBe('1')
   })
 
@@ -81,7 +77,7 @@ describe('useTheme.toggle', () => {
     const { useTheme } = await import('~/composables/useTheme')
     const theme = useTheme()
     theme.init()
-    expect(theme.isDark.value).toBe(false) // системная тема в заглушке светлая
+    expect(theme.isDark.value).toBe(false)
 
     theme.toggle()
 

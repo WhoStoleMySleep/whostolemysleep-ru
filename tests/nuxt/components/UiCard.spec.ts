@@ -1,8 +1,6 @@
 import { describe, test, expect, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import type { Post } from '~/types'
-// Компонент импортируется явно: автоимпорты Nuxt действуют в приложении,
-// а не в спеке.
 import UiCard from '~/components/Ui/UiCard.vue'
 
 const state = vi.hoisted(() => ({ locale: 'ru' }))

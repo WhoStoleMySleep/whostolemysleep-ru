@@ -19,7 +19,6 @@ describe('withLocales', () => {
 
   test('совпадение по префиксу только целым сегментом', async () => {
     const { withLocales } = await import('~~/server/utils/pending')
-    // «/ruby» начинается на «ru», но локалью от этого не становится.
     expect(withLocales('/ruby')).toEqual(['/ru/ruby', '/en/ruby'])
   })
 })

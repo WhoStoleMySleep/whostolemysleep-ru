@@ -1,10 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 
-/**
- * Модуль читает окружение на уровне файла, поэтому перед каждым тестом
- * он загружается заново — иначе первый же тест зафиксировал бы BASE и VERCEL
- * для всех остальных.
- */
 beforeEach(() => {
   vi.resetModules()
   vi.stubEnv('NUXT_PUBLIC_SITE_URL', 'https://site.test')
