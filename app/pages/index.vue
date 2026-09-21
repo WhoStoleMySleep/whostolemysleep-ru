@@ -39,7 +39,7 @@ const news = computed(() => {
   const all = [...(blog.value ?? []), ...(projects.value ?? [])]
   return all
     .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
-    .slice(0, 6)
+    .slice(0, 4)
     .map(post => ({ ...post, ...linkFor(post) }))
 })
 
@@ -351,15 +351,19 @@ const brings = computed(() => [
 
 .section__more:hover { color: var(--accent); }
 
-/* ═══ Обо мне ═══ */
+/* ═══ Обо мне ═══
+   Колонка кнопок начинается ровно на 3/4 ширины — на той же вертикали,
+   что и граница между третьей и четвёртой ячейками блока со стеком.
+   Отсюда нулевой gap: любой зазор сдвинул бы кнопки с этой линии.
+   Брейкпоинт — 960px: ниже ячейки стека (flex-basis 240px) всё равно
+   переносятся, и выравнивать уже не по чему. */
 .about__grid {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 48px;
+  grid-template-columns: 3fr 1fr;
   align-items: start;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .about__grid { grid-template-columns: 1fr; gap: 28px; }
 }
 
@@ -373,12 +377,19 @@ const brings = computed(() => [
 
 .about__text :deep(p + p) { margin-top: 18px; }
 
+/* Кнопки тянутся во всю колонку: левый край ложится на линию 3/4,
+   правый — на край контейнера. Обе границы совпадают с линиями стека.
+   По ширине содержимого они бы повисли в пустой колонке без опоры. */
 .about__links {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex-shrink: 0;
 }
+
+/* Подпись по центру: в растянутой пилюле текст, прижатый к левому краю,
+   читается как поле ввода. Ширина кнопки здесь задана колонкой, а не
+   содержимым, поэтому и выравнивать содержимое нужно иначе. */
+.about__links :deep(.btn) { justify-content: center; }
 
 /* ═══ Что приношу проекту ═══ */
 .brings {
