@@ -461,6 +461,9 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    /* Без этого элемент с fill-mode: both висит невидимым всю задержку:
+       анимация уже мгновенная, но начинается она по-прежнему поздно. */
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

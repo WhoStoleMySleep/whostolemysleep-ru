@@ -50,7 +50,10 @@ const host = computed(() => {
   padding: clamp(20px, 2.4vw, 28px);
   background: var(--bg-1);
   transition: background 0.3s;
-  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Каскад: карточки въезжают по очереди с шагом 40ms. Шаг упирается
+     в пятую — на длинной сетке последняя иначе ждала бы почти секунду,
+     и страница читалась бы как подтормаживающая. --i ставит v-for. */
+  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) calc(min(var(--i, 0), 5) * 40ms) both;
 }
 
 .card:hover { background: var(--bg-2); }

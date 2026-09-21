@@ -36,6 +36,14 @@ const filtered = computed(() => {
   if (!activeTag.value) return projects.value ?? []
   return (projects.value ?? []).filter(p => p.tags.some(tag => tag.name === activeTag.value))
 })
+
+/**
+ * Каскад проигрывается один раз — на первой отрисовке списка.
+ * При смене фильтра карточки пересоздаются, и волна пошла бы заново
+ * на каждый клик: ждать её ради уже виденного списка раздражает.
+ */
+const cascade = ref(true)
+watch(activeTag, () => { cascade.value = false }, { once: true })
 </script>
 
 <template>
@@ -67,7 +75,12 @@ const filtered = computed(() => {
     <p v-else-if="!filtered.length" class="empty">{{ t('projects.empty') }}</p>
 
     <section v-else class="grid">
-      <UiCard v-for="project in filtered" :key="project.id" :item="project" />
+      <UiCard
+        v-for="(project, i) in filtered"
+        :key="project.id"
+        :item="project"
+        :style="{ '--i': cascade ? i : 0 }"
+      />
     </section>
   </div>
 </template>

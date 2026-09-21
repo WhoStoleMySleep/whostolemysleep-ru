@@ -18,6 +18,13 @@ const { data: posts, pending } = await useAsyncData(
 
 const localQuery = ref('')
 
+/**
+ * Каскад проигрывается один раз — на первой отрисовке списка.
+ * Иначе он шёл бы заново на каждый набранный в поиске символ.
+ */
+const cascade = ref(true)
+watch(localQuery, () => { cascade.value = false }, { once: true })
+
 const filtered = computed(() => {
   const list = posts.value ?? []
   const q = localQuery.value.trim().toLowerCase()
@@ -59,8 +66,9 @@ const filtered = computed(() => {
 
     <div v-else class="rows">
       <NuxtLink
-        v-for="post in filtered"
+        v-for="(post, i) in filtered"
         :key="post.id"
+        :style="{ '--i': cascade ? i : 0 }"
         :to="post.href"
         :target="post.isExternal ? '_blank' : undefined"
         :rel="post.isExternal ? 'noopener noreferrer' : undefined"
@@ -123,7 +131,9 @@ const filtered = computed(() => {
   padding: clamp(20px, 2.6vw, 34px) clamp(4px, 1.2vw, 14px);
   border-bottom: 1px dotted var(--dot);
   transition: background 0.3s;
-  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+  /* 100ms — общая пауза после шапки, дальше шаг 40ms по строкам.
+     Кап на пятой: ниже неё всё равно ничего не видно без прокрутки. */
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) calc(100ms + min(var(--i, 0), 5) * 40ms) both;
 }
 
 .row:hover { background: var(--accent-dim); }
