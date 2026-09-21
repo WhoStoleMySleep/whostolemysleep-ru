@@ -1,7 +1,8 @@
 import { db } from '../db'
 import { getLocale, pick } from '../utils/locale'
+import type { H3Event } from 'h3'
 
-async function fetchSkills(event: any) {
+async function fetchSkills(event: H3Event) {
   const locale = getLocale(event)
 
   const groups = await db.query.skillGroup.findMany({

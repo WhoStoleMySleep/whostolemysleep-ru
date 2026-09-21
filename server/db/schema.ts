@@ -2,6 +2,7 @@ import {
   pgTable, pgEnum, serial, varchar, text, integer,
   timestamp, boolean, date, primaryKey,
 } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
 /* ── Cache invalidation queue ── */
 
@@ -9,8 +10,6 @@ export const pendingRevalidation = pgTable('pending_revalidation', {
   path:     text('path').primaryKey(),
   added_at: timestamp('added_at', { withTimezone: true }).defaultNow().notNull(),
 })
-import { relations } from 'drizzle-orm'
-
 /* ── Enums ── */
 
 /* Счётчик попыток для лимитеров. В памяти инстанса его держать нельзя:

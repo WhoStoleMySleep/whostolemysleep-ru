@@ -8,11 +8,18 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:introspect": "drizzle-kit introspect"
+    "db:introspect": "drizzle-kit introspect",
+    "prepare": "husky"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -35,11 +42,20 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxt/test-utils": "^4.3.2",
     "@types/node": "^25.9.1",
     "@types/nodemailer": "^8.0.0",
+    "@vitest/coverage-v8": "^5.0.1",
+    "@vue/test-utils": "^2.5.1",
     "drizzle-kit": "^0.31.10",
+    "eslint": "^10.11.0",
+    "happy-dom": "^20.14.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "sass": "^1.100.0",
     "typescript": "^6.0.3",
+    "vitest": "^5.0.1",
     "vue-tsc": "^3.3.1"
   }
 }

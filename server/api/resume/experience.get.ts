@@ -1,7 +1,8 @@
 import { db } from '../../db'
 import { getLocale, pick } from '../../utils/locale'
+import type { H3Event } from 'h3'
 
-async function fetchExperience(event: any) {
+async function fetchExperience(event: H3Event) {
   const locale = getLocale(event)
 
   const rows = await db.query.experience.findMany({

@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import type FuseType from 'fuse.js'
 import type { Post } from '~/types'
 

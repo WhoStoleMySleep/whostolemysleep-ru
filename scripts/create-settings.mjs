@@ -7,7 +7,7 @@ for (const f of ['.env.local', '.env']) {
       const m = line.match(/^([^#=]+)=(.*)$/)
       if (m) process.env[m[1].trim()] ??= m[2].trim().replace(/^["']|["']$/g, '')
     }
-  } catch {}
+  } catch { /* файла нет — значит, переменные уже в окружении */ }
 }
 
 const sql = neon(process.env.POSTGRES_PRISMA_URL)

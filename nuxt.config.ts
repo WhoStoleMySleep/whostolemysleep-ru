@@ -6,7 +6,16 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt'],
+  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt', '@nuxt/eslint'],
+
+  eslint: {
+    config: {
+      // Форматирование намеренно не включено: значения в объектах по всему
+      // проекту выровнены по колонкам вручную, и любой автоформат это сломает.
+      // ESLint здесь ловит ошибки, а не расставляет пробелы.
+      stylistic: false,
+    },
+  },
 
   i18n: {
     baseUrl: 'https://whostolemysleep.ru',

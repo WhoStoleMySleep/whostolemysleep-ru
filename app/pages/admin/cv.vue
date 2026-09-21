@@ -48,8 +48,8 @@ const comparing = ref(false)
 const changes  = ref<Change[] | null>(null)
 
 /** Подтверждённые изменения и правки значений — решение по каждому отдельно. */
-const accepted  = reactive<Record<string, boolean>>({})
-const overrides = reactive<Record<string, string>>({})
+const accepted  = ref<Record<string, boolean>>({})
+const overrides = ref<Record<string, string>>({})
 
 function readFile(event: Event) {
   const input = event.target as HTMLInputElement
@@ -77,8 +77,8 @@ async function compare() {
   try {
     const res = await api.post<{ changes: Change[] }>('/api/admin/cv/diff', { snapshot })
     changes.value = res.changes
-    for (const key of Object.keys(accepted)) delete accepted[key]
-    for (const key of Object.keys(overrides)) delete overrides[key]
+    accepted.value  = {}
+    overrides.value = {}
     // Ничего не отмечено заранее: импорт не должен применять что-то молча.
     if (!res.changes.length) toast.ok('No differences — resume already matches the file')
   } catch (e) {
@@ -102,10 +102,10 @@ const grouped = computed(() =>
     .filter((g) => g.list.length),
 )
 
-const acceptedIds = computed(() => (changes.value ?? []).filter((c) => accepted[c.id]).map((c) => c.id))
+const acceptedIds = computed(() => (changes.value ?? []).filter((c) => accepted.value[c.id]).map((c) => c.id))
 
 function setAll(list: Change[], value: boolean) {
-  for (const c of list) accepted[c.id] = value
+  for (const c of list) accepted.value[c.id] = value
 }
 
 const applying = ref(false)
@@ -114,7 +114,7 @@ async function apply() {
   const ids = acceptedIds.value
   if (!ids.length) return
 
-  const removals = (changes.value ?? []).filter((c) => accepted[c.id] && c.kind === 'remove').length
+  const removals = (changes.value ?? []).filter((c) => accepted.value[c.id] && c.kind === 'remove').length
   const ok = await confirm.ask({
     title:  `Apply ${ids.length} change(s)?`,
     text:   removals
@@ -131,7 +131,7 @@ async function apply() {
     const res = await api.post<{ applied: number }>('/api/admin/cv/apply', {
       snapshot,
       accept: ids,
-      overrides: { ...overrides },
+      overrides: { ...overrides.value },
     })
     toast.ok(`Applied ${res.applied} change(s) — added to cache queue`)
     // Сравниваем заново: остаток показывает, что ещё не применено.

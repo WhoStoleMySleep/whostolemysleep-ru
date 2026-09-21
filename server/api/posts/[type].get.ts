@@ -2,8 +2,9 @@ import { db } from '../../db'
 import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale, pick } from '../../utils/locale'
+import type { H3Event } from 'h3'
 
-async function fetchPosts(event: any) {
+async function fetchPosts(event: H3Event) {
   const type = getRouterParam(event, 'type')
   if (type !== 'blog' && type !== 'project') {
     throw createError({ statusCode: 400, message: `Invalid type: ${type}` })

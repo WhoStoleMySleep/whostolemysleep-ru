@@ -1,0 +1,44 @@
+name: CI
+
+# Vercel собирает main сам, но узнать о поломке из упавшего деплоя — поздно.
+# Здесь те же проверки прогоняются на каждой ветке и в каждом PR.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Пуш в ветку отменяет прогон предыдущего коммита — очередь не копится.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # postinstall запускает nuxt prepare: без .nuxt нет ни типов,
+      # ни сгенерированного конфига ESLint, на который ссылается свой.
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      # vue-tsc отдельным шагом: в dev typeCheck выключен ради скорости,
+      # и без этого шага ошибки типов всплывали бы только на сборке.
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      # Сборка без базы и секретов: обращений к Neon на этом шаге нет,
+      # подключение создаётся лениво, уже в рантайме.
+      - run: pnpm build

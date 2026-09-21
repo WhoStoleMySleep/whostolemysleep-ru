@@ -2,8 +2,9 @@ import { db } from '../../db'
 import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale, pick } from '../../utils/locale'
+import type { H3Event } from 'h3'
 
-async function fetchPost(event: any) {
+async function fetchPost(event: H3Event) {
   const slug = getRouterParam(event, 'slug')
   if (!slug) throw createError({ statusCode: 400, message: 'Invalid slug' })
 

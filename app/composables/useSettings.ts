@@ -7,6 +7,10 @@ export interface SiteSettings {
   years_experience: number
 }
 
+/**
+ * Тип ответа указан прямо у $fetch: без него TypeScript пытается вывести его
+ * из таблицы маршрутов Nitro и упирается в предел вложенности (TS2321).
+ */
 export function useSettings() {
-  return useAsyncData<SiteSettings>('site-settings', () => $fetch('/api/settings'))
+  return useAsyncData<SiteSettings>('site-settings', () => $fetch<SiteSettings>('/api/settings'))
 }

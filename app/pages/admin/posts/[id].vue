@@ -43,17 +43,25 @@ const { data: allTags } = await useAsyncData<Tag[]>(
   'admin-tags', () => api.get<Tag[]>('/api/admin/tags'), { default: () => [] },
 )
 
+/** Что отдаёт GET /api/admin/posts/:id: поля формы плюс связи. */
+type LoadedPost = Partial<Form> & {
+  url?:          string | null
+  published_at?: string | null
+  postTags?:     { tag: Tag }[]
+  images?:       PostImage[]
+}
+
 const form   = ref<Form>(blank())
 const images = ref<PostImage[]>([])
 
 if (!isNew.value) {
-  const post = await api.get<Record<string, any>>(`/api/admin/posts/${postId.value}`)
+  const post = await api.get<LoadedPost>(`/api/admin/posts/${postId.value}`)
   form.value = {
     ...blank(),
     ...post,
     url:          post.url ?? '',
     published_at: post.published_at?.slice(0, 16) ?? '',
-    tag_ids:      (post.postTags ?? []).map((pt: { tag: Tag }) => pt.tag.id),
+    tag_ids:      (post.postTags ?? []).map((pt) => pt.tag.id),
   }
   images.value = post.images ?? []
 }

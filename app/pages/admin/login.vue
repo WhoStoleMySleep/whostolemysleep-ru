@@ -19,8 +19,8 @@ async function submit() {
     // Кука уже поставлена — избавляем middleware от проверочного запроса.
     useState('admin:authed', () => false).value = true
     router.push('/admin')
-  } catch (e: any) {
-    error.value = e?.data?.message ?? 'Login failed'
+  } catch (e) {
+    error.value = (e as { data?: { message?: string } })?.data?.message ?? 'Login failed'
   } finally {
     loading.value = false
   }

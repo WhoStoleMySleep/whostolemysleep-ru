@@ -51,21 +51,15 @@ pnpm db:migrate                    # apply schema migrations
 node scripts/create-settings.mjs  # seed settings table (run once)
 ```
 
-### Create admin user
+### Admin credentials
 
-There is no registration UI. Insert a user directly:
+There is no registration — the admin is one password, stored as a bcrypt hash in the environment, and a secret for signing the session cookie:
 
-```sql
-INSERT INTO "user" (email, password_hash, role)
-VALUES ('you@example.com', '<bcrypt_hash>', 'admin');
+```bash
+node scripts/admin-secrets.mjs
 ```
 
-Generate a bcrypt hash (Node.js):
-
-```js
-import bcrypt from 'bcryptjs'
-console.log(await bcrypt.hash('your_password', 12))
-```
+It asks for a password (hidden input, so it stays out of the shell history) and prints `ADMIN_JWT_SECRET` and `ADMIN_PASSWORD_HASH` to paste into `.env` and into the Vercel project. Changing `ADMIN_JWT_SECRET` logs out every open session.
 
 Then log in at `/admin/login`.
 
@@ -84,6 +78,9 @@ POSTGRES_PRISMA_URL=        # Neon pooled connection (for app)
 POSTGRES_URL_NON_POOLING=   # Neon direct connection (for migrations)
 EMAIL=                      # Gmail address used to send contact form messages
 EMAIL_PASSWORD=             # Gmail App Password — not the account password
+ADMIN_JWT_SECRET=           # signs the admin session cookie
+ADMIN_PASSWORD_HASH=        # bcrypt hash of the admin password
+ISR_BYPASS_TOKEN=           # 32 hex chars; lets the admin purge Vercel's ISR cache
 NUXT_PUBLIC_SITE_URL=       # https://whostolemysleep.ru
 PUBLISH_TOKEN=              # bearer token for the external publisher — leave unset to disable
 NEON_LOCAL_SQL_ENDPOINT=    # local dev only: HTTP proxy in front of a plain Postgres
@@ -98,10 +95,40 @@ NEON_LOCAL_SQL_ENDPOINT=    # local dev only: HTTP proxy in front of a plain Pos
 | `pnpm dev` | Dev server with Nuxt devtools |
 | `pnpm build` | Production build |
 | `pnpm preview` | Preview production build locally |
+| `pnpm test` | Run the test suite once |
+| `pnpm test:watch` | Re-run affected tests on change |
+| `pnpm test:coverage` | Test run with a coverage report |
+| `pnpm lint` | ESLint over the whole repo (warnings fail too) |
+| `pnpm lint:fix` | Same, applying the fixes it can |
+| `pnpm typecheck` | `vue-tsc` over the project |
 | `pnpm db:generate` | Generate Drizzle migration from schema changes |
 | `pnpm db:migrate` | Apply pending migrations |
 | `pnpm db:studio` | Open Drizzle Studio (visual DB browser) |
 | `pnpm db:introspect` | Reverse-engineer schema from existing DB |
+
+## Tests and checks
+
+Vitest runs inside a real Nuxt environment (`@nuxt/test-utils`), so specs get the same auto-imports and aliases as the app. Files mirror the code they cover: `server/utils/cv.ts` → `tests/nuxt/server/utils/cv.spec.ts`.
+
+```
+tests/nuxt/
+  components/   # rendering and props — mountSuspended
+  composables/  # app-side logic
+  server/utils/ # pure helpers, auth, cache invalidation
+```
+
+Covered first are the places where a silent mistake is expensive: CV import parsing and diffing, ISR cache invalidation, admin session sliding, the publisher's token check, and HTML sanitising.
+
+Git hooks (husky):
+
+| Hook | What runs |
+|---|---|
+| `pre-commit` | `lint-staged` — ESLint on staged files plus the tests related to them |
+| `pre-push` | the whole suite |
+
+CI (`.github/workflows/ci.yml`) repeats lint, tests and build on every branch and pull request.
+
+ESLint deliberately carries no formatting rules — values across this codebase are aligned into columns by hand, and an autoformatter would flatten them.
 
 ## Structure
 
@@ -144,7 +171,7 @@ public/
 
 ## Admin panel
 
-Route `/admin` is JWT-protected (httpOnly cookie, `SameSite=strict`, 7-day expiry). Failed logins are counted per client address — five in fifteen minutes and the address waits.
+Route `/admin` is JWT-protected (httpOnly cookie, `SameSite=lax`, 7-day expiry, slid forward while the panel is in use). Failed logins are counted per client address — five in fifteen minutes and the address waits.
 
 Manages:
 
@@ -155,7 +182,7 @@ Manages:
 - **Skills** — grouped skill lists
 - **Settings** — open-to-work toggle, social links, contact email
 
-After editing content, hit "Revalidate" in the admin settings to purge ISR cache on Vercel.
+After editing content, hit "Revalidate" in the admin settings to purge the ISR cache on Vercel. It works by requesting each queued page with the `x-prerender-revalidate` header, so `ISR_BYPASS_TOKEN` has to be set both at build time (it is baked into the generated prerender config) and at runtime.
 
 Uploads accept png, jpeg, gif and webp only, up to 8 MB, and the type is decided by the file's own signature — the browser's `Content-Type` and the file extension are attacker-controlled, and a file stored as `text/html` on a public bucket becomes a page.
 
@@ -215,8 +242,9 @@ ISR revalidation windows:
 |---|---|
 | Home (`/ru`, `/en`) | 1 hour |
 | Blog, Projects | 10 min |
-| Resume | 2 hours |
-| Contacts, Admin | Always SSR |
+| Resume, CV, Contacts | 2 hours |
+| Privacy | 24 hours |
+| Admin | Always SSR |
 
 ## License
 

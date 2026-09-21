@@ -1,0 +1,3 @@
+echo "🔍 pre-commit: линт и тесты по затронутым файлам..."
+npx lint-staged
+echo "✅ pre-commit пройден"
