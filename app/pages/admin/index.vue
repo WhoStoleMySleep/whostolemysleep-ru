@@ -8,6 +8,11 @@ interface Stats {
   pending: number
 }
 interface Pending { path: string; added_at: string }
+interface Flush {
+  ok:      boolean
+  cleared: string[]
+  failed:  { path: string; reason: string }[]
+}
 
 const api   = useAdminApi()
 const toast = useAdminToast()
@@ -26,8 +31,15 @@ const flushing = ref(false)
 async function flush() {
   flushing.value = true
   try {
-    const res = await api.post<{ cleared: string[] }>('/api/admin/revalidate', {})
-    toast.ok(`Cleared ${res.cleared.length} path(s)`)
+    const res = await api.post<Flush>('/api/admin/revalidate', {})
+    // Провалы показываем отдельно: раньше кнопка всегда отчитывалась об
+    // успехе, даже когда кеш на самом деле не сбрасывался.
+    if (res.failed.length) {
+      const first = res.failed[0]!
+      toast.err(`${res.failed.length} failed — ${first.path}: ${first.reason}`)
+    } else {
+      toast.ok(`Revalidated ${res.cleared.length} path(s)`)
+    }
     await Promise.all([refreshPending(), refreshStats()])
   } catch (e) {
     toast.err(adminError(e))

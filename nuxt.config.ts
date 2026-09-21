@@ -143,6 +143,17 @@ export default defineNuxtConfig({
     experimental: {
       asyncContext: true,
     },
+
+    // Токен попадает в .prerender-config.json рядом с каждым isr-маршрутом.
+    // Запрос страницы с таким же значением в заголовке x-prerender-revalidate
+    // заставляет Vercel перестроить её кеш — единственный способ сбросить
+    // эдж из приложения. Значит, одна и та же переменная нужна и на сборке,
+    // и в рантайме, где её читает server/utils/revalidate.ts.
+    vercel: {
+      config: {
+        bypassToken: process.env.ISR_BYPASS_TOKEN,
+      },
+    },
   },
 
   vite: {
