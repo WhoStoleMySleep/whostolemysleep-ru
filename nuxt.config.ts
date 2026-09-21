@@ -64,8 +64,12 @@ export default defineNuxtConfig({
     // Печатная версия резюме: из поиска исключена, чтобы не конкурировать с /resume.
     '/ru/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
     '/en/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
-    '/ru/contacts':  { ssr: true },
-    '/en/contacts':  { ssr: true },
+    // Страница состоит из формы и контактов из настроек — на каждый запрос
+    // ходить в базу за ними незачем. Окно длинное: settings.patch.ts кладёт
+    // оба пути в очередь ревалидации, так что правка в админке разъезжается
+    // по кнопке Flush, а не по истечении таймера.
+    '/ru/contacts':  { isr: 7200 },
+    '/en/contacts':  { isr: 7200 },
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },
     '/ru/privacy':   { isr: 86400 },
     '/en/privacy':   { isr: 86400 },
