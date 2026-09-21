@@ -25,6 +25,35 @@ async function fetchExperience(event: H3Event) {
   }))
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:       ['Публичные'],
+    summary:    'Опыт работы',
+    parameters: [{ $ref: '#/components/parameters/locale' }],
+    responses: {
+      200: { description: 'Места работы в порядке order, внутри — пункты в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Experience' } } } } },
+    },
+    $global: {
+      components: {
+        schemas: {
+          Experience: {
+            type: 'object',
+            properties: {
+              id:        { type: 'integer' },
+              company:   { type: 'string' },
+              position:  { type: 'string' },
+              date_from: { type: 'string', format: 'date' },
+              date_to:   { type: 'string', format: 'date', nullable: true },
+              order:     { type: 'integer' },
+              bullets:   { type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, text: { type: 'string' }, order: { type: 'integer' } } } },
+            },
+          },
+        },
+      },
+    },
+  },
+})
+
 export default defineCachedEventHandler(fetchExperience, {
   maxAge:  7200,
   getKey:  (event) => `experience-${getQuery(event).locale ?? 'ru'}`,

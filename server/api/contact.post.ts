@@ -3,6 +3,36 @@ import nodemailer from 'nodemailer'
 const RATE_LIMIT  = 3
 const RATE_WINDOW = 60 * 60 * 1000
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Публичные'],
+    summary:     'Отправить сообщение с формы контактов',
+    description: 'Не больше трёх писем с одного адреса в час. Поле website — ловушка для ботов: заполнено, значит запрос отклоняется.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'email', 'message'],
+            properties: {
+              name:    { type: 'string' },
+              email:   { type: 'string', format: 'email' },
+              message: { type: 'string' },
+              website: { type: 'string', description: 'Honeypot, должно остаться пустым' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: 'Письмо отправлено', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      429: { $ref: '#/components/responses/TooManyRequests' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   // clientIp берёт адрес из заголовка платформы, а не из того, что прислал клиент.
   const ip = clientIp(event)

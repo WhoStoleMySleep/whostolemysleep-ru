@@ -9,6 +9,36 @@ interface Body {
   overrides?: Record<string, string>
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: резюме'],
+    summary:     'Применить подтверждённые изменения',
+    description: 'Разница считается на сервере заново; от клиента приходят только id подтверждённых изменений.',
+    security:    [{ adminCookie: [] }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['snapshot', 'accept'],
+            properties: {
+              snapshot:  { $ref: '#/components/schemas/CvSnapshot' },
+              accept:    { type: 'array', items: { type: 'string' }, description: 'id изменений из ответа diff' },
+              overrides: { type: 'object', additionalProperties: { type: 'string' }, description: 'id изменения — новое значение; работает только для editable' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: 'Сколько изменений применено и сколько отброшено', content: { 'application/json': { schema: { type: 'object', properties: { applied: { type: 'integer' }, skipped: { type: 'integer' } } } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      401: { $ref: '#/components/responses/Unauthorized' },
+    },
+  },
+})
+
 /**
  * Разница считается на сервере заново, а от клиента приходят только id
  * подтверждённых изменений. Иначе запись в базу задавалась бы телом

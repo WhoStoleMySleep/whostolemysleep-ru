@@ -148,6 +148,20 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       asyncContext: true,
+      openAPI:      true,
+    },
+
+    openAPI: {
+      meta: {
+        title:       'whostolemysleep.ru API',
+        description: 'Публичные данные сайта, приём постов от внешнего публикатора и эндпоинты админки.',
+        version:     '1.0.0',
+      },
+      production: false,
+      ui: {
+        scalar:  { route: '/_docs/scalar' },
+        swagger: { route: '/_docs/swagger' },
+      },
     },
 
     // Токен попадает в .prerender-config.json рядом с каждым isr-маршрутом.

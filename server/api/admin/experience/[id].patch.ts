@@ -5,6 +5,40 @@ import { markDirty } from '~~/server/utils/pending'
 
 interface Bullet { text_ru: string; text_en: string }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: резюме'],
+    summary:     'Изменить место работы',
+    description: 'bullets, если передан, заменяет список пунктов целиком.',
+    security:    [{ adminCookie: [] }],
+    parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              company:     { type: 'string' },
+              position_ru: { type: 'string' },
+              position_en: { type: 'string' },
+              date_from:   { type: 'string', format: 'date' },
+              date_to:     { type: 'string', format: 'date', nullable: true },
+              order:       { type: 'integer' },
+              bullets:     { type: 'array', items: { type: 'object', properties: { text_ru: { type: 'string' }, text_en: { type: 'string' } } } },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
+      401: { $ref: '#/components/responses/Unauthorized' },
+      404: { $ref: '#/components/responses/NotFound' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody<{

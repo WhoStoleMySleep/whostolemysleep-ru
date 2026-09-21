@@ -13,6 +13,23 @@ interface PatchBody {
   tag_ids?:     number[]
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: посты'],
+    summary:     'Изменить пост',
+    description: 'tag_ids, если передан, заменяет набор тегов целиком.',
+    security:    [{ adminCookie: [] }],
+    parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PostInput' } } } },
+    responses: {
+      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      401: { $ref: '#/components/responses/Unauthorized' },
+      404: { $ref: '#/components/responses/NotFound' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') ?? '')
   if (isNaN(id)) throw createError({ statusCode: 400, message: 'Invalid id' })

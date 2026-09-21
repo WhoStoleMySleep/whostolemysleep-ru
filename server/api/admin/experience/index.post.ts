@@ -13,6 +13,39 @@ interface Body {
   bullets: Bullet[]
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: резюме'],
+    summary:     'Добавить место работы',
+    description: 'Порядок пунктов задаётся порядком в массиве bullets.',
+    security:    [{ adminCookie: [] }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['company', 'position_ru', 'date_from'],
+            properties: {
+              company:     { type: 'string' },
+              position_ru: { type: 'string' },
+              position_en: { type: 'string' },
+              date_from:   { type: 'string', format: 'date' },
+              date_to:     { type: 'string', format: 'date', nullable: true },
+              order:       { type: 'integer' },
+              bullets:     { type: 'array', items: { type: 'object', properties: { text_ru: { type: 'string' }, text_en: { type: 'string' } } } },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: 'Созданная запись без пунктов', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
+      401: { $ref: '#/components/responses/Unauthorized' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const body = await readBody<Body>(event)
 

@@ -45,6 +45,60 @@ async function fetchPosts(event: H3Event) {
   }))
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:    ['Публичные'],
+    summary: 'Опубликованные посты по типу',
+    parameters: [
+      { name: 'type', in: 'path', required: true, description: 'Раздел сайта', schema: { type: 'string', enum: ['blog', 'project'] } },
+      { $ref: '#/components/parameters/locale' },
+    ],
+    responses: {
+      200: { description: 'Посты от новых к старым', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Post' } } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+    },
+    $global: {
+      components: {
+        schemas: {
+          Tag: {
+            type: 'object',
+            properties: {
+              id:   { type: 'integer' },
+              slug: { type: 'string' },
+              name: { type: 'string' },
+            },
+          },
+          PostImage: {
+            type: 'object',
+            properties: {
+              id:       { type: 'integer' },
+              url:      { type: 'string', format: 'uri' },
+              alt:      { type: 'string' },
+              position: { type: 'integer' },
+            },
+          },
+          Post: {
+            type: 'object',
+            properties: {
+              id:           { type: 'integer' },
+              slug:         { type: 'string' },
+              type:         { type: 'string', enum: ['blog', 'project'] },
+              title:        { type: 'string' },
+              text:         { type: 'string', description: 'HTML, пропущенный через sanitizeHtml' },
+              excerpt:      { type: 'string' },
+              url:          { type: 'string', nullable: true },
+              published_at: { type: 'string', format: 'date-time', nullable: true },
+              updated_at:   { type: 'string', format: 'date-time' },
+              tags:         { type: 'array', items: { $ref: '#/components/schemas/Tag' } },
+              images:       { type: 'array', items: { $ref: '#/components/schemas/PostImage' } },
+            },
+          },
+        },
+      },
+    },
+  },
+})
+
 export default defineCachedEventHandler(fetchPosts, {
   maxAge:  600,
   getKey:  (event) => `posts-${getRouterParam(event, 'type')}-${getQuery(event).locale ?? 'ru'}`,

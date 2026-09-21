@@ -10,6 +10,26 @@ const SIGNATURES: { type: string; ext: string; match: (bytes: Buffer) => boolean
 
 const MAX_BYTES = 8 * 1024 * 1024
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: посты'],
+    summary:     'Загрузить картинку в хранилище',
+    description: 'Тип определяется по сигнатуре файла, а не по заголовку. Принимаются png, jpeg, gif и webp до 8 МБ.',
+    security:    [{ adminCookie: [] }],
+    requestBody: {
+      required: true,
+      content: { 'multipart/form-data': { schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } } } },
+    },
+    responses: {
+      200: { description: 'Публичная ссылка на файл', content: { 'application/json': { schema: { type: 'object', properties: { url: { type: 'string', format: 'uri' } } } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      401: { $ref: '#/components/responses/Unauthorized' },
+      413: { description: 'Файл больше 8 МБ', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+      415: { description: 'Неподдерживаемый формат', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const form = await readMultipartFormData(event)
   const file = form?.find((f) => f.name === 'file')

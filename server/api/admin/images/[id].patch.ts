@@ -2,6 +2,21 @@ import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: посты'],
+    summary:     'Изменить подпись картинки',
+    security:    [{ adminCookie: [] }],
+    parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+    requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { alt_ru: { type: 'string' }, alt_en: { type: 'string' } } } } } },
+    responses: {
+      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/ImageRow' } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      401: { $ref: '#/components/responses/Unauthorized' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') ?? '')
   if (isNaN(id)) throw createError({ statusCode: 400, message: 'Invalid id' })

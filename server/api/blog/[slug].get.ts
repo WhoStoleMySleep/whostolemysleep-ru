@@ -44,6 +44,22 @@ async function fetchPost(event: H3Event) {
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:    ['Публичные'],
+    summary: 'Статья блога по слагу',
+    parameters: [
+      { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+      { $ref: '#/components/parameters/locale' },
+    ],
+    responses: {
+      200: { description: 'Статья', content: { 'application/json': { schema: { $ref: '#/components/schemas/Post' } } } },
+      400: { $ref: '#/components/responses/BadRequest' },
+      404: { $ref: '#/components/responses/NotFound' },
+    },
+  },
+})
+
 export default defineCachedEventHandler(fetchPost, {
   maxAge:  600,
   getKey:  (event) => `blog-${getRouterParam(event, 'slug')}-${getQuery(event).locale ?? 'ru'}`,

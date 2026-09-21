@@ -18,6 +18,19 @@ interface CreateBody {
   tag_ids:     number[]
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Админка: посты'],
+    summary:     'Создать пост',
+    security:    [{ adminCookie: [] }],
+    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PostInput' } } } },
+    responses: {
+      200: { description: 'Созданная запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
+      401: { $ref: '#/components/responses/Unauthorized' },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const body = await readBody<CreateBody>(event)
   const { tag_ids, ...fields } = body

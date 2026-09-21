@@ -38,6 +38,17 @@ function bullet(title: string, href: string, note: string) {
   return note ? `- [${title}](${href}): ${note}` : `- [${title}](${href})`
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Служебные'],
+    summary:     'Выжимка сайта для языковых моделей',
+    description: 'Формат llmstxt.org: markdown с одним H1 и секциями ссылок.',
+    responses: {
+      200: { description: 'Markdown', content: { 'text/plain': { schema: { type: 'string' } } } },
+    },
+  },
+})
+
 export default defineCachedEventHandler(async (event) => {
   const [posts, [config], firstJob, groups] = await Promise.all([
     db

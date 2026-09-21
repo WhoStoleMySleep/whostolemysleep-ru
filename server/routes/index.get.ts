@@ -1,5 +1,16 @@
 const CIS_CODES = ['ru', 'uk', 'be', 'kk']
 
+defineRouteMeta({
+  openAPI: {
+    tags:        ['Служебные'],
+    summary:     'Корень сайта',
+    description: 'Редирект на локаль: сохранённая кука, иначе язык из accept-language.',
+    responses: {
+      302: { description: 'Redirect на /ru или /en' },
+    },
+  },
+})
+
 export default defineEventHandler((event) => {
   const saved = getCookie(event, 'locale')
   if (saved === 'ru' || saved === 'en') {

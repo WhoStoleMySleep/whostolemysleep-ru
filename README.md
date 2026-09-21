@@ -230,6 +230,24 @@ What happens on the way in:
 - **A slug that belongs to someone else is a 409**, not a silent overwrite. Posts written in the admin panel have no `external_id`, so the publisher may adopt one by slug; a post that already belongs to a different `external_id` is left alone.
 - **ISR paths are queued** exactly as the admin panel does it, so the new post appears without a manual revalidate.
 
+## API reference
+
+Every handler under `server/api` and `server/routes` carries a `defineRouteMeta({ openAPI: … })` block, so the specification is generated from the routes themselves and cannot drift away from them — a renamed field is a diff in the same file as the code.
+
+Nitro serves it in dev only:
+
+| URL | What it is |
+|---|---|
+| `/_openapi.json` | the specification itself, OpenAPI 3.1 |
+| `/_docs/scalar` | Scalar UI — grouped by tag, with a request runner |
+| `/_docs/swagger` | Swagger UI, for whoever prefers it |
+
+`openAPI.production` is `false` in `nuxt.config.ts`: the spec is a development aid, and the deployed site has no reason to hand out a map of its admin endpoints. Flip it to `'prerender'` if a published reference is ever needed.
+
+Operations are tagged by area — `Публичные`, `Публикатор`, `Админка: посты / резюме / навыки / настройки / кеш / сессия / дашборд`, `Служебные`. Shared pieces (error shapes, the `locale` query parameter, both security schemes) live in the `$global` block of `server/api/settings.get.ts`; domain schemas sit in the route that first returns them and are reused through `$ref`.
+
+Two security schemes are described: `adminCookie` (the `wms_admin` JWT cookie, issued by `POST /api/admin/login`) and `publishToken` (the bearer token from `PUBLISH_TOKEN`). Everything under `/api/admin` except login is behind the cookie — `server/middleware/admin-guard.ts` enforces it before any handler runs.
+
 ## Deployment
 
 Deployed on Vercel. Neon and Vercel Blob are both provisioned through the Vercel marketplace — environment variables are set automatically.

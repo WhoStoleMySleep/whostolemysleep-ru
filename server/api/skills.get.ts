@@ -18,6 +18,32 @@ async function fetchSkills(event: H3Event) {
   }))
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags:       ['Публичные'],
+    summary:    'Навыки по группам',
+    parameters: [{ $ref: '#/components/parameters/locale' }],
+    responses: {
+      200: { description: 'Группы в порядке order, внутри — навыки в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/SkillGroup' } } } } },
+    },
+    $global: {
+      components: {
+        schemas: {
+          SkillGroup: {
+            type: 'object',
+            properties: {
+              id:     { type: 'integer' },
+              slug:   { type: 'string' },
+              name:   { type: 'string' },
+              skills: { type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, name: { type: 'string' }, order: { type: 'integer' } } } },
+            },
+          },
+        },
+      },
+    },
+  },
+})
+
 export default defineCachedEventHandler(fetchSkills, {
   maxAge:  7200,
   getKey:  (event) => `skills-${getQuery(event).locale ?? 'ru'}`,

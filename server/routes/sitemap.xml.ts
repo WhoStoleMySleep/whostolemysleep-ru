@@ -7,6 +7,16 @@ const LOCALES  = ['en', 'ru']
 
 const STATIC_PATHS = ['', '/blog', '/projects', '/resume', '/contacts', '/privacy']
 
+defineRouteMeta({
+  openAPI: {
+    tags:    ['Служебные'],
+    summary: 'Карта сайта',
+    responses: {
+      200: { description: 'urlset со статическими страницами и постами в обеих локалях', content: { 'application/xml': { schema: { type: 'string' } } } },
+    },
+  },
+})
+
 export default defineEventHandler(async (event) => {
   const posts = await db
     .select({ slug: post.slug, type: post.type })
