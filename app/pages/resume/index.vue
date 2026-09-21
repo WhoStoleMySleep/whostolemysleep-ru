@@ -2,6 +2,7 @@
 import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
 
 const { locale, t } = useLocale()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title:       () => t('seo.resume_title'),
@@ -30,6 +31,11 @@ const { formatPeriod } = useFormatDate()
       num="03"
       :title="t('resume.title')"
     />
+
+    <NuxtLink :to="localePath('/cv')" class="cv-link">
+      {{ t('hero.cta_cv') }}
+      <span aria-hidden="true">↓</span>
+    </NuxtLink>
 
     <section v-if="about" class="block">
       <p class="block__label">{{ t('resume.about') }}</p>
@@ -86,6 +92,25 @@ const { formatPeriod } = useFormatDate()
 </template>
 
 <style scoped>
+.cv-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: clamp(8px, 2vw, 20px);
+  padding: 9px 18px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cv-link:hover { border-color: var(--accent); background: var(--accent-glow); }
+
 .block {
   display: flex;
   flex-wrap: wrap;

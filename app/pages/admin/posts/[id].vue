@@ -4,482 +4,480 @@ definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const route  = useRoute()
 const router = useRouter()
-const isNew  = route.params.id === 'new'
 
-useHead({ title: isNew ? 'Admin — New post' : 'Admin — Edit post' })
+const api     = useAdminApi()
+const toast   = useAdminToast()
+const confirm = useAdminConfirm()
+
+/** Для новой записи id ещё нет — он появится после первого сохранения. */
+const postId = ref<string | null>(route.params.id === 'new' ? null : String(route.params.id))
+const isNew  = computed(() => postId.value === null)
+
+useHead({ title: () => (isNew.value ? 'Admin — New post' : 'Admin — Edit post') })
 
 interface PostImage { id: number; url: string; alt_ru: string; alt_en: string; position: number }
+interface Tag { id: number; slug: string; name_ru: string; name_en: string }
 
-const { data: allTags } = await useFetch<any[]>('/api/admin/tags')
+interface Form {
+  slug: string
+  type: 'blog' | 'project'
+  title_ru: string; title_en: string
+  excerpt_ru: string; excerpt_en: string
+  text_ru: string; text_en: string
+  url: string
+  is_published: boolean
+  published_at: string
+  tag_ids: number[]
+}
 
-const form = reactive({
-  slug:         '',
-  type:         'blog' as 'blog' | 'project',
-  title_ru:     '',
-  title_en:     '',
-  excerpt_ru:   '',
-  excerpt_en:   '',
-  text_ru:      '',
-  text_en:      '',
-  url:          '',
-  is_published: false,
-  published_at: '',
-  tag_ids:      [] as number[],
+const blank = (): Form => ({
+  slug: '', type: 'blog',
+  title_ru: '', title_en: '',
+  excerpt_ru: '', excerpt_en: '',
+  text_ru: '', text_en: '',
+  url: '', is_published: false, published_at: '',
+  tag_ids: [],
 })
 
+const { data: allTags } = await useAsyncData<Tag[]>(
+  'admin-tags', () => api.get<Tag[]>('/api/admin/tags'), { default: () => [] },
+)
+
+const form   = ref<Form>(blank())
 const images = ref<PostImage[]>([])
 
-if (!isNew) {
-  const post = await $fetch<any>(`/api/admin/posts/${route.params.id}`)
-  Object.assign(form, {
+if (!isNew.value) {
+  const post = await api.get<Record<string, any>>(`/api/admin/posts/${postId.value}`)
+  form.value = {
+    ...blank(),
     ...post,
     url:          post.url ?? '',
     published_at: post.published_at?.slice(0, 16) ?? '',
-    tag_ids:      post.postTags.map((pt: any) => pt.tag.id),
-  })
+    tag_ids:      (post.postTags ?? []).map((pt: { tag: Tag }) => pt.tag.id),
+  }
   images.value = post.images ?? []
 }
 
-const lang      = ref<'ru' | 'en'>('ru')
-const preview   = ref(false)
-const saving    = ref(false)
-const saveMsg   = ref('')
-const error     = ref('')
+/* ── Несохранённые изменения ──
+   Прежний редактор молча терял текст при уходе со страницы. */
+
+const snapshot = ref(JSON.stringify(form.value))
+const dirty    = computed(() => JSON.stringify(form.value) !== snapshot.value)
+
+const lang    = ref<'ru' | 'en'>('ru')
+const preview = ref(false)
+const saving  = ref(false)
+
+const body = computed(() => ({
+  ...form.value,
+  url:          form.value.url || null,
+  published_at: form.value.published_at || null,
+}))
+
+async function save() {
+  if (saving.value) return
+  saving.value = true
+  try {
+    if (isNew.value) {
+      const created = await api.post<{ id: number }>('/api/admin/posts', body.value)
+      postId.value = String(created.id)
+      // replace, а не push: возврат назад не должен вести на пустую форму.
+      await router.replace(`/admin/posts/${created.id}`)
+    } else {
+      await api.patch(`/api/admin/posts/${postId.value}`, body.value)
+    }
+    snapshot.value = JSON.stringify(form.value)
+    toast.ok('Saved — added to cache queue')
+  } catch (e) {
+    toast.err(adminError(e))
+  } finally {
+    saving.value = false
+  }
+}
+
+function onKey(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault()
+    save()
+  }
+}
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (dirty.value) e.preventDefault()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeRouteLeave(async () => {
+  if (!dirty.value) return true
+  return confirm.ask({
+    title:  'Leave without saving?',
+    text:   'Unsaved changes will be lost.',
+    action: 'Leave',
+  })
+})
+
+/* ── Теги ── */
+
+function toggleTag(id: number) {
+  const idx = form.value.tag_ids.indexOf(id)
+  if (idx >= 0) form.value.tag_ids.splice(idx, 1)
+  else form.value.tag_ids.push(id)
+}
+
+/* ── Картинки ── */
+
 const uploading = ref(false)
-const uploadErr = ref('')
 
 async function uploadImage(event: Event) {
   const input = event.target as HTMLInputElement
   const file  = input.files?.[0]
-  if (!file) return
+  if (!file || !postId.value) return
   input.value = ''
 
   uploading.value = true
-  uploadErr.value = ''
   try {
     const fd = new FormData()
     fd.append('file', file)
-    const { url } = await $fetch<{ url: string }>('/api/admin/upload', { method: 'POST', body: fd })
-    const postId = route.params.id as string
-    const img = await $fetch<PostImage>(`/api/admin/posts/${postId}/images`, { method: 'POST', body: { url } })
+    const { url } = await api.call<{ url: string }>('/api/admin/upload', { method: 'POST', body: fd } as never)
+    const img = await api.post<PostImage>(`/api/admin/posts/${postId.value}/images`, { url })
     images.value.push(img)
-  } catch (e: any) {
-    uploadErr.value = e?.data?.message ?? 'Upload failed'
+    toast.ok('Image uploaded')
+  } catch (e) {
+    toast.err(adminError(e))
   } finally {
     uploading.value = false
   }
 }
 
-async function removeImage(id: number) {
-  if (!confirm('Delete this image?')) return
-  await $fetch(`/api/admin/images/${id}`, { method: 'DELETE' })
-  images.value = images.value.filter((img) => img.id !== id)
+async function removeImage(img: PostImage) {
+  const ok = await confirm.ask({ title: 'Delete image?', text: 'It will be removed from the post.' })
+  if (!ok) return
+  try {
+    await api.remove(`/api/admin/images/${img.id}`)
+    images.value = images.value.filter((x) => x.id !== img.id)
+  } catch (e) {
+    toast.err(adminError(e))
+  }
 }
 
 async function saveAlt(img: PostImage) {
-  await $fetch(`/api/admin/images/${img.id}`, {
-    method: 'PATCH',
-    body: { alt_ru: img.alt_ru, alt_en: img.alt_en },
-  })
-}
-
-const previewHtml = computed(() => lang.value === 'ru' ? form.text_ru : form.text_en)
-
-function toggleTag(id: number) {
-  const idx = form.tag_ids.indexOf(id)
-  if (idx >= 0) form.tag_ids.splice(idx, 1)
-  else form.tag_ids.push(id)
-}
-
-async function save() {
-  saving.value = true
-  saveMsg.value = ''
-  error.value   = ''
-
-  const body = {
-    ...form,
-    url:          form.url || null,
-    published_at: form.published_at || null,
-  }
-
   try {
-    if (isNew) {
-      const created = await $fetch<any>('/api/admin/posts', { method: 'POST', body })
-      router.replace(`/admin/posts/${created.id}`)
-    } else {
-      await $fetch(`/api/admin/posts/${route.params.id}`, { method: 'PATCH', body })
-    }
-    saveMsg.value = 'Saved — added to cache queue'
-  } catch (e: any) {
-    error.value = e?.data?.message ?? 'Error'
-  } finally {
-    saving.value = false
+    await api.patch(`/api/admin/images/${img.id}`, { alt_ru: img.alt_ru, alt_en: img.alt_en })
+  } catch (e) {
+    toast.err(adminError(e))
   }
 }
+
+const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : form.value.text_en))
 </script>
 
 <template>
-  <div class="editor">
-    <div class="editor-head">
-      <NuxtLink to="/admin/posts" class="back-link">← Posts</NuxtLink>
-      <p class="editor-title">{{ isNew ? 'New post' : 'Edit post' }}</p>
-      <div class="editor-head__right">
-        <span v-if="saveMsg" class="save-msg">{{ saveMsg }}</span>
-        <span v-if="error"   class="save-error">{{ error }}</span>
-        <button class="admin-btn admin-btn--primary" :disabled="saving" @click="save">
-          {{ saving ? 'Saving...' : 'Save' }}
+  <AdminPage
+    :title="isNew ? 'New post' : form.title_ru || form.slug || 'Edit post'"
+    :note="dirty ? 'Unsaved changes · ⌘S to save' : 'In sync'"
+  >
+    <template #actions>
+      <NuxtLink to="/admin/posts" class="admin-btn admin-btn--ghost">← Posts</NuxtLink>
+      <a
+        v-if="!isNew && form.slug"
+        class="admin-btn admin-btn--ghost"
+        :href="`/ru/${form.type === 'project' ? 'projects' : 'blog'}/${form.slug}`"
+        target="_blank"
+      >View</a>
+      <button class="admin-btn admin-btn--primary" type="button" :disabled="saving" @click="save">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+    </template>
+
+    <div class="admin-panel block">
+      <div class="admin-grid">
+        <AdminField v-model="form.slug" label="Slug" required placeholder="my-post-slug" />
+
+        <AdminField label="Type">
+          <select v-model="form.type" class="admin-input select">
+            <option value="blog">Blog</option>
+            <option value="project">Project</option>
+          </select>
+        </AdminField>
+
+        <AdminField label="Published at">
+          <input v-model="form.published_at" class="admin-input select" type="datetime-local">
+        </AdminField>
+
+        <AdminField v-model="form.url" label="External URL (projects)" type="url" placeholder="https://…" />
+      </div>
+
+      <AdminField v-model="form.is_published" type="checkbox" label="Published — visible on the site" />
+    </div>
+
+    <div class="admin-panel block">
+      <div class="block__head">
+        <div class="tabs">
+          <button
+            v-for="l in (['ru', 'en'] as const)"
+            :key="l"
+            class="tab"
+            :class="{ 'tab--active': lang === l }"
+            type="button"
+            @click="lang = l"
+          >{{ l.toUpperCase() }}</button>
+        </div>
+        <button class="link-btn" type="button" @click="preview = !preview">
+          {{ preview ? 'Hide preview' : 'Preview' }}
         </button>
       </div>
+
+      <template v-if="lang === 'ru'">
+        <AdminField v-model="form.title_ru" label="Title RU" required />
+        <AdminField v-model="form.excerpt_ru" label="Excerpt RU" type="textarea" :rows="2" />
+      </template>
+      <template v-else>
+        <AdminField v-model="form.title_en" label="Title EN" />
+        <AdminField v-model="form.excerpt_en" label="Excerpt EN" type="textarea" :rows="2" />
+      </template>
+
+      <AdminField :label="`Text ${lang.toUpperCase()} (HTML)`">
+        <div class="pane" :class="{ 'pane--split': preview }">
+          <textarea
+            v-if="lang === 'ru'"
+            v-model="form.text_ru"
+            class="admin-input pane__area"
+            rows="20"
+          />
+          <textarea
+            v-else
+            v-model="form.text_en"
+            class="admin-input pane__area"
+            rows="20"
+          />
+          <!-- Текст хранится готовым HTML, поэтому превью — он сам. -->
+          <div v-if="preview" class="pane__preview prose" v-html="previewHtml" />
+        </div>
+      </AdminField>
     </div>
 
-    <div class="editor-body">
-      <!-- Left: form -->
-      <div class="editor-fields">
-
-        <!-- Meta row -->
-        <div class="field-row">
-          <div class="field">
-            <label class="field-label">Slug</label>
-            <input v-model="form.slug" class="field-input" type="text" placeholder="my-post-slug" />
-          </div>
-          <div class="field field--narrow">
-            <label class="field-label">Type</label>
-            <select v-model="form.type" class="field-input">
-              <option value="blog">Blog</option>
-              <option value="project">Project</option>
-            </select>
-          </div>
-          <div class="field field--narrow">
-            <label class="field-label">Published</label>
-            <label class="toggle">
-              <input v-model="form.is_published" type="checkbox" />
-              <span>{{ form.is_published ? 'Yes' : 'No' }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label class="field-label">Published at</label>
-            <input v-model="form.published_at" class="field-input" type="datetime-local" />
-          </div>
-          <div class="field">
-            <label class="field-label">External URL (projects)</label>
-            <input v-model="form.url" class="field-input" type="url" placeholder="https://..." />
-          </div>
-        </div>
-
-        <!-- Lang tabs -->
-        <div class="lang-tabs">
-          <button class="lang-tab" :class="{ 'lang-tab--active': lang === 'ru' }" @click="lang = 'ru'">RU</button>
-          <button class="lang-tab" :class="{ 'lang-tab--active': lang === 'en' }" @click="lang = 'en'">EN</button>
-        </div>
-
-        <div v-show="lang === 'ru'" class="lang-fields">
-          <div class="field">
-            <label class="field-label">Title RU</label>
-            <input v-model="form.title_ru" class="field-input" type="text" />
-          </div>
-          <div class="field">
-            <label class="field-label">Excerpt RU</label>
-            <textarea v-model="form.excerpt_ru" class="field-input field-input--sm" rows="2" />
-          </div>
-          <div class="field">
-            <label class="field-label">
-              Text RU (HTML)
-              <button class="preview-toggle" @click="preview = !preview">
-                {{ preview ? 'Hide preview' : 'Preview' }}
-              </button>
-            </label>
-            <div class="text-pane" :class="{ 'text-pane--split': preview }">
-              <textarea v-model="form.text_ru" class="field-input field-input--text" rows="20" />
-              <div v-if="preview" class="text-preview" v-html="previewHtml" />
-            </div>
-          </div>
-        </div>
-
-        <div v-show="lang === 'en'" class="lang-fields">
-          <div class="field">
-            <label class="field-label">Title EN</label>
-            <input v-model="form.title_en" class="field-input" type="text" />
-          </div>
-          <div class="field">
-            <label class="field-label">Excerpt EN</label>
-            <textarea v-model="form.excerpt_en" class="field-input field-input--sm" rows="2" />
-          </div>
-          <div class="field">
-            <label class="field-label">
-              Text EN (HTML)
-              <button class="preview-toggle" @click="preview = !preview">
-                {{ preview ? 'Hide preview' : 'Preview' }}
-              </button>
-            </label>
-            <div class="text-pane" :class="{ 'text-pane--split': preview }">
-              <textarea v-model="form.text_en" class="field-input field-input--text" rows="20" />
-              <div v-if="preview" class="text-preview" v-html="previewHtml" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Tags -->
-        <div class="field">
-          <label class="field-label">Tags</label>
-          <div class="tags-list">
-            <label
-              v-for="tag in allTags"
-              :key="tag.id"
-              class="tag-check"
-              :class="{ 'tag-check--active': form.tag_ids.includes(tag.id) }"
-            >
-              <input type="checkbox" :checked="form.tag_ids.includes(tag.id)" @change="toggleTag(tag.id)" />
-              {{ tag.name_ru }}
-            </label>
-          </div>
-        </div>
-
-        <!-- Images -->
-        <div v-if="!isNew" class="field">
-          <label class="field-label">
-            Images
-            <span v-if="uploadErr" class="upload-err">{{ uploadErr }}</span>
-          </label>
-
-          <div class="images-grid">
-            <div v-for="img in images" :key="img.id" class="img-card">
-              <div class="img-card__preview">
-                <img :src="img.url" :alt="img.alt_ru" />
-                <button class="img-card__del" @click="removeImage(img.id)">×</button>
-                <span v-if="img.position === 0" class="img-card__cover">cover</span>
-              </div>
-              <input
-                v-model="img.alt_ru"
-                class="field-input img-alt"
-                placeholder="Alt RU"
-                @blur="saveAlt(img)"
-              />
-              <input
-                v-model="img.alt_en"
-                class="field-input img-alt"
-                placeholder="Alt EN"
-                @blur="saveAlt(img)"
-              />
-            </div>
-
-            <label class="img-upload" :class="{ 'img-upload--loading': uploading }">
-              <input type="file" accept="image/*" @change="uploadImage" />
-              <span>{{ uploading ? 'Uploading...' : '+ Upload' }}</span>
-            </label>
-          </div>
-        </div>
-
-        <p v-if="isNew" class="field-hint">Save the post first to upload images</p>
-
+    <div class="admin-panel block">
+      <p class="block__title">Tags</p>
+      <div class="tags">
+        <button
+          v-for="tag in allTags"
+          :key="tag.id"
+          class="chip"
+          :class="{ 'chip--active': form.tag_ids.includes(tag.id) }"
+          type="button"
+          @click="toggleTag(tag.id)"
+        >{{ tag.name_ru }}</button>
+        <p v-if="!allTags?.length" class="hint">No tags yet</p>
       </div>
     </div>
-  </div>
+
+    <div class="admin-panel block">
+      <p class="block__title">Images</p>
+
+      <p v-if="isNew" class="hint">Save the post first to upload images</p>
+
+      <div v-else class="images">
+        <div v-for="img in images" :key="img.id" class="img">
+          <div class="img__frame">
+            <img :src="img.url" :alt="img.alt_ru">
+            <button class="img__del" type="button" aria-label="Delete image" @click="removeImage(img)">×</button>
+            <span v-if="img.position === 0" class="img__cover">cover</span>
+          </div>
+          <input v-model="img.alt_ru" class="admin-input img__alt" placeholder="Alt RU" @blur="saveAlt(img)">
+          <input v-model="img.alt_en" class="admin-input img__alt" placeholder="Alt EN" @blur="saveAlt(img)">
+        </div>
+
+        <label class="img__upload" :class="{ 'img__upload--busy': uploading }">
+          <input type="file" accept="image/*" @change="uploadImage">
+          <span>{{ uploading ? 'Uploading…' : '+ Upload' }}</span>
+        </label>
+      </div>
+    </div>
+  </AdminPage>
 </template>
 
 <style scoped>
-.editor-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
-}
+.block { margin-bottom: 16px; display: flex; flex-direction: column; gap: 16px; }
 
-.back-link { font-size: 11px; color: var(--text-4); text-decoration: none; transition: color 0.15s; }
-.back-link:hover { color: var(--text-3); }
+.block__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-.editor-title { font-size: 18px; font-weight: 300; color: var(--text); letter-spacing: -0.02em; flex: 1; }
+.block__title { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-4); }
 
-.editor-head__right { display: flex; align-items: center; gap: 10px; }
-
-.save-msg   { font-size: 11px; color: var(--green); }
-.save-error { font-size: 11px; color: var(--red); }
-
-.editor-fields { display: flex; flex-direction: column; gap: 20px; }
-
-.field-row { display: flex; gap: 16px; flex-wrap: wrap; }
-
-.field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
-.field--narrow { flex: 0 0 160px; min-width: 160px; }
-
-.field-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-4);
-}
-
-.field-input {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  padding: 9px 12px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
+.select {
   width: 100%;
-  resize: vertical;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
 }
 
-.field-input:focus { border-color: var(--accent); }
-.field-input--sm   { min-height: 60px; }
-.field-input--text { min-height: 400px; font-size: 11px; line-height: 1.6; }
+.tabs { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: var(--r-pill); }
 
-.toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.toggle input { accent-color: var(--accent); width: 14px; height: 14px; }
-.toggle span { font-size: 12px; color: var(--text-3); }
-
-.lang-tabs { display: flex; gap: 4px; }
-
-.lang-tab {
+.tab {
   font-family: inherit;
   font-size: 10px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   padding: 5px 14px;
-  border: 1px solid var(--border);
+  border: none;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--text-4);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
-.lang-tab:hover { color: var(--text-3); }
-.lang-tab--active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.tab--active { color: var(--accent); background: var(--accent-dim); }
 
-.lang-fields { display: flex; flex-direction: column; gap: 16px; }
-
-.preview-toggle {
+.link-btn {
   font-family: inherit;
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--accent);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
 }
 
-.text-pane { display: flex; gap: 16px; }
-.text-pane--split .field-input--text { flex: 1; }
+.pane { display: flex; gap: 14px; }
 
-.text-preview {
+.pane__area {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
+  min-width: 0;
+  min-height: 420px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text);
   background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  resize: vertical;
+}
+
+.pane__preview {
+  flex: 1;
+  min-width: 0;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
   font-size: 13px;
   line-height: 1.7;
   color: var(--text-3);
-  overflow-y: auto;
-  max-height: 400px;
 }
 
-.tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 860px) {
+  .pane { flex-direction: column; }
+}
 
-.tag-check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip {
+  font-family: inherit;
   font-size: 11px;
   color: var(--text-4);
-  padding: 4px 10px;
+  padding: 5px 11px;
   border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.tag-check input { display: none; }
-.tag-check--active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
-.tag-check:hover { color: var(--text-3); }
+.chip:hover { color: var(--text-2); }
+.chip--active { color: var(--accent); border-color: var(--accent-line); background: var(--accent-dim); }
 
-.images-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-}
+.hint { font-size: 10.5px; color: var(--text-4); }
 
-.img-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 180px;
-}
+.images { display: flex; flex-wrap: wrap; gap: 12px; }
 
-.img-card__preview {
+.img { display: flex; flex-direction: column; gap: 6px; width: 180px; }
+
+.img__frame {
   position: relative;
   width: 180px;
   height: 120px;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
   overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
 }
 
-.img-card__preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.img__frame img { width: 100%; height: 100%; object-fit: cover; }
 
-.img-card__del {
+.img__del {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 5px;
+  right: 5px;
   width: 22px;
   height: 22px;
+  display: grid;
+  place-content: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--red);
   background: var(--overlay-bg);
   border: 1px solid var(--red-border);
-  color: var(--red);
-  font-size: 14px;
-  line-height: 1;
+  border-radius: var(--r-s);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
 }
 
-.img-card__del:hover { background: var(--red-bg); }
+.img__del:hover { background: var(--red-bg); }
 
-.img-card__cover {
+.img__cover {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  bottom: 5px;
+  left: 5px;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
   background: var(--overlay-bg);
-  padding: 2px 5px;
   border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  padding: 2px 6px;
 }
 
-.img-alt { font-size: 11px; padding: 5px 8px; }
+.img__alt {
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
 
-.img-upload {
+.img__upload {
   width: 180px;
   height: 120px;
-  border: 1px dashed var(--border-s);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  color: var(--text-4);
+  display: grid;
+  place-content: center;
   font-size: 11px;
   letter-spacing: 0.06em;
+  color: var(--text-4);
+  border: 1px dashed var(--border-s);
+  border-radius: var(--r-s);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
 }
 
-.img-upload:hover { border-color: var(--accent); color: var(--accent); }
-.img-upload--loading { opacity: 0.5; pointer-events: none; }
-.img-upload input { display: none; }
-
-.upload-err { color: var(--red); font-size: 10px; font-weight: normal; text-transform: none; letter-spacing: 0; }
-.field-hint { font-size: 10px; color: var(--text-4); }
+.img__upload:hover { color: var(--accent); border-color: var(--accent); }
+.img__upload--busy { opacity: 0.5; pointer-events: none; }
+.img__upload input { display: none; }
 </style>

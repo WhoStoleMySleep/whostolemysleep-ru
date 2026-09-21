@@ -2,56 +2,97 @@
 const route  = useRoute()
 const router = useRouter()
 
-const navLinks = [
-  { label: 'Dashboard',  to: '/admin' },
-  { label: 'Posts',      to: '/admin/posts' },
-  { label: 'About',      to: '/admin/about' },
-  { label: 'Experience', to: '/admin/experience' },
-  { label: 'Education',  to: '/admin/education' },
-  { label: 'Skills',     to: '/admin/skills' },
-  { label: 'Settings',   to: '/admin/settings' },
+/**
+ * Боковое меню вместо прежней строки ссылок в шапке: разделов девять,
+ * в одну строку они помещались только без группировки, и связь
+ * «About / Experience / Education / Skills — это всё резюме» не читалась.
+ */
+const sections = [
+  {
+    label: 'Content',
+    links: [
+      { label: 'Dashboard',        to: '/admin' },
+      { label: 'Posts & Projects', to: '/admin/posts' },
+    ],
+  },
+  {
+    label: 'Resume',
+    links: [
+      { label: 'About',      to: '/admin/about' },
+      { label: 'Experience', to: '/admin/experience' },
+      { label: 'Education',  to: '/admin/education' },
+      { label: 'Skills',     to: '/admin/skills' },
+      { label: 'CV / Import', to: '/admin/cv' },
+    ],
+  },
+  {
+    label: 'System',
+    links: [
+      { label: 'Settings', to: '/admin/settings' },
+    ],
+  },
 ]
+
+const navOpen = ref(false)
+watch(() => route.path, () => { navOpen.value = false })
+
+function isActive(to: string) {
+  return to === '/admin' ? route.path === '/admin' : route.path.startsWith(to)
+}
 
 async function logout() {
   await $fetch('/api/admin/logout', { method: 'POST' })
+  useState('admin:authed').value = false
   router.push('/admin/login')
 }
 </script>
 
 <template>
   <div class="admin-shell">
-    <header class="admin-header">
+    <aside class="admin-side" :class="{ 'admin-side--open': navOpen }">
       <NuxtLink to="/admin" class="admin-logo">
         wms<span class="admin-logo__dot">.</span>
         <span class="admin-logo__badge">admin</span>
       </NuxtLink>
 
       <nav class="admin-nav">
-        <NuxtLink
-          v-for="link in navLinks"
-          :key="link.to"
-          :to="link.to"
-          class="admin-nav__link"
-          :class="{ 'admin-nav__link--active': route.path === link.to || (link.to !== '/admin' && route.path.startsWith(link.to)) }"
-        >
-          {{ link.label }}
-        </NuxtLink>
+        <div v-for="section in sections" :key="section.label" class="admin-nav__group">
+          <p class="admin-nav__label">{{ section.label }}</p>
+          <NuxtLink
+            v-for="link in section.links"
+            :key="link.to"
+            :to="link.to"
+            class="admin-nav__link"
+            :class="{ 'admin-nav__link--active': isActive(link.to) }"
+          >
+            {{ link.label }}
+          </NuxtLink>
+        </div>
       </nav>
 
-      <div class="admin-header__right">
-        <NuxtLink to="/" target="_blank" class="admin-btn admin-btn--ghost" title="Open site">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <div class="admin-side__foot">
+        <NuxtLink to="/" target="_blank" class="admin-btn admin-btn--ghost">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M2 10L10 2M10 2H5M10 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Site
         </NuxtLink>
-        <button class="admin-btn admin-btn--ghost" @click="logout">Logout</button>
+        <button class="admin-btn admin-btn--ghost" type="button" @click="logout">Logout</button>
       </div>
-    </header>
+    </aside>
 
-    <main class="admin-main">
-      <slot />
-    </main>
+    <div class="admin-body">
+      <button class="admin-burger admin-btn admin-btn--ghost" type="button" @click="navOpen = !navOpen">
+        Menu
+      </button>
+
+      <main class="admin-main">
+        <slot />
+      </main>
+    </div>
+
+    <AdminToasts />
+    <AdminConfirm />
   </div>
 </template>
 
@@ -60,19 +101,21 @@ async function logout() {
 
 body { background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 13px; }
 
-.admin-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.admin-shell { min-height: 100dvh; display: flex; }
 
-.admin-header {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 0 32px;
-  height: 56px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-1);
+/* ── Боковая панель ── */
+.admin-side {
   position: sticky;
   top: 0;
-  z-index: 50;
+  flex-shrink: 0;
+  width: 220px;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 16px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-1);
 }
 
 .admin-logo {
@@ -80,16 +123,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
   align-items: center;
   gap: 8px;
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   color: var(--text);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-decoration: none;
-  flex-shrink: 0;
+  padding: 0 8px;
 }
 
-.admin-logo__dot  { color: var(--accent); }
+.admin-logo__dot { color: var(--accent); }
 
 .admin-logo__badge {
   font-family: var(--font-mono);
@@ -101,44 +144,75 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
   background: var(--accent-dim);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-pill);
-  padding: 3px 9px;
+  padding: 3px 8px;
 }
 
-.admin-nav {
-  display: flex;
-  gap: 4px;
-  flex: 1;
+.admin-nav { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+.admin-nav__group { display: flex; flex-direction: column; gap: 2px; }
+
+.admin-nav__label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  padding: 0 10px 6px;
 }
 
 .admin-nav__link {
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-4);
-  padding: 7px 13px;
-  border-radius: var(--r-pill);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  padding: 8px 10px;
+  border-radius: var(--r-s);
   transition: color 0.15s, background 0.15s;
   text-decoration: none;
 }
 
-.admin-nav__link:hover { color: var(--text-3); background: var(--bg-3); }
-.admin-nav__link--active { color: var(--accent); background: var(--accent-dim); }
+.admin-nav__link:hover { color: var(--text); background: var(--bg-3); }
 
-.admin-header__right { display: flex; align-items: center; gap: 8px; }
+.admin-nav__link--active {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
 
+.admin-side__foot { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Контент ── */
+.admin-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.admin-main { flex: 1; padding: 32px; max-width: 1100px; width: 100%; }
+
+.admin-burger { display: none; margin: 16px 16px 0; align-self: flex-start; }
+
+@media (max-width: 860px) {
+  .admin-side {
+    position: fixed;
+    z-index: 120;
+    transform: translateX(-100%);
+    transition: transform 0.2s var(--ease-out);
+  }
+  .admin-side--open { transform: none; }
+  .admin-burger { display: inline-flex; }
+  .admin-main { padding: 20px 16px; }
+}
+
+/* ── Кнопки ── */
 .admin-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-family: inherit;
   font-size: 10.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  padding: 7px 15px;
+  padding: 8px 15px;
   border-radius: var(--r-pill);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .admin-btn--ghost {
@@ -167,12 +241,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-btn--danger:hover { background: var(--red-bg); border-color: var(--red); }
 
-.admin-main { flex: 1; padding: 32px; max-width: 1200px; width: 100%; margin: 0 auto; }
-
-/* ── Геометрия контролов ──
-   Классы объявлены на самих страницах, но радиусы задаются здесь:
-   иначе их пришлось бы держать в синхроне по девяти файлам. Сами
-   страницы border-radius не задают, поэтому scoped-стили не конфликтуют. */
+/* ── Общая геометрия контролов ──
+   Классы объявлены на страницах, радиусы держим здесь: иначе их пришлось
+   бы синхронизировать по девяти файлам. */
 .admin-input,
 .field-input,
 .text-pane,
@@ -186,4 +257,27 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-input:focus,
 .field-input:focus { border-color: var(--accent); outline: none; }
+
+/* ── Панель ── */
+.admin-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--r-s);
+  background: var(--bg-1);
+  padding: 20px;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.admin-empty {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-s);
+}
 </style>

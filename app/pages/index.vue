@@ -88,7 +88,7 @@ const brings = computed(() => [
         </div>
 
         <div class="hero__cta">
-          <NuxtLink :to="localePath('/resume')" class="btn-solid">{{ t('hero.cta_cv') }}</NuxtLink>
+          <NuxtLink :to="localePath('/cv')" class="btn-solid">{{ t('hero.cta_cv') }}</NuxtLink>
           <NuxtLink :to="localePath('/projects')" class="btn-outline">{{ t('hero.cta_projects') }}</NuxtLink>
 
           <span v-if="siteSettings?.open_to_work" class="hero__status">

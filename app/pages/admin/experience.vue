@@ -3,7 +3,7 @@ defineI18nRoute(false)
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Admin — Experience' })
 
-interface Bullet { text_ru: string; text_en: string }
+interface Bullet { id: number; text_ru: string; text_en: string }
 interface Exp {
   id: number
   company: string
@@ -11,263 +11,143 @@ interface Exp {
   position_en: string
   date_from: string
   date_to: string | null
-  order: number
-  bullets: (Bullet & { id: number; order: number })[]
+  bullets: Bullet[]
 }
 
-const EMPTY = () => ({
-  company: '', position_ru: '', position_en: '',
-  date_from: '', date_to: '', order: 0, bullets: [] as Bullet[],
+function blank() {
+  return {
+    company: '', position_ru: '', position_en: '',
+    date_from: '', date_to: '',
+    bullets: [] as { text_ru: string; text_en: string }[],
+  }
+}
+
+const res = useAdminResource<Exp, ReturnType<typeof blank>>({
+  endpoint: '/api/admin/experience',
+  title:    'Experience entry',
+  blank,
+  toForm: (e) => ({
+    company:     e.company,
+    position_ru: e.position_ru,
+    position_en: e.position_en,
+    date_from:   e.date_from,
+    date_to:     e.date_to ?? '',
+    bullets:     e.bullets.map((b) => ({ text_ru: b.text_ru, text_en: b.text_en })),
+  }),
+  toBody: (f) => ({ ...f, date_to: f.date_to || null }),
 })
 
-const { data: list, refresh } = await useFetch<Exp[]>('/api/admin/experience')
+const { period } = useAdminFormat()
 
-const editId  = ref<number | null>(null)
-const form    = ref(EMPTY())
-const saving  = ref(false)
-const errMsg  = ref('')
-
-function startNew() {
-  editId.value = -1
-  form.value   = { ...EMPTY(), order: list.value?.length ?? 0 }
-}
-
-function startEdit(exp: Exp) {
-  editId.value = exp.id
-  form.value = {
-    company:     exp.company,
-    position_ru: exp.position_ru,
-    position_en: exp.position_en,
-    date_from:   exp.date_from,
-    date_to:     exp.date_to ?? '',
-    order:       exp.order,
-    bullets:     exp.bullets.map((b) => ({ text_ru: b.text_ru, text_en: b.text_en })),
-  }
-}
-
-function cancel() { editId.value = null; errMsg.value = '' }
-
-function addBullet() { form.value.bullets.push({ text_ru: '', text_en: '' }) }
-function removeBullet(i: number) { form.value.bullets.splice(i, 1) }
-
-async function save() {
-  saving.value = true; errMsg.value = ''
-  try {
-    const body = { ...form.value, date_to: form.value.date_to || null }
-    if (editId.value === -1) {
-      await $fetch('/api/admin/experience', { method: 'POST', body })
-    } else {
-      await $fetch(`/api/admin/experience/${editId.value}`, { method: 'PATCH', body })
-    }
-    await refresh()
-    editId.value = null
-  } catch (e: any) {
-    errMsg.value = e?.data?.message ?? 'Error'
-  } finally {
-    saving.value = false
-  }
-}
-
-async function remove(id: number) {
-  if (!confirm('Delete this experience entry?')) return
-  await $fetch(`/api/admin/experience/${id}`, { method: 'DELETE' })
-  await refresh()
-  if (editId.value === id) editId.value = null
-}
-
-function formatDate(d: string | null) {
-  if (!d) return 'present'
-  const [y, m] = d.split('-')
-  return `${m}.${y}`
-}
+function addBullet()          { res.form.value.bullets.push({ text_ru: '', text_en: '' }) }
+function removeBullet(i: number) { res.form.value.bullets.splice(i, 1) }
 </script>
 
 <template>
-  <div>
-    <div class="page-head">
-      <div class="dash-title">Experience</div>
-      <button class="admin-btn admin-btn--primary" @click="startNew">+ Add New</button>
-    </div>
+  <AdminPage title="Experience" :note="`${res.items.value.length} entries · drag to reorder`">
+    <template #actions>
+      <button class="admin-btn admin-btn--primary" type="button" @click="res.startNew()">+ New entry</button>
+    </template>
 
-    <!-- New Form -->
-    <div v-if="editId === -1" class="exp-form exp-form--new">
-      <p class="form-section-title">New Experience</p>
-      <div class="form-fields">
-        <div class="field-2col">
-          <div class="field-group">
-            <label class="field-label">Company</label>
-            <input v-model="form.company" class="admin-input" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Order</label>
-            <input v-model.number="form.order" class="admin-input" type="number" />
-          </div>
+    <div v-if="res.editing.value" class="admin-panel form">
+      <div class="admin-grid">
+        <AdminField v-model="res.form.value.company" label="Company" required />
+        <AdminField v-model="res.form.value.position_ru" label="Position (RU)" required />
+        <AdminField v-model="res.form.value.position_en" label="Position (EN)" />
+        <AdminField v-model="res.form.value.date_from" label="From" type="date" required />
+        <AdminField v-model="res.form.value.date_to" label="To" type="date" hint="Empty — current job" />
+      </div>
+
+      <div class="bullets">
+        <div class="bullets__head">
+          <p class="bullets__label">Responsibilities</p>
+          <button class="admin-btn admin-btn--ghost" type="button" @click="addBullet">+ Add</button>
         </div>
-        <div class="field-2col">
-          <div class="field-group">
-            <label class="field-label">Position RU</label>
-            <input v-model="form.position_ru" class="admin-input" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Position EN</label>
-            <input v-model="form.position_en" class="admin-input" />
-          </div>
+
+        <div v-for="(bullet, i) in res.form.value.bullets" :key="i" class="bullet">
+          <AdminField v-model="bullet.text_ru" placeholder="RU" />
+          <AdminField v-model="bullet.text_en" placeholder="EN" />
+          <button class="admin-btn admin-btn--danger bullet__del" type="button" @click="removeBullet(i)">×</button>
         </div>
-        <div class="field-2col">
-          <div class="field-group">
-            <label class="field-label">Date From (YYYY-MM-DD)</label>
-            <input v-model="form.date_from" class="admin-input" placeholder="2023-04-01" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Date To (empty = present)</label>
-            <input v-model="form.date_to" class="admin-input" placeholder="2024-01-01" />
-          </div>
-        </div>
-        <div class="bullets-section">
-          <div class="bullets-head">
-            <span class="field-label">Bullets</span>
-            <button class="act-btn" @click="addBullet">+ Add</button>
-          </div>
-          <div v-for="(b, i) in form.bullets" :key="i" class="bullet-row">
-            <div class="bullet-fields">
-              <input v-model="b.text_ru" class="admin-input" placeholder="RU" />
-              <input v-model="b.text_en" class="admin-input" placeholder="EN" />
-            </div>
-            <button class="act-btn act-btn--del" @click="removeBullet(i)">×</button>
-          </div>
-        </div>
-        <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-        <div class="form-actions">
-          <button class="admin-btn admin-btn--primary" :disabled="saving" @click="save">
-            {{ saving ? 'Saving...' : 'Save' }}
-          </button>
-          <button class="admin-btn admin-btn--ghost" @click="cancel">Cancel</button>
-        </div>
+
+        <p v-if="!res.form.value.bullets.length" class="bullets__empty">No bullet points</p>
+      </div>
+
+      <div class="form__actions">
+        <button class="admin-btn admin-btn--ghost" type="button" @click="res.cancel()">Cancel</button>
+        <button class="admin-btn admin-btn--primary" type="button" :disabled="res.saving.value" @click="res.save()">
+          {{ res.saving.value ? 'Saving…' : 'Save' }}
+        </button>
       </div>
     </div>
 
-    <!-- List -->
-    <div v-if="list?.length" class="exp-list">
-      <div v-for="exp in list" :key="exp.id" class="exp-item">
-        <div class="exp-item__row">
-          <div class="exp-item__info">
-            <span class="exp-item__company">{{ exp.company }}</span>
-            <span class="exp-item__pos">{{ exp.position_ru }}</span>
-            <span class="exp-item__dates">{{ formatDate(exp.date_from) }} → {{ formatDate(exp.date_to) }}</span>
+    <AdminSortable :items="res.items.value" @reorder="res.reorder">
+      <template #default="{ item }">
+        <div class="row">
+          <div class="row__main">
+            <p class="row__title">{{ item.position_ru }}</p>
+            <p class="row__sub">{{ item.company }} · {{ item.bullets.length }} bullets</p>
           </div>
-          <div class="exp-item__actions">
-            <button class="act-btn" @click="editId === exp.id ? cancel() : startEdit(exp)">
-              {{ editId === exp.id ? 'Cancel' : 'Edit' }}
-            </button>
-            <button class="act-btn act-btn--del" @click="remove(exp.id)">Delete</button>
+          <span class="row__period">{{ period(item.date_from, item.date_to) }}</span>
+          <div class="row__actions">
+            <button class="admin-btn admin-btn--ghost" type="button" @click="res.startEdit(item)">Edit</button>
+            <button class="admin-btn admin-btn--danger" type="button" @click="res.remove(item, item.company)">Delete</button>
           </div>
         </div>
+      </template>
+    </AdminSortable>
 
-        <!-- Inline Edit Form -->
-        <div v-if="editId === exp.id" class="exp-form">
-          <div class="form-fields">
-            <div class="field-2col">
-              <div class="field-group">
-                <label class="field-label">Company</label>
-                <input v-model="form.company" class="admin-input" />
-              </div>
-              <div class="field-group">
-                <label class="field-label">Order</label>
-                <input v-model.number="form.order" class="admin-input" type="number" />
-              </div>
-            </div>
-            <div class="field-2col">
-              <div class="field-group">
-                <label class="field-label">Position RU</label>
-                <input v-model="form.position_ru" class="admin-input" />
-              </div>
-              <div class="field-group">
-                <label class="field-label">Position EN</label>
-                <input v-model="form.position_en" class="admin-input" />
-              </div>
-            </div>
-            <div class="field-2col">
-              <div class="field-group">
-                <label class="field-label">Date From (YYYY-MM-DD)</label>
-                <input v-model="form.date_from" class="admin-input" placeholder="2023-04-01" />
-              </div>
-              <div class="field-group">
-                <label class="field-label">Date To (empty = present)</label>
-                <input v-model="form.date_to" class="admin-input" placeholder="2024-01-01" />
-              </div>
-            </div>
-            <div class="bullets-section">
-              <div class="bullets-head">
-                <span class="field-label">Bullets</span>
-                <button class="act-btn" @click="addBullet">+ Add</button>
-              </div>
-              <div v-for="(b, i) in form.bullets" :key="i" class="bullet-row">
-                <div class="bullet-fields">
-                  <input v-model="b.text_ru" class="admin-input" placeholder="RU" />
-                  <input v-model="b.text_en" class="admin-input" placeholder="EN" />
-                </div>
-                <button class="act-btn act-btn--del" @click="removeBullet(i)">×</button>
-              </div>
-            </div>
-            <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-            <div class="form-actions">
-              <button class="admin-btn admin-btn--primary" :disabled="saving" @click="save">
-                {{ saving ? 'Saving...' : 'Save' }}
-              </button>
-              <button class="admin-btn admin-btn--ghost" @click="cancel">Cancel</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="editId !== -1" class="empty-state">No experience entries yet</div>
-  </div>
+    <p v-if="!res.items.value.length && !res.loading.value" class="admin-empty">No experience entries yet</p>
+  </AdminPage>
 </template>
 
 <style scoped>
-.dash-title { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
-.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.form { margin-bottom: 24px; }
+.form__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
-.exp-list { display: flex; flex-direction: column; gap: 1px; background: var(--bg-3); }
-.exp-item { background: var(--bg-1); }
-.exp-item__row { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; gap: 16px; }
-.exp-item__info { display: flex; flex-direction: column; gap: 4px; }
-.exp-item__company { font-size: 13px; color: var(--text); }
-.exp-item__pos { font-size: 11px; color: var(--text-4); }
-.exp-item__dates { font-size: 10px; color: var(--text-4); letter-spacing: 0.05em; }
-.exp-item__actions { display: flex; gap: 8px; flex-shrink: 0; }
+.bullets { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
 
-.exp-form { border-top: 1px solid var(--border); padding: 20px; background: var(--bg); }
-.exp-form--new { border: 1px solid var(--border); background: var(--bg); margin-bottom: 16px; padding: 20px; }
-.form-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin-bottom: 16px; }
-
-.form-fields { display: flex; flex-direction: column; gap: 16px; }
-.field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
-
-.admin-input {
-  background: var(--bg-3); border: 1px solid var(--border-s); color: var(--text-3);
-  font-family: var(--font-mono); font-size: 12px; padding: 8px 12px;
-  outline: none; transition: border-color 0.15s; width: 100%;
+.bullets__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
-.admin-input:focus { border-color: var(--accent); color: var(--text); }
 
-.bullets-section { display: flex; flex-direction: column; gap: 8px; }
-.bullets-head { display: flex; align-items: center; justify-content: space-between; }
-.bullet-row { display: flex; align-items: flex-start; gap: 8px; }
-.bullet-fields { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-
-.act-btn {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
-  padding: 5px 10px; border: 1px solid var(--border-s); background: transparent;
-  color: var(--text-4); cursor: pointer; transition: border-color 0.15s, color 0.15s;
+.bullets__label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-4);
 }
-.act-btn:hover { border-color: var(--accent); color: var(--accent); }
-.act-btn--del:hover { border-color: var(--red); color: var(--red); }
 
-.err-msg { font-size: 11px; color: var(--red); }
-.form-actions { display: flex; gap: 10px; }
-.empty-state { padding: 40px 20px; text-align: center; color: var(--text-4); font-size: 12px; }
+.bullets__empty { font-size: 11px; color: var(--text-4); }
+
+.bullet {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.bullet__del { padding: 8px 12px; font-size: 13px; }
+
+@media (max-width: 700px) {
+  .bullet { grid-template-columns: 1fr auto; }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.row__main { flex: 1; min-width: 180px; }
+.row__title { font-size: 13px; color: var(--text); }
+.row__sub { font-size: 11px; color: var(--text-4); margin-top: 3px; }
+.row__period { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.row__actions { display: flex; gap: 6px; }
 </style>

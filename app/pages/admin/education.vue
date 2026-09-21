@@ -10,209 +10,92 @@ interface Edu {
   specialization_en: string
   date_from: string
   date_to: string | null
-  order: number
 }
 
-const EMPTY = () => ({
-  institution: '', specialization_ru: '', specialization_en: '',
-  date_from: '', date_to: '', order: 0,
+const res = useAdminResource<Edu, ReturnType<typeof blank>>({
+  endpoint: '/api/admin/education',
+  title:    'Education entry',
+  blank,
+  toForm: (e) => ({
+    institution:       e.institution,
+    specialization_ru: e.specialization_ru,
+    specialization_en: e.specialization_en,
+    date_from:         e.date_from,
+    date_to:           e.date_to ?? '',
+  }),
+  // Пустая строка в поле даты означает «по настоящее время», а колонка
+  // ждёт null: без этого Postgres отвергал запрос целиком.
+  toBody: (f) => ({ ...f, date_to: f.date_to || null }),
 })
 
-const { data: list, refresh } = await useFetch<Edu[]>('/api/admin/education')
-
-const editId = ref<number | null>(null)
-const form   = ref(EMPTY())
-const saving = ref(false)
-const errMsg = ref('')
-
-function startNew() {
-  editId.value = -1
-  form.value   = { ...EMPTY(), order: list.value?.length ?? 0 }
-}
-
-function startEdit(edu: Edu) {
-  editId.value = edu.id
-  form.value = {
-    institution:       edu.institution,
-    specialization_ru: edu.specialization_ru,
-    specialization_en: edu.specialization_en,
-    date_from:         edu.date_from,
-    date_to:           edu.date_to ?? '',
-    order:             edu.order,
+function blank() {
+  return {
+    institution: '', specialization_ru: '', specialization_en: '',
+    date_from: '', date_to: '',
   }
 }
 
-function cancel() { editId.value = null; errMsg.value = '' }
-
-async function save() {
-  saving.value = true; errMsg.value = ''
-  try {
-    const body = { ...form.value, date_to: form.value.date_to || null }
-    if (editId.value === -1) {
-      await $fetch('/api/admin/education', { method: 'POST', body })
-    } else {
-      await $fetch(`/api/admin/education/${editId.value}`, { method: 'PATCH', body })
-    }
-    await refresh()
-    editId.value = null
-  } catch (e: any) {
-    errMsg.value = e?.data?.message ?? 'Error'
-  } finally {
-    saving.value = false
-  }
-}
-
-async function remove(id: number) {
-  if (!confirm('Delete this education entry?')) return
-  await $fetch(`/api/admin/education/${id}`, { method: 'DELETE' })
-  await refresh()
-  if (editId.value === id) editId.value = null
-}
-
-function formatDate(d: string | null) {
-  if (!d) return 'present'
-  const [y, m] = d.split('-')
-  return `${m}.${y}`
-}
+const { period } = useAdminFormat()
 </script>
 
 <template>
-  <div>
-    <div class="page-head">
-      <div class="dash-title">Education</div>
-      <button class="admin-btn admin-btn--primary" @click="startNew">+ Add New</button>
-    </div>
+  <AdminPage title="Education" :note="`${res.items.value.length} entries · drag to reorder`">
+    <template #actions>
+      <button class="admin-btn admin-btn--primary" type="button" @click="res.startNew()">+ New entry</button>
+    </template>
 
-    <!-- New Form -->
-    <div v-if="editId === -1" class="edu-form edu-form--new">
-      <p class="form-section-title">New Education</p>
-      <div class="form-fields">
-        <div class="field-group">
-          <label class="field-label">Institution</label>
-          <input v-model="form.institution" class="admin-input" />
-        </div>
-        <div class="field-2col">
-          <div class="field-group">
-            <label class="field-label">Specialization RU</label>
-            <input v-model="form.specialization_ru" class="admin-input" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Specialization EN</label>
-            <input v-model="form.specialization_en" class="admin-input" />
-          </div>
-        </div>
-        <div class="field-2col">
-          <div class="field-group">
-            <label class="field-label">Date From (YYYY-MM-DD)</label>
-            <input v-model="form.date_from" class="admin-input" placeholder="2021-09-01" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Date To (empty = present)</label>
-            <input v-model="form.date_to" class="admin-input" placeholder="2025-06-01" />
-          </div>
-        </div>
-        <div class="field-group" style="max-width:160px">
-          <label class="field-label">Order</label>
-          <input v-model.number="form.order" class="admin-input" type="number" />
-        </div>
-        <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-        <div class="form-actions">
-          <button class="admin-btn admin-btn--primary" :disabled="saving" @click="save">
-            {{ saving ? 'Saving...' : 'Save' }}
-          </button>
-          <button class="admin-btn admin-btn--ghost" @click="cancel">Cancel</button>
-        </div>
+    <div v-if="res.editing.value" class="admin-panel form">
+      <div class="admin-grid">
+        <AdminField v-model="res.form.value.institution" label="Institution" required />
+        <AdminField v-model="res.form.value.specialization_ru" label="Specialization (RU)" required />
+        <AdminField v-model="res.form.value.specialization_en" label="Specialization (EN)" />
+        <AdminField v-model="res.form.value.date_from" label="From" type="date" required />
+        <AdminField v-model="res.form.value.date_to" label="To" type="date" hint="Empty — still studying" />
+      </div>
+
+      <div class="form__actions">
+        <button class="admin-btn admin-btn--ghost" type="button" @click="res.cancel()">Cancel</button>
+        <button class="admin-btn admin-btn--primary" type="button" :disabled="res.saving.value" @click="res.save()">
+          {{ res.saving.value ? 'Saving…' : 'Save' }}
+        </button>
       </div>
     </div>
 
-    <!-- List -->
-    <div v-if="list?.length" class="edu-list">
-      <div v-for="edu in list" :key="edu.id" class="edu-item">
-        <div class="edu-item__row">
-          <div class="edu-item__info">
-            <span class="edu-item__inst">{{ edu.institution }}</span>
-            <span class="edu-item__spec">{{ edu.specialization_ru }}</span>
-            <span class="edu-item__dates">{{ formatDate(edu.date_from) }} → {{ formatDate(edu.date_to) }}</span>
+    <AdminSortable :items="res.items.value" @reorder="res.reorder">
+      <template #default="{ item }">
+        <div class="row">
+          <div class="row__main">
+            <p class="row__title">{{ item.specialization_ru }}</p>
+            <p class="row__sub">{{ item.institution }}</p>
           </div>
-          <div class="edu-item__actions">
-            <button class="act-btn" @click="editId === edu.id ? cancel() : startEdit(edu)">
-              {{ editId === edu.id ? 'Cancel' : 'Edit' }}
-            </button>
-            <button class="act-btn act-btn--del" @click="remove(edu.id)">Delete</button>
+          <span class="row__period">{{ period(item.date_from, item.date_to) }}</span>
+          <div class="row__actions">
+            <button class="admin-btn admin-btn--ghost" type="button" @click="res.startEdit(item)">Edit</button>
+            <button class="admin-btn admin-btn--danger" type="button" @click="res.remove(item, item.institution)">Delete</button>
           </div>
         </div>
+      </template>
+    </AdminSortable>
 
-        <!-- Inline Edit Form -->
-        <div v-if="editId === edu.id" class="edu-form">
-          <div class="form-fields">
-            <div class="field-group">
-              <label class="field-label">Institution</label>
-              <input v-model="form.institution" class="admin-input" />
-            </div>
-            <div class="field-2col">
-              <div class="field-group">
-                <label class="field-label">Specialization RU</label>
-                <input v-model="form.specialization_ru" class="admin-input" />
-              </div>
-              <div class="field-group">
-                <label class="field-label">Specialization EN</label>
-                <input v-model="form.specialization_en" class="admin-input" />
-              </div>
-            </div>
-            <div class="field-2col">
-              <div class="field-group">
-                <label class="field-label">Date From (YYYY-MM-DD)</label>
-                <input v-model="form.date_from" class="admin-input" placeholder="2021-09-01" />
-              </div>
-              <div class="field-group">
-                <label class="field-label">Date To (empty = present)</label>
-                <input v-model="form.date_to" class="admin-input" placeholder="2025-06-01" />
-              </div>
-            </div>
-            <div class="field-group" style="max-width:160px">
-              <label class="field-label">Order</label>
-              <input v-model.number="form.order" class="admin-input" type="number" />
-            </div>
-            <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-            <div class="form-actions">
-              <button class="admin-btn admin-btn--primary" :disabled="saving" @click="save">
-                {{ saving ? 'Saving...' : 'Save' }}
-              </button>
-              <button class="admin-btn admin-btn--ghost" @click="cancel">Cancel</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="editId !== -1" class="empty-state">No education entries yet</div>
-  </div>
+    <p v-if="!res.items.value.length && !res.loading.value" class="admin-empty">No education entries yet</p>
+  </AdminPage>
 </template>
 
 <style scoped>
-.dash-title { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
-.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-.edu-list { display: flex; flex-direction: column; gap: 1px; background: var(--bg-3); }
-.edu-item { background: var(--bg-1); }
-.edu-item__row { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; gap: 16px; }
-.edu-item__info { display: flex; flex-direction: column; gap: 4px; }
-.edu-item__inst { font-size: 13px; color: var(--text); }
-.edu-item__spec { font-size: 11px; color: var(--text-4); }
-.edu-item__dates { font-size: 10px; color: var(--text-4); letter-spacing: 0.05em; }
-.edu-item__actions { display: flex; gap: 8px; flex-shrink: 0; }
-.edu-form { border-top: 1px solid var(--border); padding: 20px; background: var(--bg); }
-.edu-form--new { border: 1px solid var(--border); background: var(--bg); margin-bottom: 16px; padding: 20px; }
-.form-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); margin-bottom: 16px; }
-.form-fields { display: flex; flex-direction: column; gap: 16px; }
-.field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
-.admin-input { background: var(--bg-3); border: 1px solid var(--border-s); color: var(--text-3); font-family: var(--font-mono); font-size: 12px; padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
-.admin-input:focus { border-color: var(--accent); color: var(--text); }
-.act-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; padding: 5px 10px; border: 1px solid var(--border-s); background: transparent; color: var(--text-4); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
-.act-btn:hover { border-color: var(--accent); color: var(--accent); }
-.act-btn--del:hover { border-color: var(--red); color: var(--red); }
-.err-msg { font-size: 11px; color: var(--red); }
-.form-actions { display: flex; gap: 10px; }
-.empty-state { padding: 40px 20px; text-align: center; color: var(--text-4); font-size: 12px; }
+.form { margin-bottom: 24px; }
+.form__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.row__main { flex: 1; min-width: 180px; }
+.row__title { font-size: 13px; color: var(--text); }
+.row__sub { font-size: 11px; color: var(--text-4); margin-top: 3px; }
+.row__period { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.row__actions { display: flex; gap: 6px; }
 </style>

@@ -3,279 +3,245 @@ defineI18nRoute(false)
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Admin — Skills' })
 
-interface SkillItem { id: number; name: string; order: number }
-interface Group { id: number; slug: string; name_ru: string; name_en: string; order: number; skills: SkillItem[] }
+interface Skill { id: number; group_id: number; name: string; order: number }
+interface Group { id: number; slug: string; name_ru: string; name_en: string; order: number; skills: Skill[] }
 
-const { data: groups, refresh } = await useFetch<Group[]>('/api/admin/skills')
+const api     = useAdminApi()
+const toast   = useAdminToast()
+const confirm = useAdminConfirm()
 
-const editGroupId   = ref<number | null>(null)
-const editSkillId   = ref<number | null>(null)
-const newGroupOpen  = ref(false)
-const newSkillGroup = ref<number | null>(null)
+const { data, refresh } = await useAsyncData<Group[]>(
+  'admin-skills', () => api.get<Group[]>('/api/admin/skills'), { default: () => [] },
+)
+const groups = computed(() => data.value ?? [])
 
-const groupForm = ref({ slug: '', name_ru: '', name_en: '', order: 0 })
-const skillForm = ref({ name: '', order: 0, group_id: 0 })
-const newSkillName = ref('')
+/* ── Группа ── */
 
+const blank = () => ({ slug: '', name_ru: '', name_en: '' })
+const editId = ref<number | null>(null)
+const form   = ref(blank())
 const saving = ref(false)
-const errMsg = ref('')
+const isNew  = computed(() => editId.value === -1)
 
-function openEditGroup(g: Group) {
-  editGroupId.value = g.id
-  groupForm.value   = { slug: g.slug, name_ru: g.name_ru, name_en: g.name_en, order: g.order }
-}
+function startNew() { editId.value = -1; form.value = blank() }
+function startEdit(g: Group) { editId.value = g.id; form.value = { slug: g.slug, name_ru: g.name_ru, name_en: g.name_en } }
+function cancel() { editId.value = null }
 
-function cancelGroup() { editGroupId.value = null; newGroupOpen.value = false; errMsg.value = '' }
-
-async function saveGroup(id: number | null) {
-  saving.value = true; errMsg.value = ''
-  try {
-    if (id === null) {
-      await $fetch('/api/admin/skills', { method: 'POST', body: { ...groupForm.value } })
-    } else {
-      await $fetch(`/api/admin/skills/groups/${id}`, { method: 'PATCH', body: groupForm.value })
-    }
-    await refresh()
-    cancelGroup()
-  } catch (e: any) {
-    errMsg.value = e?.data?.message ?? 'Error'
-  } finally {
-    saving.value = false
-  }
-}
-
-async function deleteGroup(id: number) {
-  if (!confirm('Delete group and all its skills?')) return
-  await $fetch(`/api/admin/skills/groups/${id}`, { method: 'DELETE' })
-  await refresh()
-}
-
-function openNewGroup() {
-  newGroupOpen.value = true
-  groupForm.value    = { slug: '', name_ru: '', name_en: '', order: groups.value?.length ?? 0 }
-  editGroupId.value  = null
-}
-
-function openNewSkill(groupId: number) {
-  newSkillGroup.value = groupId
-  newSkillName.value  = ''
-  editSkillId.value   = null
-}
-
-function cancelSkill() { newSkillGroup.value = null; editSkillId.value = null; newSkillName.value = '' }
-
-async function addSkill(groupId: number) {
-  const name = newSkillName.value.trim()
-  if (!name) return
+async function saveGroup() {
   saving.value = true
   try {
-    const g = groups.value?.find((x) => x.id === groupId)
-    await $fetch('/api/admin/skills/items', { method: 'POST', body: { group_id: groupId, name, order: g?.skills.length ?? 0 } })
+    if (isNew.value) await api.post('/api/admin/skills', { ...form.value, order: groups.value.length })
+    else             await api.patch(`/api/admin/skills/groups/${editId.value}`, form.value)
     await refresh()
-    cancelSkill()
+    editId.value = null
+    toast.ok('Group saved')
+  } catch (e) {
+    toast.err(adminError(e))
   } finally {
     saving.value = false
   }
 }
 
-async function saveSkillName(id: number, name: string) {
-  await $fetch(`/api/admin/skills/items/${id}`, { method: 'PATCH', body: { name } })
-  await refresh()
-  cancelSkill()
+async function removeGroup(g: Group) {
+  const ok = await confirm.ask({
+    title: 'Delete group?',
+    text:  `«${g.name_en || g.name_ru}» and its ${g.skills.length} skill(s) will be removed permanently.`,
+  })
+  if (!ok) return
+  try {
+    await api.remove(`/api/admin/skills/groups/${g.id}`)
+    if (editId.value === g.id) editId.value = null
+    await refresh()
+    toast.ok('Group deleted')
+  } catch (e) {
+    toast.err(adminError(e))
+  }
 }
 
-async function deleteSkill(id: number) {
-  if (!confirm('Delete this skill?')) return
-  await $fetch(`/api/admin/skills/items/${id}`, { method: 'DELETE' })
-  await refresh()
+async function reorderGroups(ids: number[]) {
+  const before = [...groups.value]
+  const byId = new Map(before.map((g) => [g.id, g]))
+  data.value = ids.map((id) => byId.get(id)).filter(Boolean) as Group[]
+  try {
+    await api.patch('/api/admin/skills/groups/reorder', { ids })
+  } catch (e) {
+    data.value = before
+    toast.err(adminError(e))
+  }
 }
 
-const editSkillName = ref('')
-function openEditSkill(s: SkillItem) {
-  editSkillId.value = s.id
-  editSkillName.value = s.name
-  newSkillGroup.value = null
+/* ── Навыки внутри группы ──
+   Правятся прямо в списке: у записи одно поле, ради него открывать
+   отдельную форму — лишний шаг на каждое переименование. */
+
+const draft = reactive<Record<number, string>>({})
+
+async function addSkill(g: Group) {
+  const name = (draft[g.id] ?? '').trim()
+  if (!name) return
+  try {
+    await api.post('/api/admin/skills/items', { group_id: g.id, name, order: g.skills.length })
+    draft[g.id] = ''
+    await refresh()
+  } catch (e) {
+    toast.err(adminError(e))
+  }
 }
+
+async function renameSkill(s: Skill, name: string) {
+  const next = name.trim()
+  if (!next || next === s.name) return
+  try {
+    await api.patch(`/api/admin/skills/items/${s.id}`, { name: next })
+    s.name = next
+  } catch (e) {
+    toast.err(adminError(e))
+    await refresh()
+  }
+}
+
+async function removeSkill(g: Group, s: Skill) {
+  try {
+    await api.remove(`/api/admin/skills/items/${s.id}`)
+    g.skills = g.skills.filter((x) => x.id !== s.id)
+  } catch (e) {
+    toast.err(adminError(e))
+    await refresh()
+  }
+}
+
+async function reorderSkills(g: Group, ids: number[]) {
+  const before = [...g.skills]
+  const byId = new Map(before.map((s) => [s.id, s]))
+  g.skills = ids.map((id) => byId.get(id)).filter(Boolean) as Skill[]
+  try {
+    await api.patch('/api/admin/skills/items/reorder', { ids })
+  } catch (e) {
+    g.skills = before
+    toast.err(adminError(e))
+  }
+}
+
+const total = computed(() => groups.value.reduce((n, g) => n + g.skills.length, 0))
 </script>
 
 <template>
-  <div>
-    <div class="page-head">
-      <div class="dash-title">Skills</div>
-      <button class="admin-btn admin-btn--primary" @click="openNewGroup">+ Add Group</button>
-    </div>
+  <AdminPage title="Skills" :note="`${groups.length} group(s) · ${total} skill(s)`">
+    <template #actions>
+      <button class="admin-btn admin-btn--primary" type="button" @click="startNew">+ Group</button>
+    </template>
 
-    <!-- New Group Form -->
-    <div v-if="newGroupOpen" class="group-form-block">
-      <p class="form-title">New Group</p>
-      <div class="field-2col">
-        <div class="field-group">
-          <label class="field-label">Slug</label>
-          <input v-model="groupForm.slug" class="admin-input" placeholder="languages" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">Order</label>
-          <input v-model.number="groupForm.order" class="admin-input" type="number" />
-        </div>
+    <div v-if="editId !== null" class="admin-panel form">
+      <div class="admin-grid">
+        <AdminField v-model="form.slug" label="Slug" required placeholder="frontend" />
+        <AdminField v-model="form.name_ru" label="Name RU" required />
+        <AdminField v-model="form.name_en" label="Name EN" required />
       </div>
-      <div class="field-2col">
-        <div class="field-group">
-          <label class="field-label">Name RU</label>
-          <input v-model="groupForm.name_ru" class="admin-input" placeholder="Языки" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">Name EN</label>
-          <input v-model="groupForm.name_en" class="admin-input" placeholder="Languages" />
-        </div>
-      </div>
-      <p v-if="errMsg" class="err-msg">{{ errMsg }}</p>
-      <div class="form-actions">
-        <button class="admin-btn admin-btn--primary" :disabled="saving" @click="saveGroup(null)">
-          {{ saving ? 'Saving...' : 'Add Group' }}
+      <div class="form__actions">
+        <button class="admin-btn admin-btn--primary" type="button" :disabled="saving" @click="saveGroup">
+          {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button class="admin-btn" @click="cancelGroup">Cancel</button>
+        <button class="admin-btn admin-btn--ghost" type="button" @click="cancel">Cancel</button>
       </div>
     </div>
 
-    <!-- Groups -->
-    <div v-for="g in groups" :key="g.id" class="group-block">
-      <!-- Group Header -->
-      <div class="group-header">
-        <div v-if="editGroupId === g.id" class="group-edit-form">
-          <div class="field-2col">
-            <div class="field-group">
-              <label class="field-label">Slug</label>
-              <input v-model="groupForm.slug" class="admin-input" />
-            </div>
-            <div class="field-group">
-              <label class="field-label">Order</label>
-              <input v-model.number="groupForm.order" class="admin-input" type="number" />
-            </div>
-          </div>
-          <div class="field-2col">
-            <div class="field-group">
-              <label class="field-label">Name RU</label>
-              <input v-model="groupForm.name_ru" class="admin-input" />
-            </div>
-            <div class="field-group">
-              <label class="field-label">Name EN</label>
-              <input v-model="groupForm.name_en" class="admin-input" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button class="admin-btn admin-btn--primary" :disabled="saving" @click="saveGroup(g.id)">Save</button>
-            <button class="admin-btn" @click="cancelGroup">Cancel</button>
-          </div>
-        </div>
-        <div v-else class="group-title-row">
-          <div class="group-title-info">
-            <span class="group-name">{{ g.name_ru }}</span>
-            <span class="group-name-en">{{ g.name_en }}</span>
-          </div>
-          <div class="group-actions">
-            <button class="act-btn" @click="openEditGroup(g)">Edit</button>
-            <button class="act-btn act-btn--del" @click="deleteGroup(g.id)">Delete</button>
-          </div>
-        </div>
-      </div>
+    <p v-if="!groups.length" class="admin-empty">No skill groups yet</p>
 
-      <!-- Skills List -->
-      <div class="skills-list">
-        <div v-for="s in g.skills" :key="s.id" class="skill-item">
-          <div v-if="editSkillId === s.id" class="skill-edit">
-            <input v-model="editSkillName" class="admin-input skill-input" @keydown.enter="saveSkillName(s.id, editSkillName)" @keydown.escape="cancelSkill" />
-            <button class="act-btn" @click="saveSkillName(s.id, editSkillName)">Save</button>
-            <button class="act-btn" @click="cancelSkill">×</button>
-          </div>
-          <div v-else class="skill-row">
-            <span class="skill-name">{{ s.name }}</span>
-            <div class="skill-actions">
-              <button class="act-btn-sm" @click="openEditSkill(s)">edit</button>
-              <button class="act-btn-sm act-btn-sm--del" @click="deleteSkill(s.id)">×</button>
+    <AdminSortable :items="groups" @reorder="reorderGroups">
+      <template #default="{ item: group }">
+        <div class="group">
+          <div class="group__head">
+            <div class="group__title">
+              <span class="group__name">{{ group.name_en || group.name_ru }}</span>
+              <code class="group__slug">{{ group.slug }}</code>
+            </div>
+            <div class="group__actions">
+              <button class="admin-btn admin-btn--ghost" type="button" @click="startEdit(group)">Edit</button>
+              <button class="admin-btn admin-btn--danger" type="button" @click="removeGroup(group)">Delete</button>
             </div>
           </div>
-        </div>
 
-        <!-- Add Skill -->
-        <div v-if="newSkillGroup === g.id" class="skill-new">
-          <input
-            v-model="newSkillName"
-            class="admin-input skill-input"
-            placeholder="Skill name"
-            @keydown.enter="addSkill(g.id)"
-            @keydown.escape="cancelSkill"
-            autofocus
-          />
-          <button class="act-btn" :disabled="saving" @click="addSkill(g.id)">Add</button>
-          <button class="act-btn" @click="cancelSkill">×</button>
-        </div>
-        <button v-else class="add-skill-btn" @click="openNewSkill(g.id)">+ Add skill</button>
-      </div>
-    </div>
+          <AdminSortable :items="group.skills" @reorder="(ids) => reorderSkills(group, ids)">
+            <template #default="{ item: skill }">
+              <div class="skill">
+                <input
+                  class="admin-input skill__input"
+                  :value="skill.name"
+                  @change="renameSkill(skill, ($event.target as HTMLInputElement).value)"
+                >
+                <button class="skill__del" type="button" aria-label="Delete skill" @click="removeSkill(group, skill)">×</button>
+              </div>
+            </template>
+          </AdminSortable>
 
-    <div v-if="!groups?.length" class="empty-state">No skill groups yet</div>
-  </div>
+          <form class="add" @submit.prevent="addSkill(group)">
+            <input
+              v-model="draft[group.id]"
+              class="admin-input add__input"
+              placeholder="New skill…"
+            >
+            <button class="admin-btn admin-btn--ghost" type="submit">Add</button>
+          </form>
+        </div>
+      </template>
+    </AdminSortable>
+  </AdminPage>
 </template>
 
 <style scoped>
-.dash-title { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
-.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.form { margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px; }
+.form__actions { display: flex; gap: 8px; }
 
-.group-form-block {
-  border: 1px solid var(--border); background: var(--bg); padding: 20px; margin-bottom: 20px;
-  display: flex; flex-direction: column; gap: 16px;
+.group { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.group__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.group__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.group__name { font-size: 14px; color: var(--text); }
+.group__slug { font-size: 10.5px; color: var(--text-4); }
+.group__actions { display: flex; gap: 6px; }
+
+.skill { display: flex; align-items: center; gap: 6px; padding: 4px 6px; }
+
+.skill__input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
 }
-.form-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
 
-.group-block { border: 1px solid var(--border); background: var(--bg-1); margin-bottom: 12px; }
+.skill__input:hover { border-color: var(--border); }
+.skill__input:focus { background: var(--bg); }
 
-.group-header { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.group-title-row { display: flex; align-items: center; justify-content: space-between; }
-.group-title-info { display: flex; flex-direction: column; gap: 2px; }
-.group-name { font-size: 13px; color: var(--text); }
-.group-name-en { font-size: 11px; color: var(--text-4); }
-.group-actions { display: flex; gap: 8px; }
-.group-edit-form { display: flex; flex-direction: column; gap: 12px; }
-
-.skills-list { padding: 8px 20px 16px; display: flex; flex-direction: column; gap: 2px; }
-.skill-item { }
-.skill-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
-.skill-row:last-of-type { border-bottom: none; }
-.skill-name { font-size: 12px; color: var(--text-3); }
-.skill-actions { display: flex; gap: 6px; }
-.skill-edit { display: flex; align-items: center; gap: 6px; padding: 6px 0; }
-.skill-new { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
-.skill-input { flex: 1; max-width: 320px; }
-
-.act-btn-sm {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
-  padding: 3px 7px; border: 1px solid var(--border-s); background: transparent;
-  color: var(--text-4); cursor: pointer; transition: border-color 0.15s, color 0.15s;
+.skill__del {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-4);
+  background: none;
+  border: none;
+  border-radius: var(--r-s);
+  cursor: pointer;
 }
-.act-btn-sm:hover { border-color: var(--accent); color: var(--accent); }
-.act-btn-sm--del:hover { border-color: var(--red); color: var(--red); }
 
-.add-skill-btn {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
-  padding: 6px 0; color: var(--text-4); background: transparent; border: none; cursor: pointer;
-  text-align: left; transition: color 0.15s;
+.skill__del:hover { color: var(--red); background: var(--red-bg); }
+
+.add { display: flex; gap: 8px; }
+
+.add__input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
 }
-.add-skill-btn:hover { color: var(--accent); }
-
-.act-btn {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
-  padding: 5px 10px; border: 1px solid var(--border-s); background: transparent;
-  color: var(--text-4); cursor: pointer; transition: border-color 0.15s, color 0.15s;
-}
-.act-btn:hover { border-color: var(--accent); color: var(--accent); }
-.act-btn--del:hover { border-color: var(--red); color: var(--red); }
-
-.field-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
-.admin-input { background: var(--bg-3); border: 1px solid var(--border-s); color: var(--text-3); font-family: var(--font-mono); font-size: 12px; padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
-.admin-input:focus { border-color: var(--accent); color: var(--text); }
-.form-actions { display: flex; gap: 10px; }
-.err-msg { font-size: 11px; color: var(--red); }
-.empty-state { padding: 40px 20px; text-align: center; color: var(--text-4); font-size: 12px; }
 </style>

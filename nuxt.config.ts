@@ -39,6 +39,11 @@ export default defineNuxtConfig({
           "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
           'upgrade-insecure-requests',
         ].join('; '),
+        // Пароль админки уходит на сервер открытым текстом внутри TLS — как и
+        // везде. HSTS запрещает браузеру вообще пробовать http:// на домене,
+        // то есть закрывает окно, в котором запрос мог уйти без шифрования.
+        // Без preload: попасть в список браузеров легко, выйти — долго.
+        'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy':        'strict-origin-when-cross-origin',
         'X-Frame-Options':        'DENY',
@@ -56,6 +61,9 @@ export default defineNuxtConfig({
     '/en/projects':  { isr: 600 },
     '/ru/resume':    { isr: 7200 },
     '/en/resume':    { isr: 7200 },
+    // Печатная версия резюме: из поиска исключена, чтобы не конкурировать с /resume.
+    '/ru/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
+    '/en/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
     '/ru/contacts':  { ssr: true },
     '/en/contacts':  { ssr: true },
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },

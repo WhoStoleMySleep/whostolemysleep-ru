@@ -1,10 +1,12 @@
 import {
-  checkAdminPassword, signAdminToken,
-  hitLoginAttempt, clearFailures,
-  getClientIp, ADMIN_COOKIE,
+  assertAdminConfig, checkAdminPassword, signAdminToken, setAdminCookie,
+  hitLoginAttempt, clearFailures, getClientIp,
 } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
+  // До счётчика: ненастроенный сервер не должен тратить попытки входа.
+  assertAdminConfig()
+
   const ip = getClientIp(event)
 
   // Попытку засчитываем до проверки пароля: иначе неудачные запросы,
@@ -22,15 +24,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await clearFailures(ip)
-  const token = await signAdminToken()
-
-  setCookie(event, ADMIN_COOKIE, token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge:   7 * 24 * 3600,
-    path:     '/',
-  })
+  setAdminCookie(event, await signAdminToken())
 
   return { ok: true }
 })

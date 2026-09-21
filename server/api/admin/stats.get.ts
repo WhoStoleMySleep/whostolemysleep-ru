@@ -1,0 +1,28 @@
+import { db } from '~~/server/db'
+import * as schema from '~~/server/db/schema'
+import { count, sql } from 'drizzle-orm'
+
+/**
+ * Числа для дашборда. Отдельный эндпоинт, потому что раньше дашборд ради
+ * трёх цифр выкачивал все посты со всеми текстами и считал их на клиенте.
+ */
+export default defineEventHandler(async () => {
+  const [posts] = await db
+    .select({
+      total:     count(),
+      published: sql<number>`count(*) filter (where ${schema.post.is_published})`.mapWith(Number),
+    })
+    .from(schema.post)
+
+  const [pending] = await db
+    .select({ total: count() })
+    .from(schema.pendingRevalidation)
+
+  const total     = posts?.total ?? 0
+  const published = posts?.published ?? 0
+
+  return {
+    posts:   { total, published, drafts: total - published },
+    pending: pending?.total ?? 0,
+  }
+})
