@@ -13,8 +13,8 @@ updates:
     commit-message:
       prefix: chore
     groups:
-      # Мелкие подъёмы — одним PR: CI всё равно прогоняет набор целиком,
-      # а десять отдельных запросов на слияние в неделю никто не читает.
+      # Small bumps go in one PR: CI runs the whole suite either way, and nobody
+      # reads ten separate merge requests a week.
       minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
