@@ -15,7 +15,13 @@ export default defineVitestConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['app/composables/**', 'server/utils/**'],
+      include: [
+        'app/composables/**',
+        'app/middleware/**',
+        'app/stores/**',
+        'server/utils/**',
+        'server/middleware/**',
+      ],
     },
     onConsoleLog: (log) => !log.includes('va.vercel-scripts.com'),
 

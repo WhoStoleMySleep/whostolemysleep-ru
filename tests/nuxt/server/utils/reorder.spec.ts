@@ -1,4 +1,18 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { plan } from '~~/tests/helpers/fakeDb'
+import type { FakeDbState } from '~~/tests/helpers/fakeDb'
+import * as schema from '~~/server/db/schema'
+
+const state = vi.hoisted((): FakeDbState => ({ results: {}, calls: [], cursor: {}, rows: {} }))
+
+vi.mock('~~/server/db', async () => {
+  const { makeFakeDb } = await import('~~/tests/helpers/fakeDb')
+  return { db: makeFakeDb(state) }
+})
+
+beforeEach(() => {
+  plan(state)
+})
 
 describe('readOrderIds', () => {
   test('берёт список id из тела запроса', async () => {
@@ -26,5 +40,22 @@ describe('readOrderIds', () => {
     expect(() => readOrderIds({})).toThrow()
     expect(() => readOrderIds(null)).toThrow()
     expect(() => readOrderIds({ ids: 5 })).toThrow()
+  })
+})
+
+describe('applyOrder', () => {
+  test('переставляет весь список одним запросом', async () => {
+    const { applyOrder } = await import('~~/server/utils/reorder')
+    await applyOrder(schema.education, [3, 1, 2])
+
+    expect(state.calls).toHaveLength(1)
+    expect(state.calls[0]?.op).toBe('execute')
+  })
+
+  test('пустой список не ходит в базу', async () => {
+    const { applyOrder } = await import('~~/server/utils/reorder')
+    await applyOrder(schema.education, [])
+
+    expect(state.calls).toHaveLength(0)
   })
 })

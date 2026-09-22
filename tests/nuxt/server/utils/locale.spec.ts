@@ -1,4 +1,32 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi, afterEach } from 'vitest'
+import type { H3Event } from 'h3'
+
+const event = {} as H3Event
+
+function query(params: Record<string, unknown>) {
+  vi.stubGlobal('getQuery', () => params)
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('getLocale', () => {
+  test('locale=en включает английский', async () => {
+    query({ locale: 'en' })
+    const { getLocale } = await import('~~/server/utils/locale')
+    expect(getLocale(event)).toBe('en')
+  })
+
+  test('всё остальное читается как русский — язык не берут из непонятного параметра', async () => {
+    const { getLocale } = await import('~~/server/utils/locale')
+
+    for (const params of [{}, { locale: 'ru' }, { locale: 'de' }, { locale: ['en'] }]) {
+      query(params)
+      expect(getLocale(event)).toBe('ru')
+    }
+  })
+})
 
 describe('pick', () => {
   test('для en отдаёт английский вариант', async () => {
