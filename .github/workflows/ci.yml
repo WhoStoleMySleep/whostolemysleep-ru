@@ -33,3 +33,8 @@ jobs:
       - run: pnpm test
 
       - run: pnpm build
+
+      # The other steps see the source through Vite; this one runs the artefact and
+      # catches a build that does not boot. What happens on Vercel's own loader is
+      # checked after the deployment, in deployed.yml.
+      - run: pnpm smoke

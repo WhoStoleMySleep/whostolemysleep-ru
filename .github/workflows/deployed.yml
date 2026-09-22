@@ -1,0 +1,26 @@
+name: Deployed
+
+# The build pipeline runs on GitHub's Node; the site runs on Vercel's, which loads
+# modules its own way. sanitize-html 2.17.6 passed lint, types, tests, the build and
+# a local boot of .output, then died with ERR_REQUIRE_ESM on Vercel's first request.
+# Nothing before deployment can see that, so this asks the deployed site instead.
+on:
+  deployment_status
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success' && contains(fromJSON('["Production","production"]'), github.event.deployment_status.environment)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request the routes a broken function would take down
+        run: |
+          base=https://whostolemysleep.ru
+          failed=0
+          for path in / /ru /en /ru/blog /ru/projects /ru/resume /en/rss.xml /sitemap.xml /llms.txt "/api/posts/blog?locale=ru"; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$base$path")
+            case "$status" in
+              2*|3*) echo "ok   $status $path" ;;
+              *)     echo "FAIL $status $path"; failed=1 ;;
+            esac
+          done
+          exit $failed

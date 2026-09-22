@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
+    "smoke": "node scripts/smoke.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "test": "vitest run",
@@ -38,7 +39,7 @@
     "nodemailer": "^8.0.7",
     "nuxt": "^4.5.2",
     "pinia": "^3.0.4",
-    "sanitize-html": "^2.17.7",
+    "sanitize-html": "2.17.5",
     "vue": "latest",
     "vue-router": "latest"
   },
