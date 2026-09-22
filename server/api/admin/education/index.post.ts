@@ -4,8 +4,8 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Добавить образование',
+    tags:        ['Admin: resume'],
+    summary:     'Add an education entry',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
@@ -27,7 +27,7 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: 'Созданная запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/EducationRow' } } } },
+      200: { description: 'The created row', content: { 'application/json': { schema: { $ref: '#/components/schemas/EducationRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

@@ -2,11 +2,11 @@ import { db } from '~~/server/db'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: резюме'],
-    summary:  'Образование списком',
+    tags:     ['Admin: resume'],
+    summary:  'Education as a list',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Записи в порядке order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/EducationRow' } } } } },
+      200: { description: 'Rows in order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/EducationRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {
@@ -27,7 +27,7 @@ defineRouteMeta({
           ReorderInput: {
             type: 'object',
             required: ['ids'],
-            properties: { ids: { type: 'array', items: { type: 'integer' }, description: 'Позиция id в списке становится значением order' } },
+            properties: { ids: { type: 'array', items: { type: 'integer' }, description: 'The position of an id in the list becomes its order value' } },
           },
         },
       },

@@ -6,24 +6,24 @@ export interface DbCall {
   steps: { m: string; args: unknown[] }[]
 }
 
-/** План ответов: ключ — `${операция}:${таблица}`, значение — ответы по порядку await'ов. */
+/** The plan of answers: key is `${operation}:${table}`, value is the answers in await order. */
 export type DbResults = Record<string, unknown[][]>
 
 export interface FakeDbState {
   results: DbResults
   calls:   DbCall[]
   cursor:  Record<string, number>
-  /** Строки для db.query.<таблица>: ключ — имя из схемы (aboutMe, skillGroup). */
+  /** Rows for db.query.<table>: the key is the name from the schema (aboutMe, skillGroup). */
   rows?:   Record<string, unknown[]>
 }
 
 /**
- * Заглушка drizzle: цепочка методов любой длины, а await отдаёт ответ из плана
- * по ключу «операция:таблица». Ключ вместо позиции в очереди — потому что часть
- * запросов в коде условная, и сдвиг очереди ломался бы от любой ветки.
+ * A drizzle stub: a method chain of any length, and awaiting it returns the planned
+ * answer for the "operation:table" key. Keyed rather than positional because some of
+ * the queries in the code are conditional, and any branch would shift a queue.
  *
- * Ответы для ключа берутся по порядку; когда остаётся последний, он повторяется.
- * Ключ без плана отвечает пустым списком.
+ * Answers for a key are taken in order; the last one repeats once it is reached.
+ * A key with no plan answers with an empty list.
  */
 export function makeFakeDb(state: FakeDbState): unknown {
   return new Proxy({} as Record<string, unknown>, {
@@ -43,7 +43,7 @@ function queryApi(state: FakeDbState): unknown {
   })
 }
 
-/** Сбрасывает план и журнал — вызывать в beforeEach. */
+/** Resets the plan and the log — call it in beforeEach. */
 export function plan(state: FakeDbState, results: DbResults = {}, rows: Record<string, unknown[]> = {}): void {
   state.results = results
   state.calls   = []
@@ -88,7 +88,7 @@ function tableOf(args: unknown[]): string | null {
   return null
 }
 
-/** Находит запрос в журнале и отдаёт аргумент нужного шага цепочки. */
+/** Finds a query in the log and returns the argument of the requested chain step. */
 export function stepArg<T = unknown>(calls: DbCall[], key: string, method: string, nth = 0): T | undefined {
   const matches = calls.filter((c) => `${c.op}:${c.table}` === key)
   const call    = matches[nth]

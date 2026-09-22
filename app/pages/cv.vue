@@ -2,10 +2,9 @@
 import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
 
 /**
- * Печатная версия резюме: одна колонка, обычные заголовки, никаких
- * таблиц и иконок. Браузерное «Сохранить как PDF» даёт файл с живым
- * текстом — именно такой разбирают системы отбора резюме (ATS),
- * в отличие от картинки или вёрстки в две колонки.
+ * The printable version of the resume: one column, plain headings, no tables and
+ * no icons. The browser's "Save as PDF" produces a file with real text — the kind
+ * applicant tracking systems can parse, unlike an image or a two-column layout.
  */
 definePageMeta({ layout: false })
 
@@ -27,7 +26,7 @@ const [
   useAsyncData('cv-settings', () => $fetch<{ email: string; github_url: string; telegram_url: string }>('/api/settings')),
 ])
 
-// Имя документа — имя файла, который предложит «Сохранить как PDF».
+// The document name is the filename "Save as PDF" will suggest.
 const docTitle = computed(() => `${t('cv.name')} — CV`)
 
 useHead(() => ({
@@ -40,7 +39,7 @@ function printPage() {
   window.print()
 }
 
-/** Ссылка без протокола: в печати «https://» только съедает строку. */
+/** A link without its protocol: in print "https://" only eats up the line. */
 function short(url: string) {
   return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 }
@@ -102,8 +101,8 @@ const contacts = computed(() =>
 </template>
 
 <style scoped>
-/* Лист печатается в чёрном по белому независимо от темы сайта:
-   принтер и парсер ATS одинаково не любят светлый текст на тёмном. */
+/* The sheet prints black on white regardless of the site theme: a printer and an
+   ATS parser dislike light text on dark in equal measure. */
 .page {
   min-height: 100dvh;
   padding: 24px 16px 64px;

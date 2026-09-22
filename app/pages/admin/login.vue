@@ -16,7 +16,7 @@ async function submit() {
 
   try {
     await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
-    // Кука уже поставлена — избавляем middleware от проверочного запроса.
+    // The cookie is already set — this spares the middleware a verification request.
     useState('admin:authed', () => false).value = true
     router.push('/admin')
   } catch (e) {

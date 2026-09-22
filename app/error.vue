@@ -52,10 +52,10 @@ function goHome() {
 </template>
 
 <style scoped>
-/* Страница ошибки рендерится вне лейаута, поэтому фоновые слои и
-   панель продублированы здесь — иначе она выпадает из общего вида.
-   Панель обязательна: без неё контент ложится прямо на оранжевую
-   диагональ и акцентный текст на ней становится невидимым. */
+/* The error page renders outside the layout, so the background layers and the
+   panel are duplicated here — otherwise it falls out of the site's look. The panel
+   is mandatory: without it the content lies straight on the orange diagonal and the
+   accent text on top of it becomes invisible. */
 .err {
   --shell-pad: clamp(10px, 2.2vw, 30px);
 
@@ -116,10 +116,10 @@ function goHome() {
   animation: rise 0.6s var(--ease-out) both;
 }
 
-/* ── Число ──
-   Только Archivo 900 без курсива: курсивного начертания в проекте нет,
-   и браузер подделывал наклон скосом — цифра выходила кривой и лезла
-   на соседнюю. Трекинг положительный, как во всех заголовках сайта. */
+/* ── The digit ──
+   Archivo 900 only, never italic: the project has no italic cut, so the browser
+   faked the slant by skewing — the digit came out crooked and ran into its
+   neighbour. Positive tracking, as in every heading on the site. */
 .err__number {
   display: flex;
   align-items: baseline;
@@ -158,7 +158,7 @@ function goHome() {
 }
 
 .err__btn {
-  /* панель — флекс-колонка, без этого кнопка растягивается на всю ширину */
+  /* the panel is a flex column; without this the button stretches to full width */
   align-self: flex-start;
   margin: clamp(26px, 3vw, 36px) 0 0;
   font-size: 11px;

@@ -11,11 +11,11 @@ const m = vi.hoisted(() => ({
 mockNuxtImport('useLocale', () => () => ({ locale: m.locale }))
 
 const blog = [
-  { id: 1, slug: 'rust', title: 'Бэкенд на Rust', excerpt: 'про раст', tags: [{ name: 'Rust' }] },
-  { id: 2, slug: 'vue',  title: 'Заметки о Vue',  excerpt: 'про vue',  tags: [{ name: 'Vue' }] },
+  { id: 1, slug: 'rust', title: 'Backend in Rust', excerpt: 'about rust', tags: [{ name: 'Rust' }] },
+  { id: 2, slug: 'vue',  title: 'Notes on Vue',   excerpt: 'about vue',  tags: [{ name: 'Vue' }] },
 ]
 const projects = [
-  { id: 3, slug: 'cli', title: 'Консольная утилита', excerpt: 'cli', tags: [] },
+  { id: 3, slug: 'cli', title: 'A command-line tool', excerpt: 'cli', tags: [] },
 ]
 
 async function store() {
@@ -35,8 +35,8 @@ afterEach(() => {
   m.fetch.mockReset()
 })
 
-describe('открытие и закрытие', () => {
-  test('первое открытие грузит записи обоих типов', async () => {
+describe('opening and closing', () => {
+  test('the first opening loads entries of both types', async () => {
     const s = await store()
     await s.open()
 
@@ -44,7 +44,7 @@ describe('открытие и закрытие', () => {
     expect(m.fetch).toHaveBeenCalledTimes(2)
   })
 
-  test('повторное открытие не ходит в сеть заново', async () => {
+  test('opening again does not hit the network a second time', async () => {
     const s = await store()
     await s.open()
     s.close()
@@ -53,7 +53,7 @@ describe('открытие и закрытие', () => {
     expect(m.fetch).toHaveBeenCalledTimes(2)
   })
 
-  test('закрытие чистит запрос и результаты', async () => {
+  test('closing clears the query and the results', async () => {
     const s = await store()
     await s.open()
     await s.search('Rust')
@@ -65,8 +65,8 @@ describe('открытие и закрытие', () => {
   })
 })
 
-describe('поиск', () => {
-  test('находит по заголовку среди статей и проектов', async () => {
+describe('search', () => {
+  test('it finds by title across both posts and projects', async () => {
     const s = await store()
     await s.open()
     await s.search('Rust')
@@ -74,7 +74,7 @@ describe('поиск', () => {
     expect(s.results.map((p) => p.slug)).toContain('rust')
   })
 
-  test('находит по названию тега', async () => {
+  test('it finds by tag name', async () => {
     const s = await store()
     await s.open()
     await s.search('Vue')
@@ -82,7 +82,7 @@ describe('поиск', () => {
     expect(s.results.map((p) => p.slug)).toContain('vue')
   })
 
-  test('пустой запрос сбрасывает результаты', async () => {
+  test('an empty query resets the results', async () => {
     const s = await store()
     await s.open()
     await s.search('Rust')
@@ -91,7 +91,7 @@ describe('поиск', () => {
     expect(s.results).toEqual([])
   })
 
-  test('устаревший результат не перетирает свежий запрос', async () => {
+  test('a stale result does not overwrite a fresher query', async () => {
     const s = await store()
     await s.open()
 
@@ -103,17 +103,17 @@ describe('поиск', () => {
     expect(s.results.map((p) => p.slug)).toContain('vue')
   })
 
-  test('ничего не найдено — пустой список, а не все записи', async () => {
+  test('nothing found is an empty list, not every entry', async () => {
     const s = await store()
     await s.open()
-    await s.search('квантовая хромодинамика')
+    await s.search('quantum chromodynamics')
 
     expect(s.results).toEqual([])
   })
 })
 
-describe('смена языка', () => {
-  test('открытый поиск перезагружает записи на новом языке', async () => {
+describe('switching language', () => {
+  test('an open search reloads the entries in the new language', async () => {
     const s = await store()
     await s.open()
     m.fetch.mockClear()
@@ -126,7 +126,7 @@ describe('смена языка', () => {
     expect(m.fetch.mock.calls[0]?.[1]).toMatchObject({ query: { locale: 'en' } })
   })
 
-  test('закрытый поиск ждёт открытия, а не грузит впустую', async () => {
+  test('a closed search waits to be opened instead of loading for nothing', async () => {
     const s = await store()
     await s.open()
     s.close()

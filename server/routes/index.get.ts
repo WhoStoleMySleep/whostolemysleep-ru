@@ -2,11 +2,11 @@ const CIS_CODES = ['ru', 'uk', 'be', 'kk']
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Служебные'],
-    summary:     'Корень сайта',
-    description: 'Редирект на локаль: сохранённая кука, иначе язык из accept-language.',
+    tags:        ['Service'],
+    summary:     'Site root',
+    description: 'Redirect to a locale: the stored cookie, otherwise the language from accept-language.',
     responses: {
-      302: { description: 'Redirect на /ru или /en' },
+      302: { description: 'Redirect to /ru or /en' },
     },
   },
 })

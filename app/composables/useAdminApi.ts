@@ -1,11 +1,12 @@
 /**
- * Единственная дверь в /api/admin из интерфейса.
+ * The only door from the UI into /api/admin.
  *
- * Держит три вещи, которые раньше каждая страница решала сама (и по-разному):
- * передачу куки при SSR, разбор текста ошибки и реакцию на протухшую сессию.
+ * It holds three things every page used to solve on its own, differently each
+ * time: passing the cookie during SSR, reading the error text out of a response,
+ * and reacting to an expired session.
  */
 
-/** Текст ошибки из ответа H3. До этого по страницам был размазан `e?.data?.message ?? 'Error'`. */
+/** The error text out of an H3 response. `e?.data?.message ?? 'Error'` used to be smeared across every page. */
 export function adminError(e: unknown): string {
   const err = e as { data?: { message?: string }, statusMessage?: string, message?: string }
   return err?.data?.message || err?.statusMessage || err?.message || 'Unknown error'
@@ -18,16 +19,16 @@ function isUnauthorized(e: unknown): boolean {
 
 export const useAdminApi = () => {
   const authed = useState('admin:authed', () => false)
-  // На сервере обычный $fetch не передаёт куки браузера — запрос уходит
-  // анонимным и получает 401. useRequestFetch проксирует заголовки запроса.
+  // On the server a plain $fetch does not forward the browser's cookies — the
+  // request goes out anonymous and gets a 401. useRequestFetch proxies the headers.
   const request = useRequestFetch()
 
   async function call<T>(url: string, opts?: Parameters<typeof $fetch<T>>[1]): Promise<T> {
     try {
       return await request<T>(url, opts as never) as T
     } catch (e) {
-      // Сессия истекла или куку удалили: держать пользователя на странице,
-      // где ничего не сохраняется, бессмысленно.
+      // The session expired or the cookie was removed: keeping the user on a page
+      // where nothing can be saved is pointless.
       if (isUnauthorized(e)) {
         authed.value = false
         await navigateTo('/admin/login')

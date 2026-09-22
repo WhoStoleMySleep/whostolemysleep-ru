@@ -23,8 +23,8 @@ const res = useAdminResource<Edu, ReturnType<typeof blank>>({
     date_from:         e.date_from,
     date_to:           e.date_to ?? '',
   }),
-  // Пустая строка в поле даты означает «по настоящее время», а колонка
-  // ждёт null: без этого Postgres отвергал запрос целиком.
+  // An empty date field means "to this day", and the column expects null: without
+  // this Postgres rejected the whole request.
   toBody: (f) => ({ ...f, date_to: f.date_to || null }),
 })
 

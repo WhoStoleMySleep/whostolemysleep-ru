@@ -13,7 +13,7 @@ vi.mock('~~/server/db', async () => {
 const saved = { id: 7, slug: 'post', external_id: null, type: 'blog' }
 
 function payload(extra: Partial<PublishPayload> = {}): PublishPayload {
-  return { slug: 'post', title: 'Заголовок', body_md: '# Привет\n\nТекст', ...extra }
+  return { slug: 'post', title: 'A title', body_md: '# Hello\n\nBody text', ...extra }
 }
 
 async function save(p: PublishPayload, targetId?: number) {
@@ -31,32 +31,32 @@ afterEach(() => {
 })
 
 describe('savePublishedPost', () => {
-  test('новый пост: markdown становится HTML, ссылка собирается от адреса сайта', async () => {
+  test('a new post: markdown becomes HTML, the link is built from the site address', async () => {
     const out = await save(payload())
 
     expect(out).toEqual({ id: 7, slug: 'post', url: 'https://example.com/blog/post' })
 
     const values = stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')
     expect(values?.text_ru).toContain('<h1>')
-    expect(values?.title_ru).toBe('Заголовок')
+    expect(values?.title_ru).toBe('A title')
     expect(values?.is_published).toBe(true)
   })
 
-  test('lead становится анонсом, без него анонс берётся из текста', async () => {
-    await save(payload({ lead: '  Кратко  ' }))
-    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.excerpt_ru).toBe('Кратко')
+  test('lead becomes the excerpt; without it the excerpt comes from the body', async () => {
+    await save(payload({ lead: '  In brief  ' }))
+    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.excerpt_ru).toBe('In brief')
 
     plan(state, { 'insert:post': [[saved]] })
     await save(payload())
-    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.excerpt_ru).toContain('Текст')
+    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.excerpt_ru).toContain('Body text')
   })
 
-  test('status draft не публикует', async () => {
+  test('status draft does not publish', async () => {
     await save(payload({ status: 'draft' }))
     expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.is_published).toBe(false)
   })
 
-  test('раздел, начинающийся с proj, — это проект, всё остальное блог', async () => {
+  test('a section starting with proj is a project, everything else is the blog', async () => {
     await save(payload({ section: 'Projects' }))
     expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.type).toBe('project')
 
@@ -65,7 +65,7 @@ describe('savePublishedPost', () => {
     expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.type).toBe('blog')
   })
 
-  test('тот же external_id обновляет запись, а не добавляет вторую', async () => {
+  test('the same external_id updates the entry instead of adding a second one', async () => {
     const existing = { id: 3, slug: 'post', external_id: 'ext-1' }
     plan(state, { 'select:post': [[existing], []], 'update:post': [[{ ...saved, id: 3 }]] })
 
@@ -75,7 +75,7 @@ describe('savePublishedPost', () => {
     expect(state.calls.some((c) => `${c.op}:${c.table}` === 'insert:post')).toBe(false)
   })
 
-  test('пост, заведённый в админке, публикатор подхватывает по слагу', async () => {
+  test('a post created in the admin panel is picked up by the publisher through its slug', async () => {
     plan(state, { 'select:post': [[{ id: 5, slug: 'post', external_id: null }], []], 'update:post': [[{ ...saved, id: 5 }]] })
 
     const out = await save(payload())
@@ -85,24 +85,24 @@ describe('savePublishedPost', () => {
     expect(where).toBeTruthy()
   })
 
-  test('слаг занят чужим постом — 409, а не тихая перезапись', async () => {
+  test('a slug taken by another post is a 409, not a silent overwrite', async () => {
     plan(state, { 'select:post': [[], [{ id: 9 }]] })
     await expect(save(payload())).rejects.toThrow(/already taken/)
   })
 
-  test('обновление несуществующего id — 404', async () => {
+  test('updating a non-existent id is a 404', async () => {
     plan(state, { 'select:post': [[]] })
     await expect(save(payload(), 42)).rejects.toThrow(/not found/i)
   })
 
-  test('база не вернула запись — 500, а не молчаливый успех', async () => {
+  test('the database returned no row — a 500, not a silent success', async () => {
     plan(state, { 'insert:post': [[]] })
     await expect(save(payload())).rejects.toThrow(/Save failed/)
   })
 })
 
-describe('теги', () => {
-  test('существующий тег переиспользуется, новый заводится со слагом-транслитом', async () => {
+describe('tags', () => {
+  test('an existing tag is reused, a new one is created with a transliterated slug', async () => {
     plan(state, {
       'insert:post': [[saved]],
       'select:tag':  [[{ id: 1, slug: 'rust', name_ru: 'Rust' }]],
@@ -118,7 +118,7 @@ describe('теги', () => {
     ])
   })
 
-  test('связи переписываются целиком: старые снимаются перед вставкой', async () => {
+  test('the relations are rewritten wholesale: the old ones are dropped before the insert', async () => {
     plan(state, { 'insert:post': [[saved]], 'select:tag': [[{ id: 1, slug: 'rust' }]] })
     await save(payload({ tags: ['Rust'] }))
 
@@ -126,7 +126,7 @@ describe('теги', () => {
     expect(keys.indexOf('delete:post_tag')).toBeLessThan(keys.indexOf('insert:post_tag'))
   })
 
-  test('пустой список и мусорные названия не создают тегов', async () => {
+  test('an empty list and junk names create no tags', async () => {
     await save(payload({ tags: [] }))
     expect(state.calls.some((c) => c.table === 'tag')).toBe(false)
 
@@ -136,14 +136,14 @@ describe('теги', () => {
   })
 })
 
-describe('обложка', () => {
-  test('заменяет первую картинку поста', async () => {
+describe('cover image', () => {
+  test('it replaces the first image of the post', async () => {
     await save(payload({ cover_url: 'https://cdn/img.webp' }))
 
     expect(stepArg(state.calls, 'insert:image', 'values')).toEqual({ post_id: 7, url: 'https://cdn/img.webp', position: 0 })
   })
 
-  test('без обложки старая снимается, новая не вставляется', async () => {
+  test('with no cover the old one is removed and no new one is inserted', async () => {
     await save(payload({ cover_url: null }))
 
     expect(state.calls.some((c) => `${c.op}:${c.table}` === 'delete:image')).toBe(true)
@@ -151,8 +151,8 @@ describe('обложка', () => {
   })
 })
 
-describe('очередь сброса кеша', () => {
-  test('пути поста уходят в pending_revalidation', async () => {
+describe('cache invalidation queue', () => {
+  test('the post paths go into pending_revalidation', async () => {
     await save(payload())
 
     expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([

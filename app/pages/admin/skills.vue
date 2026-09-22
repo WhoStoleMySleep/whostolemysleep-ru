@@ -15,7 +15,7 @@ const { data, refresh } = await useAsyncData<Group[]>(
 )
 const groups = computed(() => data.value ?? [])
 
-/* ── Группа ── */
+/* ── Group ── */
 
 const blank = () => ({ slug: '', name_ru: '', name_en: '' })
 const editId = ref<number | null>(null)
@@ -70,9 +70,9 @@ async function reorderGroups(ids: number[]) {
   }
 }
 
-/* ── Навыки внутри группы ──
-   Правятся прямо в списке: у записи одно поле, ради него открывать
-   отдельную форму — лишний шаг на каждое переименование. */
+/* ── Skills inside a group ──
+   Edited in the list itself: an entry has a single field, and opening a separate
+   form for it would be an extra step on every rename. */
 
 const draft = reactive<Record<number, string>>({})
 

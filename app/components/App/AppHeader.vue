@@ -35,9 +35,9 @@ function isActive(key: string) {
         <span class="head__name head__name--short">wms.</span>
       </NuxtLink>
 
-      <!-- Порядок как в макете: Hire me → тема → язык → бургер.
-           Поиск — функция сайта, которой в макете нет, поэтому он
-           стоит перед этой группой и не разрывает её. -->
+      <!-- The order comes from the mockup: Hire me, theme, language, burger.
+           Search is a feature the mockup does not have, so it sits before that
+           group instead of breaking it apart. -->
       <div class="head__actions">
         <button
           v-if="siteSettings?.show_search"
@@ -99,7 +99,7 @@ function isActive(key: string) {
     </div>
 
     <Transition name="mobile-nav">
-      <nav v-if="mobileOpen" class="head__mobile" aria-label="Основная навигация">
+      <nav v-if="mobileOpen" class="head__mobile" :aria-label="$t('nav.aria')">
         <button
           v-if="siteSettings?.show_search"
           class="head__mobile-search"
@@ -139,7 +139,7 @@ function isActive(key: string) {
   padding: clamp(18px, 2.4vw, 30px) clamp(18px, 3vw, 46px);
 }
 
-/* ── Логотип ── */
+/* ── Logo ── */
 .head__logo { display: flex; align-items: center; gap: 12px; }
 
 .head__dots {
@@ -160,8 +160,8 @@ function isActive(key: string) {
 
 .head__name {
   font-size: 15px;
-  /* 500, а не 700: это было единственное место с моноширинным 700 на
-     всём сайте, и ради одного слова тянулся отдельный файл на 21.6 КБ. */
+  /* 500, not 700: this was the only place on the site using monospace 700, and
+     one word was pulling in a separate 21.6 KB font file. */
   font-weight: 500;
   letter-spacing: 0.08em;
   transition: color 0.2s;
@@ -169,7 +169,7 @@ function isActive(key: string) {
 
 .head__logo:hover .head__name { color: var(--accent); }
 
-/* ── Действия ── */
+/* ── Actions ── */
 .head__actions { display: flex; align-items: center; gap: 10px; }
 
 .head__cta {
@@ -205,10 +205,10 @@ function isActive(key: string) {
 
 .head__btn--text { font-size: 11px; letter-spacing: 0.14em; }
 
-/* Ниже 900px появляется бургер, и четыре кнопки рядом с логотипом
-   перестают помещаться — бургер срезало краем панели. Поиск (его в
-   макете нет вовсе, это функция сайта) уезжает в мобильное меню,
-   в баре остаются тема, язык и бургер — как в макете. */
+/* Below 900px the burger appears and four buttons next to the logo stop
+   fitting — the burger was clipped by the edge of the bar. Search (absent from
+   the mockup entirely, it is a feature of the site) moves into the mobile menu,
+   leaving theme, language and burger in the bar, as in the mockup. */
 @media (max-width: 900px) {
   .head__btn--search { display: none; }
 }
@@ -220,8 +220,8 @@ function isActive(key: string) {
   .head__name { font-size: 13px; letter-spacing: 0.04em; }
 }
 
-/* На 320px полное имя уже не оставляет места кнопкам — бургер срезало
-   краем панели. Подменяем коротким знаком. */
+/* At 320px the full name leaves no room for the buttons — the burger was clipped
+   by the edge of the bar. A short mark takes its place. */
 .head__name--short { display: none; }
 
 @media (max-width: 360px) {
@@ -230,7 +230,7 @@ function isActive(key: string) {
   .head__name--short { display: inline; }
 }
 
-/* ── Бургер ── */
+/* ── Burger ── */
 .head__burger {
   display: none;
   gap: 5px;
@@ -250,7 +250,7 @@ function isActive(key: string) {
 
 .head__burger span:last-child { background: var(--accent); }
 
-/* ── Мобильное меню ── */
+/* ── Mobile menu ── */
 .head__mobile {
   padding: 8px clamp(18px, 3vw, 46px) 24px;
   border-top: 1px solid var(--border);
@@ -303,7 +303,7 @@ function isActive(key: string) {
 .mobile-nav-enter-from,
 .mobile-nav-leave-to { opacity: 0; }
 
-/* Обе иконки стопкой в одной ячейке; какая видна — решают правила
-   в main.css, они завязаны на класс .light у <html>. */
+/* Both icons are stacked in one cell; which one shows is decided by rules in
+   main.css, keyed on the .light class of <html>. */
 .head__btn--theme .ico { grid-column: 1; grid-row: 1; }
 </style>

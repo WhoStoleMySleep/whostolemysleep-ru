@@ -4,7 +4,7 @@ defineProps<{
   num?: string
   title: string
   subtitle?: string
-  /** Увеличенный кегль — для страницы контактов. */
+  /** Larger type — used by the contacts page. */
   large?: boolean
 }>()
 </script>

@@ -7,18 +7,18 @@ mockNuxtImport('useLocalePath', () => () => (path: string) => `/ru${path}`)
 const post = (fields: Partial<Post>) => ({ id: 1, slug: 'hello', ...fields } as Post)
 
 describe('usePostLink', () => {
-  test('запись без ссылки ведёт на страницу блога внутри локали', async () => {
+  test('an entry with no link points at the blog page inside the locale', async () => {
     const { usePostLink } = await import('~/composables/usePostLink')
     expect(usePostLink().linkFor(post({ url: null }))).toEqual({ href: '/ru/blog/hello', isExternal: false })
   })
 
-  test('проект со своим url ведёт наружу', async () => {
+  test('a project with its own url points outwards', async () => {
     const { usePostLink } = await import('~/composables/usePostLink')
     expect(usePostLink().linkFor(post({ url: 'https://github.com/x' })))
       .toEqual({ href: 'https://github.com/x', isExternal: true })
   })
 
-  test('пустая строка в url — не ссылка, а незаполненное поле', async () => {
+  test('an empty string in url is not a link but an unfilled field', async () => {
     const { usePostLink } = await import('~/composables/usePostLink')
     expect(usePostLink().linkFor(post({ url: '' })).isExternal).toBe(false)
   })

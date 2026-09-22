@@ -43,7 +43,7 @@ const news = computed(() => {
     .map(post => ({ ...post, ...linkFor(post) }))
 })
 
-/** Стаж живёт только здесь — в заголовке его больше нет, чтобы не дублировать. */
+/** Years of experience live here only — the heading no longer repeats them. */
 const years = computed(() => siteSettings.value?.years_experience ?? 5)
 
 const stack = computed(() => [
@@ -63,7 +63,7 @@ const brings = computed(() => [
 <template>
   <div class="home">
 
-    <!-- Герой -->
+    <!-- Hero -->
     <section class="hero">
       <div class="hero__blob" aria-hidden="true" />
 
@@ -99,7 +99,7 @@ const brings = computed(() => [
       </div>
     </section>
 
-    <!-- Стек -->
+    <!-- Stack -->
     <section class="stack">
       <div v-for="row in stack" :key="row.k" class="stack__cell">
         <span class="stack__k">{{ row.k }}</span>
@@ -107,7 +107,7 @@ const brings = computed(() => [
       </div>
     </section>
 
-    <!-- Обо мне -->
+    <!-- About -->
     <section v-if="about" class="section about">
       <p class="eyebrow section__eyebrow">{{ t('about.eyebrow') }}</p>
       <div class="about__grid">
@@ -119,7 +119,7 @@ const brings = computed(() => [
       </div>
     </section>
 
-    <!-- Последнее -->
+    <!-- Latest -->
     <section v-if="news.length" class="section">
       <div class="section__head">
         <h2 class="section__title">{{ t('news.eyebrow') }}</h2>
@@ -145,7 +145,7 @@ const brings = computed(() => [
       </div>
     </section>
 
-    <!-- Что приношу проекту -->
+    <!-- What I bring to a project -->
     <section class="section brings">
       <div class="brings__list-col">
         <p class="brings__title">{{ t('brings.title') }}</p>
@@ -167,12 +167,12 @@ const brings = computed(() => [
 </template>
 
 <style scoped>
-/* ═══ Герой ═══
-   overflow: clip живёт здесь, а не на .panel в лейауте: у панели он
-   сломал бы position: sticky у бокового рейла. Обрезать нужно только
-   круг, который намеренно выходит за край. */
-/* Без своего overflow: круг намеренно выходит за секцию и обрезается
-   панелью по скруглённому углу — так же, как в макете. */
+/* ═══ Hero ═══
+   overflow: clip lives here rather than on .panel in the layout: on the panel it
+   would break position: sticky on the side rail. The only thing to clip is the
+   circle that deliberately runs past the edge. */
+/* No overflow of its own: the circle deliberately leaves the section and is
+   clipped by the panel along its rounded corner, exactly as in the mockup. */
 .hero {
   position: relative;
   padding: clamp(12px, 3vw, 40px) 0 clamp(30px, 4vw, 56px);
@@ -285,7 +285,7 @@ const brings = computed(() => [
   color: var(--text-3);
 }
 
-/* ═══ Стек ═══ */
+/* ═══ Stack ═══ */
 .stack {
   display: flex;
   flex-wrap: wrap;
@@ -320,7 +320,7 @@ const brings = computed(() => [
   text-wrap: pretty;
 }
 
-/* ═══ Секции ═══ */
+/* ═══ Sections ═══ */
 .section { padding: clamp(34px, 4.4vw, 68px) 0 0; }
 
 .section__eyebrow { margin-bottom: 22px; }
@@ -351,12 +351,12 @@ const brings = computed(() => [
 
 .section__more:hover { color: var(--accent); }
 
-/* ═══ Обо мне ═══
-   Колонка кнопок начинается ровно на 3/4 ширины — на той же вертикали,
-   что и граница между третьей и четвёртой ячейками блока со стеком.
-   Отсюда нулевой gap: любой зазор сдвинул бы кнопки с этой линии.
-   Брейкпоинт — 960px: ниже ячейки стека (flex-basis 240px) всё равно
-   переносятся, и выравнивать уже не по чему. */
+/* ═══ About ═══
+   The button column starts exactly at 3/4 of the width — on the same vertical as
+   the boundary between the third and fourth cells of the stack block. Hence the
+   zero gap: any gutter would push the buttons off that line. The breakpoint is
+   960px: below it the stack cells (flex-basis 240px) wrap anyway and there is
+   nothing left to align to. */
 .about__grid {
   display: grid;
   grid-template-columns: 3fr 1fr;
@@ -377,21 +377,22 @@ const brings = computed(() => [
 
 .about__text :deep(p + p) { margin-top: 18px; }
 
-/* Кнопки тянутся во всю колонку: левый край ложится на линию 3/4,
-   правый — на край контейнера. Обе границы совпадают с линиями стека.
-   По ширине содержимого они бы повисли в пустой колонке без опоры. */
+/* The buttons stretch across the whole column: the left edge lands on the 3/4
+   line, the right one on the container edge. Both match the lines of the stack.
+   Sized to their content they would float in an empty column with nothing to
+   anchor them. */
 .about__links {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* Подпись по центру: в растянутой пилюле текст, прижатый к левому краю,
-   читается как поле ввода. Ширина кнопки здесь задана колонкой, а не
-   содержимым, поэтому и выравнивать содержимое нужно иначе. */
+/* The label is centred: inside a stretched pill, text pinned to the left edge
+   reads as an input field. The button's width comes from the column rather than
+   from its content, so its content has to be aligned differently too. */
 .about__links :deep(.btn) { justify-content: center; }
 
-/* ═══ Что приношу проекту ═══ */
+/* ═══ What I bring to a project ═══ */
 .brings {
   display: flex;
   flex-wrap: wrap;
@@ -469,7 +470,7 @@ const brings = computed(() => [
 
 .brings__cta:hover { background: var(--accent-btn); color: var(--on-accent); }
 
-/* ═══ Последнее ═══ */
+/* ═══ Latest ═══ */
 .rows { border-top: 1px dotted var(--dot); }
 
 .row {

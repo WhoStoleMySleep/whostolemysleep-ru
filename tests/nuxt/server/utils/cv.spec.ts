@@ -26,45 +26,45 @@ beforeEach(() => {
 })
 
 describe('parseSnapshot', () => {
-  test('разбирает полный файл', async () => {
+  test('parses a complete file', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
-      about: { text_ru: ' про меня ', text_en: 'about' },
+      about: { text_ru: ' about me ', text_en: 'about' },
       experience: [{
-        company: 'Acme', position_ru: 'Разработчик', position_en: 'Developer',
+        company: 'Acme', position_ru: 'Developer', position_en: 'Developer',
         date_from: '2020-01-01', date_to: null,
-        bullets: [{ text_ru: 'делал', text_en: 'did' }],
+        bullets: [{ text_ru: 'did things', text_en: 'did' }],
       }],
-      education: [{ institution: 'ВУЗ', specialization_ru: 'ПО', specialization_en: 'SE', date_from: '2015-09-01', date_to: '2019-06-30' }],
-      skills: [{ slug: 'lang', name_ru: 'Языки', name_en: 'Languages', items: ['TypeScript', 'Rust'] }],
+      education: [{ institution: 'University', specialization_ru: 'Software', specialization_en: 'SE', date_from: '2015-09-01', date_to: '2019-06-30' }],
+      skills: [{ slug: 'lang', name_ru: 'Languages', name_en: 'Languages', items: ['TypeScript', 'Rust'] }],
     })
 
-    expect(out.about).toEqual({ text_ru: 'про меня', text_en: 'about' })
+    expect(out.about).toEqual({ text_ru: 'about me', text_en: 'about' })
     expect(out.experience).toHaveLength(1)
     expect(out.education?.[0]?.date_to).toBe('2019-06-30')
     expect(out.skills?.[0]?.items).toEqual(['TypeScript', 'Rust'])
   })
 
-  test('не-объект — ошибка: разбирать нечего', async () => {
+  test('a non-object is an error: there is nothing to parse', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     expect(() => parseSnapshot(null)).toThrow()
-    expect(() => parseSnapshot('текст')).toThrow()
+    expect(() => parseSnapshot('text')).toThrow()
     expect(() => parseSnapshot(42)).toThrow()
   })
 
-  test('отсутствующий раздел не попадает в результат — это «не трогать», а не «удалить всё»', async () => {
+  test('a missing section is left out of the result — that means leave alone, not delete everything', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({ about: { text_ru: 'a', text_en: 'b' } })
     expect(out).not.toHaveProperty('experience')
     expect(out).not.toHaveProperty('skills')
   })
 
-  test('пустой раздел остаётся пустым массивом — это уже «удалить всё»', async () => {
+  test('an empty section stays an empty array — that one does mean delete everything', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     expect(parseSnapshot({ experience: [] }).experience).toEqual([])
   })
 
-  test('запись без компании или с кривой датой отбрасывается, остальные проходят', async () => {
+  test('a row with no company or a broken date is dropped, the rest pass', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
       experience: [
@@ -77,39 +77,39 @@ describe('parseSnapshot', () => {
     expect(out.experience?.[0]?.company).toBe('Beta')
   })
 
-  test('незаполненная дата окончания — это «по настоящее время», а не ошибка', async () => {
+  test('an unfilled end date means to this day, not an error', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
-    const out = parseSnapshot({ experience: [{ company: 'Acme', date_from: '2020-01-01', date_to: 'сейчас' }] })
+    const out = parseSnapshot({ experience: [{ company: 'Acme', date_from: '2020-01-01', date_to: 'now' }] })
     expect(out.experience?.[0]?.date_to).toBeNull()
   })
 
-  test('пункт строкой вместо объекта — частый способ записать руками', async () => {
+  test('a bullet as a string instead of an object is a common way to write it by hand', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
-      experience: [{ company: 'Acme', date_from: '2020-01-01', bullets: [' поднял сервис '] }],
+      experience: [{ company: 'Acme', date_from: '2020-01-01', bullets: [' brought a service up '] }],
     })
-    expect(out.experience?.[0]?.bullets).toEqual([{ text_ru: 'поднял сервис', text_en: '' }])
+    expect(out.experience?.[0]?.bullets).toEqual([{ text_ru: 'brought a service up', text_en: '' }])
   })
 
-  test('пустые пункты выбрасываются, а bullets не массивом — просто пустой список', async () => {
+  test('empty bullets are dropped, and bullets that are not an array are just an empty list', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
       experience: [
         { company: 'Acme', date_from: '2020-01-01', bullets: ['', { text_ru: '', text_en: '' }, 'ok'] },
-        { company: 'Beta', date_from: '2020-01-01', bullets: 'строкой' },
+        { company: 'Beta', date_from: '2020-01-01', bullets: 'a string' },
       ],
     })
     expect(out.experience?.[0]?.bullets).toHaveLength(1)
     expect(out.experience?.[1]?.bullets).toEqual([])
   })
 
-  test('группа навыков без slug отбрасывается — привязываться не к чему', async () => {
+  test('a skill group with no slug is dropped — there is nothing to key it by', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
-    const out = parseSnapshot({ skills: [{ name_ru: 'Языки', items: ['Rust'] }] })
+    const out = parseSnapshot({ skills: [{ name_ru: 'Languages', items: ['Rust'] }] })
     expect(out.skills).toEqual([])
   })
 
-  test('нестроковые навыки внутри группы отсеиваются', async () => {
+  test('non-string skills inside a group are filtered out', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({ skills: [{ slug: 'lang', items: ['Rust', 42, null, '  '] }] })
     expect(out.skills?.[0]?.items).toEqual(['Rust'])
@@ -117,43 +117,43 @@ describe('parseSnapshot', () => {
 })
 
 describe('diffSnapshot', () => {
-  test('пустой ввод не даёт изменений', async () => {
+  test('empty input gives no changes', async () => {
     const { diffSnapshot } = await import('~~/server/utils/cv')
     expect(await diffSnapshot({})).toEqual([])
   })
 
-  test('совпадающий текст about изменением не считается', async () => {
-    dbState.about = { id: 1, text_ru: 'про меня', text_en: 'about' }
+  test('an identical about text does not count as a change', async () => {
+    dbState.about = { id: 1, text_ru: 'about me', text_en: 'about' }
     const { diffSnapshot } = await import('~~/server/utils/cv')
-    const out = await diffSnapshot({ about: { text_ru: 'про меня', text_en: 'about' } })
+    const out = await diffSnapshot({ about: { text_ru: 'about me', text_en: 'about' } })
     expect(out).toEqual([])
   })
 
-  test('правка about видна по полям и помечена editable', async () => {
-    dbState.about = { id: 1, text_ru: 'старое', text_en: 'old' }
+  test('an edit to about shows per field and is marked editable', async () => {
+    dbState.about = { id: 1, text_ru: 'the old text', text_en: 'old' }
     const { diffSnapshot } = await import('~~/server/utils/cv')
-    const out = await diffSnapshot({ about: { text_ru: 'новое', text_en: 'old' } })
+    const out = await diffSnapshot({ about: { text_ru: 'the new text', text_en: 'old' } })
 
     expect(out).toHaveLength(1)
-    expect(out[0]?.change).toMatchObject({ section: 'about', kind: 'update', field: 'text_ru', before: 'старое', after: 'новое', editable: true })
+    expect(out[0]?.change).toMatchObject({ section: 'about', kind: 'update', field: 'text_ru', before: 'the old text', after: 'the new text', editable: true })
   })
 
-  test('незнакомая работа — это add', async () => {
+  test('an unknown job is an add', async () => {
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
-      experience: [{ company: 'Acme', position_ru: 'Разработчик', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
+      experience: [{ company: 'Acme', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
     })
     expect(out.map((b) => b.change.kind)).toEqual(['add'])
   })
 
-  test('запись узнаётся по компании и дате начала, регистр и пробелы не мешают', async () => {
+  test('a row is matched by company and start date, case and spaces do not matter', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'Разработчик', position_en: '',
+      id: 7, order: 0, company: 'Acme', position_ru: 'Developer', position_en: '',
       date_from: '2020-01-01', date_to: null, bullets: [],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
-      experience: [{ company: ' ACME ', position_ru: 'Разработчик', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
+      experience: [{ company: ' ACME ', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
     })
 
     expect(out.map((b) => b.change.kind)).toEqual(['update'])
@@ -161,9 +161,9 @@ describe('diffSnapshot', () => {
     expect(out[0]?.change.field).toBe('company')
   })
 
-  test('исчезнувшая из файла работа — это remove', async () => {
+  test('a job that vanished from the file is a remove', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'Разработчик', position_en: '',
+      id: 7, order: 0, company: 'Acme', position_ru: 'Developer', position_en: '',
       date_from: '2020-01-01', date_to: null, bullets: [],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
@@ -174,17 +174,17 @@ describe('diffSnapshot', () => {
     expect(out[0]?.targetId).toBe(7)
   })
 
-  test('пункты сравниваются списком целиком — перестановка тоже изменение', async () => {
+  test('bullets are compared as a whole list — a reorder is a change too', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'Р', position_en: '',
+      id: 7, order: 0, company: 'Acme', position_ru: 'D', position_en: '',
       date_from: '2020-01-01', date_to: null,
-      bullets: [{ text_ru: 'один', text_en: '' }, { text_ru: 'два', text_en: '' }],
+      bullets: [{ text_ru: 'one', text_en: '' }, { text_ru: 'two', text_en: '' }],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
       experience: [{
-        company: 'Acme', position_ru: 'Р', position_en: '', date_from: '2020-01-01', date_to: null,
-        bullets: [{ text_ru: 'два', text_en: '' }, { text_ru: 'один', text_en: '' }],
+        company: 'Acme', position_ru: 'D', position_en: '', date_from: '2020-01-01', date_to: null,
+        bullets: [{ text_ru: 'two', text_en: '' }, { text_ru: 'one', text_en: '' }],
       }],
     })
 
@@ -193,20 +193,20 @@ describe('diffSnapshot', () => {
     expect(out[0]?.change.editable).toBe(false)
   })
 
-  test('состав группы навыков меняется одним изменением', async () => {
-    dbState.skills = [{ id: 3, order: 0, slug: 'lang', name_ru: 'Языки', name_en: 'Languages', skills: [{ name: 'Rust' }] }]
+  test('the contents of a skill group change as a single change', async () => {
+    dbState.skills = [{ id: 3, order: 0, slug: 'lang', name_ru: 'Languages', name_en: 'Languages', skills: [{ name: 'Rust' }] }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
-      skills: [{ slug: 'lang', name_ru: 'Языки', name_en: 'Languages', items: ['Rust', 'TypeScript'] }],
+      skills: [{ slug: 'lang', name_ru: 'Languages', name_en: 'Languages', items: ['Rust', 'TypeScript'] }],
     })
 
     expect(out).toHaveLength(1)
     expect(out[0]?.change).toMatchObject({ section: 'skills', field: 'items', after: ['Rust', 'TypeScript'] })
   })
 
-  test('раздел, которого нет в файле, не порождает удалений', async () => {
+  test('a section missing from the file produces no removals', async () => {
     dbState.education = [{
-      id: 2, order: 0, institution: 'ВУЗ', specialization_ru: 'ПО', specialization_en: '',
+      id: 2, order: 0, institution: 'University', specialization_ru: 'Software', specialization_en: '',
       date_from: '2015-09-01', date_to: null,
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')

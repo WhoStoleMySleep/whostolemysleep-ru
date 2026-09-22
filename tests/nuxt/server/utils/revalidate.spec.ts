@@ -10,8 +10,8 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('revalidatePaths вне Vercel', () => {
-  test('чистит хранилище Nitro — кеш лежит рядом с сервером', async () => {
+describe('revalidatePaths outside Vercel', () => {
+  test('it clears the Nitro storage — the cache lives next to the server', async () => {
     vi.stubEnv('VERCEL', '')
     const removeItem = vi.fn()
     vi.stubGlobal('useStorage', () => ({
@@ -27,13 +27,13 @@ describe('revalidatePaths вне Vercel', () => {
   })
 })
 
-describe('revalidatePaths на Vercel', () => {
+describe('revalidatePaths on Vercel', () => {
   beforeEach(() => {
     vi.stubEnv('VERCEL', '1')
     vi.stubEnv('ISR_BYPASS_TOKEN', 'secret')
   })
 
-  test('пустой список не ходит в сеть', async () => {
+  test('an empty list never hits the network', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('$fetch', fetchMock)
 
@@ -42,7 +42,7 @@ describe('revalidatePaths на Vercel', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  test('запрашивает страницу по абсолютному адресу с токеном в заголовке', async () => {
+  test('it requests the page by absolute address with the token in the header', async () => {
     const fetchMock = vi.fn(async () => '')
     vi.stubGlobal('$fetch', fetchMock)
 
@@ -56,7 +56,7 @@ describe('revalidatePaths на Vercel', () => {
     expect(res.revalidated).toEqual(['/ru/blog'])
   })
 
-  test('упавший путь попадает в failed с кодом ответа, остальные — в revalidated', async () => {
+  test('a failed path lands in failed with its status code, the rest in revalidated', async () => {
     vi.stubGlobal('$fetch', vi.fn(async (url: string) => {
       if (url.endsWith('/en/blog')) throw Object.assign(new Error('nope'), { statusCode: 403 })
       return ''
@@ -69,7 +69,7 @@ describe('revalidatePaths на Vercel', () => {
     expect(res.failed).toEqual([{ path: '/en/blog', reason: 'HTTP 403' }])
   })
 
-  test('без токена бросает ошибку, а не отчитывается об успехе', async () => {
+  test('with no token it throws instead of reporting success', async () => {
     vi.stubEnv('ISR_BYPASS_TOKEN', '')
     vi.stubGlobal('$fetch', vi.fn())
 

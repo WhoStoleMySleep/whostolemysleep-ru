@@ -2,11 +2,11 @@ import { db } from '~~/server/db'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: навыки'],
-    summary:  'Группы навыков со списком навыков',
+    tags:     ['Admin: skills'],
+    summary:  'Skill groups with their skills',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Группы в порядке order, внутри — навыки в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/SkillGroupRow' } } } } },
+      200: { description: 'Groups in order, each with its skills in their own order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/SkillGroupRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {

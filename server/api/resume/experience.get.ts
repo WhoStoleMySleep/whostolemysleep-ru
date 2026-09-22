@@ -27,11 +27,11 @@ async function fetchExperience(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Публичные'],
-    summary:    'Опыт работы',
+    tags:       ['Public'],
+    summary:    'Experience',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Места работы в порядке order, внутри — пункты в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Experience' } } } } },
+      200: { description: 'Jobs in order, each with its bullets in their own order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Experience' } } } } },
     },
     $global: {
       components: {

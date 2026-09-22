@@ -5,9 +5,9 @@ const RATE_WINDOW = 60 * 60 * 1000
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Публичные'],
-    summary:     'Отправить сообщение с формы контактов',
-    description: 'Не больше трёх писем с одного адреса в час. Поле website — ловушка для ботов: заполнено, значит запрос отклоняется.',
+    tags:        ['Public'],
+    summary:     'Send a message from the contact form',
+    description: 'At most three messages per address per hour. The website field is a bot trap: if it is filled in, the request is rejected.',
     requestBody: {
       required: true,
       content: {
@@ -19,14 +19,14 @@ defineRouteMeta({
               name:    { type: 'string' },
               email:   { type: 'string', format: 'email' },
               message: { type: 'string' },
-              website: { type: 'string', description: 'Honeypot, должно остаться пустым' },
+              website: { type: 'string', description: 'Honeypot, must stay empty' },
             },
           },
         },
       },
     },
     responses: {
-      200: { description: 'Письмо отправлено', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Message sent', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       429: { $ref: '#/components/responses/TooManyRequests' },
     },
@@ -34,7 +34,7 @@ defineRouteMeta({
 })
 
 export default defineEventHandler(async (event) => {
-  // clientIp берёт адрес из заголовка платформы, а не из того, что прислал клиент.
+  // clientIp reads the platform header, not whatever the client sent.
   const ip = clientIp(event)
   const allowed = await checkRateLimit(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW)
   if (!allowed) throw createError({ statusCode: 429, message: 'rate_limit' })

@@ -4,12 +4,12 @@ import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Админка: посты'],
-    summary:    'Пост целиком, с тегами и картинками',
+    tags:       ['Admin: posts'],
+    summary:    'A whole post, with tags and images',
     security:   [{ adminCookie: [] }],
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     responses: {
-      200: { description: 'Пост', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
+      200: { description: 'A post', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },

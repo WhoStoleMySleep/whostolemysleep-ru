@@ -3,9 +3,9 @@ const route  = useRoute()
 const router = useRouter()
 
 /**
- * Боковое меню вместо прежней строки ссылок в шапке: разделов девять,
- * в одну строку они помещались только без группировки, и связь
- * «About / Experience / Education / Skills — это всё резюме» не читалась.
+ * A side menu instead of the old row of links in the header: there are nine
+ * sections, they only fitted on one line without grouping, and the fact that
+ * About / Experience / Education / Skills are all the resume did not read.
  */
 const sections = [
   {
@@ -103,7 +103,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-shell { min-height: 100dvh; display: flex; }
 
-/* ── Боковая панель ── */
+/* ── Sidebar ── */
 .admin-side {
   position: sticky;
   top: 0;
@@ -178,7 +178,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-side__foot { display: flex; flex-direction: column; gap: 6px; }
 
-/* ── Контент ── */
+/* ── Content ── */
 .admin-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
 .admin-main { flex: 1; padding: 32px; max-width: 1100px; width: 100%; }
@@ -197,7 +197,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
   .admin-main { padding: 20px 16px; }
 }
 
-/* ── Кнопки ── */
+/* ── Buttons ── */
 .admin-btn {
   display: inline-flex;
   align-items: center;
@@ -241,9 +241,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 
 .admin-btn--danger:hover { background: var(--red-bg); border-color: var(--red); }
 
-/* ── Общая геометрия контролов ──
-   Классы объявлены на страницах, радиусы держим здесь: иначе их пришлось
-   бы синхронизировать по девяти файлам. */
+/* ── Shared control geometry ──
+   The classes are used on the pages, the radii live here: otherwise they would have
+   to be kept in sync across nine files. */
 .admin-input,
 .field-input,
 .text-pane,
@@ -258,7 +258,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-mono);
 .admin-input:focus,
 .field-input:focus { border-color: var(--accent); outline: none; }
 
-/* ── Панель ── */
+/* ── Panel ── */
 .admin-panel {
   border: 1px solid var(--border);
   border-radius: var(--r-s);

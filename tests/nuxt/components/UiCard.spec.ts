@@ -16,9 +16,9 @@ const post = (fields: Partial<Post> = {}): Post => ({
   id: 1,
   slug: 'hello',
   type: 'blog',
-  title: 'Заголовок',
+  title: 'Title',
   text: '',
-  excerpt: 'Анонс',
+  excerpt: 'Summary',
   url: null,
   tags: [],
   images: [],
@@ -28,7 +28,7 @@ const post = (fields: Partial<Post> = {}): Post => ({
 })
 
 describe('UiCard', () => {
-  test('внутренняя запись ведёт на страницу блога и открывается в том же окне', async () => {
+  test('an internal entry links to the blog page and opens in the same window', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post() } })
     const link = wrapper.get('a')
 
@@ -36,7 +36,7 @@ describe('UiCard', () => {
     expect(link.attributes('target')).toBeUndefined()
   })
 
-  test('внешний проект открывается в новой вкладке и с защитным rel', async () => {
+  test('an external project opens in a new tab with a protective rel', async () => {
     const wrapper = await mountSuspended(UiCard, {
       props: { item: post({ url: 'https://github.com/user/repo' }) },
     })
@@ -47,36 +47,36 @@ describe('UiCard', () => {
     expect(link.attributes('rel')).toBe('noopener noreferrer')
   })
 
-  test('вместо полного адреса показывается хост без www', async () => {
+  test('the host without www is shown instead of the full address', async () => {
     const wrapper = await mountSuspended(UiCard, {
       props: { item: post({ url: 'https://www.example.com/a/b?c=1' }) },
     })
     expect(wrapper.text()).toContain('example.com ↗')
   })
 
-  test('битый url не роняет карточку — просто нет подписи со ссылкой', async () => {
-    const wrapper = await mountSuspended(UiCard, { props: { item: post({ url: 'не адрес' }) } })
+  test('a broken url does not break the card — there is simply no link caption', async () => {
+    const wrapper = await mountSuspended(UiCard, { props: { item: post({ url: 'not a url' }) } })
     expect(wrapper.find('.card__link').exists()).toBe(false)
   })
 
-  test('первый тег вытесняет подпись раздела', async () => {
+  test('the first tag replaces the section caption', async () => {
     const wrapper = await mountSuspended(UiCard, {
       props: { item: post({ tags: [{ id: 1, slug: 'rust', name: 'Rust' }] }) },
     })
     expect(wrapper.get('.card__tag').text()).toBe('Rust')
   })
 
-  test('без тегов раздел подписывается сам', async () => {
+  test('with no tags the section captions itself', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post({ type: 'project' }) } })
     expect(wrapper.get('.card__tag').text()).toBe('card.project')
   })
 
-  test('без даты публикации блок даты не рисуется', async () => {
+  test('with no publication date the date block is not rendered', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post({ published_at: null }) } })
     expect(wrapper.find('.card__date').exists()).toBe(false)
   })
 
-  test('дата показывается в формате локали', async () => {
+  test('the date is shown in the locale format', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post() } })
     expect(wrapper.get('.card__date').text()).toBe('09.02.2024')
   })

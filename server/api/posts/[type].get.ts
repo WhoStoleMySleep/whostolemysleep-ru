@@ -47,14 +47,14 @@ async function fetchPosts(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:    ['Публичные'],
-    summary: 'Опубликованные посты по типу',
+    tags:    ['Public'],
+    summary: 'Published posts by type',
     parameters: [
-      { name: 'type', in: 'path', required: true, description: 'Раздел сайта', schema: { type: 'string', enum: ['blog', 'project'] } },
+      { name: 'type', in: 'path', required: true, description: 'A section of the site', schema: { type: 'string', enum: ['blog', 'project'] } },
       { $ref: '#/components/parameters/locale' },
     ],
     responses: {
-      200: { description: 'Посты от новых к старым', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Post' } } } } },
+      200: { description: 'Posts, newest first', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Post' } } } } },
       400: { $ref: '#/components/responses/BadRequest' },
     },
     $global: {
@@ -84,7 +84,7 @@ defineRouteMeta({
               slug:         { type: 'string' },
               type:         { type: 'string', enum: ['blog', 'project'] },
               title:        { type: 'string' },
-              text:         { type: 'string', description: 'HTML, пропущенный через sanitizeHtml' },
+              text:         { type: 'string', description: 'HTML, passed through sanitizeHtml' },
               excerpt:      { type: 'string' },
               url:          { type: 'string', nullable: true },
               published_at: { type: 'string', format: 'date-time', nullable: true },

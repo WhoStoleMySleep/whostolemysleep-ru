@@ -5,7 +5,7 @@ const TRANSLIT: Record<string, string> = {
   э: 'e', ю: 'yu', я: 'ya',
 }
 
-/** Транслитерирует и приводит к виду, годному для адреса: «Rust и Nuxt» → «rust-i-nuxt». */
+/** Transliterates into something usable as a URL: "Rust и Nuxt" becomes "rust-i-nuxt". */
 export function slugify(source: string): string {
   return source
     .toLowerCase()

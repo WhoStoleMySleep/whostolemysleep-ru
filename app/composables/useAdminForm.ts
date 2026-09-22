@@ -1,18 +1,18 @@
 export interface AdminFormOptions<T, F extends object> {
   endpoint: string
-  /** Ответ API → поля формы. */
+  /** API response to form fields. */
   toForm: (data: T) => F
-  /** Форма → тело PATCH. По умолчанию уходит форма как есть. */
+  /** Form to PATCH body. By default the form is sent as it is. */
   toBody?: (form: F) => unknown
   title: string
 }
 
 /**
- * Одна форма на страницу (About, Settings) — без списка и режима создания.
+ * One form per page (About, Settings) — no list, no create mode.
  *
- * Сверх прежнего кода страниц даёт две вещи: отметку о несохранённых
- * правках и защиту от ухода со страницы с ними. Раньше текст about можно
- * было потерять, случайно нажав на пункт меню.
+ * Over what the pages did before, it adds two things: a dirty marker and a guard
+ * against leaving the page with unsaved edits. The about text used to be lost by
+ * accidentally clicking a menu item.
  */
 export function useAdminForm<T, F extends object>(opts: AdminFormOptions<T, F>) {
   const api   = useAdminApi()
@@ -22,7 +22,7 @@ export function useAdminForm<T, F extends object>(opts: AdminFormOptions<T, F>) 
 
   const form   = ref<F>({} as F) as Ref<F>
   const saving = ref(false)
-  /** Слепок сохранённого состояния — с ним сравнивается форма. */
+  /** Snapshot of the saved state — the form is compared against it. */
   const saved  = ref('')
 
   function reset(value: T | null) {
@@ -31,7 +31,7 @@ export function useAdminForm<T, F extends object>(opts: AdminFormOptions<T, F>) 
     saved.value = JSON.stringify(form.value)
   }
 
-  // useAsyncData оборачивает T в PickFrom<>, поэтому приводим явно.
+  // useAsyncData wraps T in PickFrom<>, hence the explicit cast.
   reset((data.value ?? null) as T | null)
   watch(data, (v) => reset((v ?? null) as T | null))
 
@@ -56,8 +56,8 @@ export function useAdminForm<T, F extends object>(opts: AdminFormOptions<T, F>) 
     window.addEventListener('beforeunload', warn)
     onBeforeUnmount(() => window.removeEventListener('beforeunload', warn))
 
-    // Ctrl/Cmd+S — привычка из любого редактора; браузерный «сохранить
-    // страницу» здесь бесполезен, поэтому перехватываем.
+    // Ctrl/Cmd+S is muscle memory from every editor; the browser's "save page"
+    // is useless here, so the shortcut is intercepted.
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); if (dirty.value) save() }
     }

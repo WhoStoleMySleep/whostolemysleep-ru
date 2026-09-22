@@ -12,8 +12,8 @@ export const pendingRevalidation = pgTable('pending_revalidation', {
 })
 /* ── Enums ── */
 
-/* Счётчик попыток для лимитеров. В памяти инстанса его держать нельзя:
-   на Vercel их много, и каждый холодный старт обнуляет ограничение. */
+/* The attempt counter behind the rate limiters. It cannot live in instance memory:
+   Vercel runs many instances, and every cold start would reset the limit. */
 export const rateLimit = pgTable('rate_limit', {
   key:      varchar('key', { length: 200 }).primaryKey(),
   count:    integer('count').notNull().default(0),
@@ -28,7 +28,7 @@ export const userRoleEnum  = pgEnum('user_role',  ['admin', 'viewer'])
 export const post = pgTable('post', {
   id:           serial('id').primaryKey(),
   slug:         varchar('slug', { length: 255 }).notNull().unique(),
-  /* id поста во внешнем публикаторе: по нему повторная отправка обновляет, а не дублирует */
+  /* The post id in the external publisher: it makes a repeat send update instead of duplicate */
   external_id:  varchar('external_id', { length: 64 }).unique(),
   type:         postTypeEnum('type').notNull(),
   title_ru:     varchar('title_ru', { length: 500 }).notNull(),

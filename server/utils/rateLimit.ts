@@ -9,8 +9,9 @@ export interface RateVerdict {
 }
 
 /**
- * Счётчик обращений с общим для всех инстансов состоянием — он живёт в базе.
- * Одним запросом: заводим окно, увеличиваем счётчик, начинаем новое окно, если старое истекло.
+ * A request counter whose state is shared by every instance, which is why it lives
+ * in the database. One statement: open the window, increment it, and start a new
+ * window when the old one has expired.
  */
 export async function hitRateLimit(key: string, limit: number, windowMs: number): Promise<RateVerdict> {
   const resetAt = new Date(Date.now() + windowMs).toISOString()
@@ -21,7 +22,7 @@ export async function hitRateLimit(key: string, limit: number, windowMs: number)
     .onConflictDoUpdate({
       target: schema.rateLimit.key,
       set: {
-        // Истёкшее окно начинается заново, живое — просто считает дальше.
+        // An expired window starts over; a live one just keeps counting.
         count:    sql`case when ${reset_at} <= now() then 1 else ${count} + 1 end`,
         reset_at: sql`case when ${reset_at} <= now() then ${resetAt}::timestamp else ${reset_at} end`,
       },
@@ -34,21 +35,22 @@ export async function hitRateLimit(key: string, limit: number, windowMs: number)
   return { allowed: false, retryAfter }
 }
 
-/** Сбрасывает счётчик — после удачного входа копить неудачи незачем. */
+/** Clears the counter — after a successful login there is no point keeping failures. */
 export async function clearRateLimit(key: string): Promise<void> {
   await db.delete(schema.rateLimit).where(eq(schema.rateLimit.key, key))
 }
 
-/** Совместимость с прежним вызовом из формы контактов. */
+/** Kept for the older call site in the contact form. */
 export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
   const { allowed } = await hitRateLimit(key, limit, windowMs)
   return allowed
 }
 
 /**
- * Адрес клиента для лимитеров. `x-forwarded-for` сознательно не используется:
- * его присылает сам клиент, и подмена обнуляла бы любой счётчик. На Vercel адрес
- * приходит платформенным заголовком, вне её — берём адрес сокета, подделать который нельзя.
+ * The client address used by the limiters. `x-forwarded-for` is deliberately ignored:
+ * the client sends it itself, and spoofing it would reset any counter. On Vercel the
+ * address arrives in a platform header; elsewhere the socket address is used, and that
+ * one cannot be faked.
  */
 export function clientIp(event: H3Event): string {
   const vercel = getRequestHeader(event, 'x-vercel-forwarded-for')

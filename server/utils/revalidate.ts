@@ -1,19 +1,19 @@
 /**
- * Сброс кеша готовых страниц.
+ * Flushing the cache of rendered pages.
  *
- * На Vercel страницы с isr лежат на эдже, а не в хранилище Nitro: функция
- * на каждый вызов поднимается заново, и чистить её локальный кеш бесполезно
- * — именно поэтому кнопка Flush раньше отчитывалась об успехе, а страница
- * на сайте не менялась.
+ * On Vercel an isr page lives at the edge, not in Nitro storage: the function is
+ * started from scratch on every call, so clearing its local cache achieves
+ * nothing — which is exactly why the Flush button used to report success while
+ * the page on the site stayed the same.
  *
- * Обновить их из приложения можно единственным способом: запросить страницу
- * с заголовком x-prerender-revalidate, где лежит токен из сгенерированного
- * на сборке .prerender-config.json. Токен туда кладёт nuxt.config.ts из
- * ISR_BYPASS_TOKEN, поэтому переменная нужна и на сборке, и в рантайме —
- * значения должны совпадать.
+ * There is one way to refresh them from inside the app: request the page with an
+ * x-prerender-revalidate header carrying the token from the .prerender-config.json
+ * generated at build time. nuxt.config.ts puts ISR_BYPASS_TOKEN there, so the
+ * variable is needed both at build time and at runtime — and the two values have
+ * to match.
  *
- * Вне Vercel (локально, self-hosted) работает прежний путь через хранилище
- * Nitro: там кеш действительно лежит рядом с сервером.
+ * Outside Vercel (locally, self-hosted) the older path through Nitro storage
+ * still works: there the cache really does sit next to the server.
  */
 
 const BASE = process.env.NUXT_PUBLIC_SITE_URL ?? 'https://whostolemysleep.ru'

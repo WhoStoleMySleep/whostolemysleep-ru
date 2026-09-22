@@ -9,10 +9,10 @@ const STATIC_PATHS = ['', '/blog', '/projects', '/resume', '/contacts', '/privac
 
 defineRouteMeta({
   openAPI: {
-    tags:    ['Служебные'],
-    summary: 'Карта сайта',
+    tags:    ['Service'],
+    summary: 'Sitemap',
     responses: {
-      200: { description: 'urlset со статическими страницами и постами в обеих локалях', content: { 'application/xml': { schema: { type: 'string' } } } },
+      200: { description: 'A urlset with the static pages and the posts in both locales', content: { 'application/xml': { schema: { type: 'string' } } } },
     },
   },
 })

@@ -26,8 +26,8 @@ const type   = ref<'all' | 'blog' | 'project'>('all')
 const status = ref<'all' | 'published' | 'draft'>('all')
 const query  = ref('')
 
-// Поиск по списку: постов уже больше, чем помещается на экран, а до этого
-// единственным фильтром был тип.
+// Search over the list: there are more posts than fit on a screen, and the only
+// filter before this was the type.
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   return (data.value ?? []).filter((p) => {
@@ -54,7 +54,7 @@ async function remove(post: Row) {
   }
 }
 
-/** Публикация переключается из списка — ради одного флага открывать редактор незачем. */
+/** Publishing is toggled from the list — no reason to open the editor for one flag. */
 async function togglePublish(post: Row) {
   const next = !post.is_published
   post.is_published = next

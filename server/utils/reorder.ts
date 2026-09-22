@@ -3,12 +3,12 @@ import type { PgTable } from 'drizzle-orm/pg-core'
 import { db } from '../db'
 
 /**
- * Расставляет колонку "order" по позиции id в списке — одним запросом.
+ * Sets the "order" column from the position of each id in the list — in one query.
  *
- * Перетаскивание в списке меняет порядок сразу у нескольких записей.
- * Отдельный PATCH на каждую означал бы пачку round-trip'ов к Neon (а он
- * ходит по HTTP, где каждый запрос — отдельное соединение) и список,
- * который на полпути остался бы наполовину переставленным.
+ * Dragging one item changes the order of several rows at once. A PATCH per row
+ * would mean a batch of round trips to Neon (which talks over HTTP, where every
+ * request is its own connection) and a list left half-reordered if one of them
+ * failed.
  */
 export async function applyOrder(table: PgTable, ids: number[]): Promise<void> {
   if (!ids.length) return
@@ -23,7 +23,7 @@ export async function applyOrder(table: PgTable, ids: number[]): Promise<void> {
   `)
 }
 
-/** Список id из тела запроса. Всё, что не целое число, отбрасывается. */
+/** The list of ids from the request body. Anything that is not an integer is dropped. */
 export function readOrderIds(body: unknown): number[] {
   const ids = (body as { ids?: unknown })?.ids
   if (!Array.isArray(ids)) {

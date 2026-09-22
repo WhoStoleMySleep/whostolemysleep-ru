@@ -7,9 +7,9 @@ const ALLOWED = ['open_to_work', 'show_search', 'github_url', 'telegram_url', 'e
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: настройки'],
-    summary:     'Изменить настройки',
-    description: 'Из тела берутся только перечисленные поля, остальное игнорируется.',
+    tags:        ['Admin: settings'],
+    summary:     'Edit site settings',
+    description: 'Only the listed fields are read from the body, everything else is ignored.',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
@@ -29,7 +29,7 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/SettingsRow' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/SettingsRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

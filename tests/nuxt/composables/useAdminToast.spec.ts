@@ -5,7 +5,7 @@ afterEach(() => {
 })
 
 describe('useAdminToast', () => {
-  test('сообщения копятся в порядке появления и различают вид', async () => {
+  test('messages pile up in the order they appear and keep their kind', async () => {
     const { useAdminToast } = await import('~/composables/useAdminToast')
     const toast = useAdminToast()
     toast.toasts.value = []
@@ -16,7 +16,7 @@ describe('useAdminToast', () => {
     expect(toast.toasts.value.map((t) => [t.kind, t.text])).toEqual([['ok', 'Saved'], ['err', 'Failed']])
   })
 
-  test('у каждого сообщения свой id — одинаковый текст не схлопывается', async () => {
+  test('every message has its own id — identical text does not collapse', async () => {
     const { useAdminToast } = await import('~/composables/useAdminToast')
     const toast = useAdminToast()
     toast.toasts.value = []
@@ -28,19 +28,19 @@ describe('useAdminToast', () => {
     expect(first!.id).not.toBe(second!.id)
   })
 
-  test('dismiss убирает только своё сообщение', async () => {
+  test('dismiss removes only its own message', async () => {
     const { useAdminToast } = await import('~/composables/useAdminToast')
     const toast = useAdminToast()
     toast.toasts.value = []
 
-    toast.ok('Первое')
-    toast.ok('Второе')
+    toast.ok('First')
+    toast.ok('Second')
     toast.dismiss(toast.toasts.value[0]!.id)
 
-    expect(toast.toasts.value.map((t) => t.text)).toEqual(['Второе'])
+    expect(toast.toasts.value.map((t) => t.text)).toEqual(['Second'])
   })
 
-  test('сообщение уходит само — держать его на экране никто не обязан', async () => {
+  test('a message leaves by itself — nobody has to keep it on screen', async () => {
     vi.useFakeTimers()
     const { useAdminToast } = await import('~/composables/useAdminToast')
     const toast = useAdminToast()

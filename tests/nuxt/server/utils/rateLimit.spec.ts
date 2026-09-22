@@ -25,21 +25,21 @@ afterEach(() => {
 })
 
 describe('hitRateLimit', () => {
-  test('попытка в пределах лимита проходит', async () => {
+  test('an attempt within the limit passes', async () => {
     plan(state, { 'insert:rate_limit': [[row(3)]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
 
     expect(await hitRateLimit('k', 5, 60_000)).toEqual({ allowed: true })
   })
 
-  test('попытка ровно на границе ещё проходит', async () => {
+  test('an attempt exactly at the boundary still passes', async () => {
     plan(state, { 'insert:rate_limit': [[row(5)]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
 
     expect(await hitRateLimit('k', 5, 60_000)).toEqual({ allowed: true })
   })
 
-  test('за границей — отказ и время до конца окна', async () => {
+  test('past the boundary it is a refusal plus the time left in the window', async () => {
     plan(state, { 'insert:rate_limit': [[row(6, 120)]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
 
@@ -49,21 +49,21 @@ describe('hitRateLimit', () => {
     expect(verdict.retryAfter).toBeLessThanOrEqual(120)
   })
 
-  test('истёкшее окно не отдаёт нулевой или отрицательный retryAfter', async () => {
+  test('an expired window does not return a zero or negative retryAfter', async () => {
     plan(state, { 'insert:rate_limit': [[row(6, -30)]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
 
     expect((await hitRateLimit('k', 5, 60_000)).retryAfter).toBe(1)
   })
 
-  test('база не вернула строку — пропускаем, счётчик не повод закрыть вход', async () => {
+  test('the database returned no row — let it through, a counter is no reason to close the door', async () => {
     plan(state, { 'insert:rate_limit': [[]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
 
     expect(await hitRateLimit('k', 5, 60_000)).toEqual({ allowed: true })
   })
 
-  test('первая попытка заводит окно со счётчиком 1', async () => {
+  test('the first attempt opens a window with the counter at 1', async () => {
     plan(state, { 'insert:rate_limit': [[row(1)]] })
     const { hitRateLimit } = await import('~~/server/utils/rateLimit')
     await hitRateLimit('login:1.2.3.4', 5, 60_000)
@@ -76,7 +76,7 @@ describe('hitRateLimit', () => {
 })
 
 describe('clearRateLimit', () => {
-  test('снимает счётчик', async () => {
+  test('it clears the counter', async () => {
     const { clearRateLimit } = await import('~~/server/utils/rateLimit')
     await clearRateLimit('login:1.2.3.4')
 
@@ -85,7 +85,7 @@ describe('clearRateLimit', () => {
 })
 
 describe('checkRateLimit', () => {
-  test('отдаёт только да/нет — вызов из формы контактов ждёт булево', async () => {
+  test('it returns only yes/no — the contact form caller expects a boolean', async () => {
     plan(state, { 'insert:rate_limit': [[row(1)], [row(99)]] })
     const { checkRateLimit } = await import('~~/server/utils/rateLimit')
 
@@ -100,28 +100,28 @@ describe('clientIp', () => {
     vi.stubGlobal('getRequestIP', () => socket)
   }
 
-  test('заголовок Vercel в приоритете, из цепочки берётся первый адрес', async () => {
+  test('the Vercel header wins, and the first address of the chain is taken', async () => {
     headers({ 'x-vercel-forwarded-for': ' 1.1.1.1 , 2.2.2.2 ', 'x-real-ip': '3.3.3.3' }, '4.4.4.4')
     const { clientIp } = await import('~~/server/utils/rateLimit')
 
     expect(clientIp(event)).toBe('1.1.1.1')
   })
 
-  test('без заголовка Vercel идёт x-real-ip', async () => {
+  test('with no Vercel header x-real-ip is used', async () => {
     headers({ 'x-real-ip': ' 3.3.3.3 ' }, '4.4.4.4')
     const { clientIp } = await import('~~/server/utils/rateLimit')
 
     expect(clientIp(event)).toBe('3.3.3.3')
   })
 
-  test('x-forwarded-for не смотрим: его присылает сам клиент', async () => {
+  test('x-forwarded-for is ignored: the client sends it itself', async () => {
     headers({ 'x-forwarded-for': '9.9.9.9' }, '4.4.4.4')
     const { clientIp } = await import('~~/server/utils/rateLimit')
 
     expect(clientIp(event)).toBe('4.4.4.4')
   })
 
-  test('нет ничего — адрес-заглушка, а не пустая строка в ключе лимитера', async () => {
+  test('with nothing at all a placeholder address, not an empty string in the limiter key', async () => {
     headers({}, undefined)
     const { clientIp } = await import('~~/server/utils/rateLimit')
 

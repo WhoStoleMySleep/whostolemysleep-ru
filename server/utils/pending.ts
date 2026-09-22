@@ -11,7 +11,7 @@ export async function markDirty(paths: string[]) {
     .onConflictDoNothing()
 }
 
-/** Очередь — это то, что ещё не разъехалось. Снимаем только обновлённое. */
+/** The queue is what has not caught up yet. Only what refreshed is removed. */
 export async function clearPending(paths: string[]): Promise<void> {
   if (!paths.length) return
   await db.delete(schema.pendingRevalidation)
@@ -19,10 +19,10 @@ export async function clearPending(paths: string[]): Promise<void> {
 }
 
 /**
- * В очередь пути кладутся без локали — «страница блога», а не «две её
- * версии». Реальные маршруты у сайта всегда с префиксом (strategy: prefix),
- * поэтому перед сбросом кеша путь раскрывается в обе локали. Пути, где
- * префикс уже есть, проходят как есть.
+ * Paths are queued without a locale — "the blog page", not "its two versions".
+ * Real routes on this site always carry a prefix (strategy: prefix), so a path is
+ * expanded into both locales right before the flush. Paths that already have a
+ * prefix pass through unchanged.
  */
 export function withLocales(path: string): string[] {
   if (LOCALES.some((l) => path === `/${l}` || path.startsWith(`/${l}/`))) return [path]
@@ -36,7 +36,7 @@ export function postPaths(slug?: string): string[] {
   return paths
 }
 
-/** /cv рисуется из тех же таблиц, что и /resume, и устаревает вместе с ним. */
+/** /cv is rendered from the same tables as /resume and goes stale together with it. */
 export function resumePaths(): string[] {
   return ['/', '/resume', '/cv']
 }

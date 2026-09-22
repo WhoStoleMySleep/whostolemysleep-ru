@@ -1,17 +1,17 @@
 defineRouteMeta({
   openAPI: {
-    tags:    ['Публикатор'],
-    summary: 'Проверка связи',
+    tags:    ['Publisher'],
+    summary: 'Health check',
     responses: {
-      200: { description: 'Сервер жив; publishing показывает, задан ли PUBLISH_TOKEN', content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['ok'] }, publishing: { type: 'boolean' } } } } } },
+      200: { description: 'The server is up; publishing tells whether PUBLISH_TOKEN is set', content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['ok'] }, publishing: { type: 'boolean' } } } } } },
     },
   },
 })
 
 /**
- * Проверка связи для внешнего публикатора. Токен здесь не спрашиваем:
- * ответ ничего не раскрывает, а кнопка «Проверить связь» должна работать
- * и когда токен ещё не введён.
+ * Health check for the external publisher. No token is required here: the answer
+ * reveals nothing, and the "Check connection" button has to work before the token
+ * has been entered.
  */
 export default defineEventHandler(() => ({
   status:    'ok',

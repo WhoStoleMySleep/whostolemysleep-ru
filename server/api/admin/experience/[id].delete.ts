@@ -5,12 +5,12 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Админка: резюме'],
-    summary:    'Удалить место работы',
+    tags:       ['Admin: resume'],
+    summary:    'Delete a job',
     security:   [{ adminCookie: [] }],
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     responses: {
-      200: { description: 'Запись удалена', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Row deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

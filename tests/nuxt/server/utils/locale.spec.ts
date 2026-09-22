@@ -12,13 +12,13 @@ afterEach(() => {
 })
 
 describe('getLocale', () => {
-  test('locale=en включает английский', async () => {
+  test('locale=en switches to English', async () => {
     query({ locale: 'en' })
     const { getLocale } = await import('~~/server/utils/locale')
     expect(getLocale(event)).toBe('en')
   })
 
-  test('всё остальное читается как русский — язык не берут из непонятного параметра', async () => {
+  test('everything else reads as Russian — the language is not taken from an unclear parameter', async () => {
     const { getLocale } = await import('~~/server/utils/locale')
 
     for (const params of [{}, { locale: 'ru' }, { locale: 'de' }, { locale: ['en'] }]) {
@@ -29,17 +29,17 @@ describe('getLocale', () => {
 })
 
 describe('pick', () => {
-  test('для en отдаёт английский вариант', async () => {
+  test('for en it returns the English variant', async () => {
     const { pick } = await import('~~/server/utils/locale')
     expect(pick('русский', 'english', 'en')).toBe('english')
   })
 
-  test('для ru отдаёт русский, даже когда английский заполнен', async () => {
+  test('for ru it returns Russian even when the English field is filled in', async () => {
     const { pick } = await import('~~/server/utils/locale')
     expect(pick('русский', 'english', 'ru')).toBe('русский')
   })
 
-  test('пустой перевод не показывается пустотой — откат на русский', async () => {
+  test('an empty translation is not shown as emptiness — it falls back to Russian', async () => {
     const { pick } = await import('~~/server/utils/locale')
     expect(pick('русский', '', 'en')).toBe('русский')
   })

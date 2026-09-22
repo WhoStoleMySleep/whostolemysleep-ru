@@ -1,8 +1,8 @@
 import type { Post } from '~/types'
 
 /**
- * Куда ведёт запись: внешние проекты — на свой url, остальное —
- * на страницу блога. Используется главной и UiCard.
+ * Where an entry points: an external project to its own url, everything else to
+ * the blog page. Used by the home page and by UiCard.
  */
 export const usePostLink = () => {
   const localePath = useLocalePath()

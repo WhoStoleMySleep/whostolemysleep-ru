@@ -118,7 +118,7 @@ const { formatLong } = useFormatDate()
   animation: fade 0.9s 0.1s both;
 }
 
-/* ── Тело статьи ── */
+/* ── Article body ── */
 .post__body {
   font-size: 14.5px;
   line-height: 1.8;

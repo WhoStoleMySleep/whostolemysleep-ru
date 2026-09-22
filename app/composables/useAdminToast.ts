@@ -9,8 +9,8 @@ let nextId = 0
 const LIFETIME_MS = 3500
 
 /**
- * Замена разрозненных saveMsg/errMsg/saved на страницах: каждая показывала
- * результат по-своему и в своём углу.
+ * Replaces the scattered saveMsg/errMsg/saved flags: every page used to report
+ * the result in its own way and in its own corner.
  */
 export const useAdminToast = () => {
   const toasts = useState<Toast[]>('admin:toasts', () => [])

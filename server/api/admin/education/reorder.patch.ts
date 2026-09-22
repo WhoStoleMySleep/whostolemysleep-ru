@@ -4,13 +4,13 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Переставить образование',
-    description: 'Порядок задаётся одним запросом: позиция id в массиве становится значением order.',
+    tags:        ['Admin: resume'],
+    summary:     'Reorder education entries',
+    description: 'The whole order is set in one request: the position of an id in the array becomes its order value.',
     security:    [{ adminCookie: [] }],
     requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ReorderInput' } } } },
     responses: {
-      200: { description: 'Порядок сохранён', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Order saved', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
     },

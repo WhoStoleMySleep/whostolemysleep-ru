@@ -4,9 +4,9 @@ import { eq, count } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Прикрепить картинку к посту',
-    description: 'Позиция считается сама — картинка встаёт в конец списка.',
+    tags:        ['Admin: posts'],
+    summary:     'Attach an image to a post',
+    description: 'The position is computed — the image goes to the end of the list.',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: {
@@ -14,7 +14,7 @@ defineRouteMeta({
       content: { 'application/json': { schema: { type: 'object', required: ['url'], properties: { url: { type: 'string', format: 'uri' }, alt_ru: { type: 'string' }, alt_en: { type: 'string' } } } } },
     },
     responses: {
-      200: { description: 'Созданная запись картинки', content: { 'application/json': { schema: { $ref: '#/components/schemas/ImageRow' } } } },
+      200: { description: 'The created image row', content: { 'application/json': { schema: { $ref: '#/components/schemas/ImageRow' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
     },

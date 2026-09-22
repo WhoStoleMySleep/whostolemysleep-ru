@@ -4,11 +4,11 @@ import { asc } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: кеш'],
-    summary:  'Очередь ревалидации',
+    tags:     ['Admin: cache'],
+    summary:  'Revalidation queue',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Пути, ждущие сброса кеша, от старых к новым', content: { 'application/json': { schema: { type: 'array', items: { type: 'object', properties: { path: { type: 'string' }, added_at: { type: 'string', format: 'date-time' } } } } } } },
+      200: { description: 'Paths waiting for a cache flush, oldest first', content: { 'application/json': { schema: { type: 'array', items: { type: 'object', properties: { path: { type: 'string' }, added_at: { type: 'string', format: 'date-time' } } } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

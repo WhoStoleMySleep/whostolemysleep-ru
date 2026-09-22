@@ -27,15 +27,15 @@ beforeEach(() => {
   m.navigate.mockClear()
 })
 
-describe('middleware админки', () => {
-  test('страница входа не проверяется — иначе войти было бы некуда', async () => {
+describe('admin middleware', () => {
+  test('the login page is not checked — otherwise there would be nowhere to log in', async () => {
     await (await middleware())(route('/admin/login'))
 
     expect(m.request).not.toHaveBeenCalled()
     expect(m.navigate).not.toHaveBeenCalled()
   })
 
-  test('живая сессия пропускает и запоминается', async () => {
+  test('a live session lets the user through and is remembered', async () => {
     const mw = await middleware()
     await mw(route('/admin'))
 
@@ -44,7 +44,7 @@ describe('middleware админки', () => {
     expect(m.navigate).not.toHaveBeenCalled()
   })
 
-  test('запомненная сессия не ходит в сеть на каждый переход', async () => {
+  test('a remembered session does not hit the network on every navigation', async () => {
     const mw = await middleware()
     await mw(route('/admin'))
     m.request.mockClear()
@@ -54,7 +54,7 @@ describe('middleware админки', () => {
     expect(m.request).not.toHaveBeenCalled()
   })
 
-  test('отказ API отправляет на вход', async () => {
+  test('a rejection from the API sends the user to login', async () => {
     m.request.mockRejectedValue({ statusCode: 401 })
 
     const out = await (await middleware())(route('/admin/posts'))

@@ -2,15 +2,15 @@ import { marked } from 'marked'
 import { sanitizeHtml } from './sanitize'
 
 /**
- * Markdown из публикатора в HTML, который хранит сайт.
- * Результат обязательно прогоняется через тот же санитайзер, что и текст из админки.
+ * Markdown from the publisher into the HTML the site stores.
+ * The result always goes through the same sanitizer as text written in the admin panel.
  */
 export function markdownToHtml(markdown: string): string {
   const html = marked.parse(markdown, { async: false, gfm: true, breaks: false })
   return sanitizeHtml(html as string)
 }
 
-/** Анонс из готового HTML — если своего анонса не прислали. */
+/** An excerpt derived from the rendered HTML, when none was supplied. */
 export function excerptFromHtml(html: string, limit = 200): string {
   const plain = html
     .replace(/<[^>]+>/g, ' ')

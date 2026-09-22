@@ -1,7 +1,7 @@
 /**
- * Единый источник пунктов навигации.
- * Используется боковым рейлом в лейауте, шапкой и мобильным меню —
- * чтобы список не расходился по трём местам.
+ * The single source of navigation items.
+ * Used by the side rail in the layout, by the header and by the mobile menu, so
+ * the list cannot drift apart in three places.
  */
 export const useNav = () => {
   const { t } = useLocale()

@@ -1,7 +1,7 @@
 interface ConfirmRequest {
   title: string
   text:  string
-  /** Подпись на кнопке подтверждения. */
+  /** Label on the confirm button. */
   action: string
   danger: boolean
 }
@@ -9,15 +9,15 @@ interface ConfirmRequest {
 let resolve: ((ok: boolean) => void) | null = null
 
 /**
- * Замена window.confirm. Нативный диалог нельзя оформить, он блокирует
- * поток и на мобильных выглядит как предупреждение браузера — из-за чего
- * удаление постов и групп навыков читалось как ошибка сайта.
+ * A replacement for window.confirm. The native dialog cannot be styled, it blocks
+ * the thread, and on mobile it looks like a browser warning — which made deleting
+ * a post or a skill group read as a site error.
  */
 export const useAdminConfirm = () => {
   const request = useState<ConfirmRequest | null>('admin:confirm', () => null)
 
   function ask(opts: Partial<ConfirmRequest> & { title: string }): Promise<boolean> {
-    // Второй запрос поверх первого оставил бы висеть чужой промис.
+    // A second request on top of the first would leave the earlier promise hanging.
     close(false)
     request.value = {
       text:   '',

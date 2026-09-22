@@ -1,6 +1,6 @@
 import { put } from '@vercel/blob'
 
-/** Что принимаем: сигнатура файла → разрешённый content-type. */
+/** What is accepted: file signature to the content type it is allowed to claim. */
 const SIGNATURES: { type: string; ext: string; match: (bytes: Buffer) => boolean }[] = [
   { type: 'image/png',  ext: 'png',  match: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
   { type: 'image/jpeg', ext: 'jpg',  match: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
@@ -12,20 +12,20 @@ const MAX_BYTES = 8 * 1024 * 1024
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Загрузить картинку в хранилище',
-    description: 'Тип определяется по сигнатуре файла, а не по заголовку. Принимаются png, jpeg, gif и webp до 8 МБ.',
+    tags:        ['Admin: posts'],
+    summary:     'Upload an image to blob storage',
+    description: 'The type is taken from the file signature, not from the header. png, jpeg, gif and webp up to 8 MB are accepted.',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
       content: { 'multipart/form-data': { schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } } } },
     },
     responses: {
-      200: { description: 'Публичная ссылка на файл', content: { 'application/json': { schema: { type: 'object', properties: { url: { type: 'string', format: 'uri' } } } } } },
+      200: { description: 'The public URL of the file', content: { 'application/json': { schema: { type: 'object', properties: { url: { type: 'string', format: 'uri' } } } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
-      413: { description: 'Файл больше 8 МБ', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-      415: { description: 'Неподдерживаемый формат', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+      413: { description: 'File is larger than 8 MB', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+      415: { description: 'Unsupported format', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
     },
   },
 })
@@ -40,8 +40,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 413, message: `File is larger than ${MAX_BYTES / 1024 / 1024} MB` })
   }
 
-  // Тип определяем по содержимому: заголовок и расширение присылает клиент, верить им нельзя —
-  // иначе на публичный домен хранилища уедет html, который откроется как страница.
+  // The type comes from the bytes: the header and the extension are client-supplied and
+  // cannot be trusted — otherwise html lands on the storage domain and opens as a page.
   const kind = SIGNATURES.find((signature) => signature.match(file.data))
   if (!kind) {
     throw createError({ statusCode: 415, message: 'Only png, jpeg, gif and webp images are accepted' })
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
   return { url: blob.url }
 })
 
-/** Имя из формы чистим: путь, юникод и точки в нём нам не нужны. */
+/** The name from the form is scrubbed: no paths, no unicode, no extra dots. */
 function safeName(original: string | undefined, ext: string): string {
   const base = (original ?? 'upload')
     .split(/[\\/]/).pop()!

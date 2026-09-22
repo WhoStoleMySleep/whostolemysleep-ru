@@ -4,11 +4,11 @@ import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: резюме'],
-    summary:  'Блок «Обо мне» на обоих языках',
+    tags:     ['Admin: resume'],
+    summary:  'About block in both languages',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Запись целиком', content: { 'application/json': { schema: { $ref: '#/components/schemas/AboutRow' } } } },
+      200: { description: 'The whole row', content: { 'application/json': { schema: { $ref: '#/components/schemas/AboutRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },
     },

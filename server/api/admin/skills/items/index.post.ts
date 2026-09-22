@@ -4,8 +4,8 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: навыки'],
-    summary:     'Добавить навык в группу',
+    tags:        ['Admin: skills'],
+    summary:     'Add a skill to a group',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
@@ -24,7 +24,7 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: 'Созданный навык', content: { 'application/json': { schema: { $ref: '#/components/schemas/SkillRow' } } } },
+      200: { description: 'The created skill', content: { 'application/json': { schema: { $ref: '#/components/schemas/SkillRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

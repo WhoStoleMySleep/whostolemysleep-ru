@@ -4,13 +4,13 @@ import { count, eq, or, sql } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: дашборд'],
-    summary:     'Числа для дашборда',
-    description: 'Счётчики постов, длина очереди ревалидации и незаполненные английские поля по разделам.',
+    tags:        ['Admin: dashboard'],
+    summary:     'Dashboard counters',
+    description: 'Post counters, revalidation queue length, and empty English fields per section.',
     security:    [{ adminCookie: [] }],
     responses: {
       200: {
-        description: 'Счётчики постов, длина очереди ревалидации и пробелы в английской версии',
+        description: 'Post counters, revalidation queue length, and gaps in the English version',
         content: {
           'application/json': {
             schema: {
@@ -20,7 +20,7 @@ defineRouteMeta({
                 pending: { type: 'integer' },
                 missing_en: {
                   type: 'object',
-                  description: 'Записи, у которых английские поля пустые; total — их сумма',
+                  description: 'Rows whose English fields are empty; total is their sum',
                   properties: {
                     posts:      { type: 'integer' },
                     about:      { type: 'integer' },
@@ -43,12 +43,11 @@ defineRouteMeta({
 })
 
 /**
- * Пустые английские поля по разделам.
+ * Empty English fields per section.
  *
- * Английская версия наполняется вручную и отстаёт от русской: публикатор
- * присылает только русский текст, а чтение откатывается на него же — поэтому
- * пробел ничего не ломает и сам о себе не сообщает. Дашборд — единственное
- * место, где его видно.
+ * The English version is filled in by hand and trails the Russian one: the
+ * publisher sends Russian only, and reads fall back to it — so a gap breaks
+ * nothing and never announces itself. The dashboard is the one place it shows.
  */
 async function missingEn() {
   const rows = async (query: Promise<{ n: number }[]>) => (await query)[0]?.n ?? 0
@@ -71,8 +70,8 @@ async function missingEn() {
 }
 
 /**
- * Числа для дашборда. Отдельный эндпоинт, потому что раньше дашборд ради
- * трёх цифр выкачивал все посты со всеми текстами и считал их на клиенте.
+ * Dashboard counters. A separate endpoint because the dashboard used to pull
+ * every post with every text and count three numbers on the client.
  */
 export default defineEventHandler(async () => {
   const [posts] = await db

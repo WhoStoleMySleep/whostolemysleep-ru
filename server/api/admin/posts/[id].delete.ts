@@ -5,12 +5,12 @@ import { markDirty, postPaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Админка: посты'],
-    summary:    'Удалить пост',
+    tags:       ['Admin: posts'],
+    summary:    'Delete a post',
     security:   [{ adminCookie: [] }],
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     responses: {
-      200: { description: 'Пост удалён', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Post deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },

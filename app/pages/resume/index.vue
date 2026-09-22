@@ -149,7 +149,7 @@ const { formatPeriod } = useFormatDate()
 
 .prose :deep(p + p) { margin-top: 18px; }
 
-/* ── Запись ── */
+/* ── Entry ── */
 .item__head {
   display: flex;
   flex-wrap: wrap;
@@ -189,7 +189,7 @@ const { formatPeriod } = useFormatDate()
   color: var(--text-3);
 }
 
-/* ── Пункты ── */
+/* ── Bullets ── */
 .bullets { margin-top: 18px; }
 
 .bullets__item {
@@ -205,7 +205,7 @@ const { formatPeriod } = useFormatDate()
 
 .bullets__dash { color: var(--accent); flex-shrink: 0; }
 
-/* ── Навыки ── */
+/* ── Skills ── */
 .group__label {
   font-size: 11.5px;
   letter-spacing: 0.16em;

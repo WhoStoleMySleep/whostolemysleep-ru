@@ -14,7 +14,7 @@ export const useSearchStore = defineStore('search', () => {
   const allItems = ref<Post[]>([])
   const isLoaded = ref(false)
 
-  /** Индекс строится один раз на набор записей, а не на каждое нажатие. */
+  /** The index is built once per set of entries, not on every keystroke. */
   let index: FuseType<Post> | null = null
 
   const { locale } = useLocale()
@@ -48,9 +48,9 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   /**
-   * fuse.js подгружается динамически. При статическом импорте он попадал
-   * во входной чанк и весил ~34 КБ на каждой странице сайта — даже там,
-   * где поиск отключён настройкой и не может быть открыт.
+   * fuse.js is imported dynamically. As a static import it landed in the entry
+   * chunk and cost ~34 KB on every page of the site — including the pages where
+   * search is disabled by a setting and cannot be opened at all.
    */
   async function ensureIndex() {
     if (index) return index
@@ -67,8 +67,8 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     const idx = await ensureIndex()
-    // Пока грузился индекс, пользователь мог дописать запрос — тогда
-    // этот результат уже неактуален и перетирать им свежий нельзя.
+    // While the index was loading the query may have been typed further — this
+    // result is stale by now and must not overwrite a fresher one.
     if (query.value !== q) return
 
     results.value = idx.search(q).map((r) => r.item)

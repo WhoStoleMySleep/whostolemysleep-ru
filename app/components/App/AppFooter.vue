@@ -4,7 +4,7 @@ const { t } = useLocale()
 const localePath = useLocalePath()
 const { data: siteSettings } = await useSettings()
 
-/** Набор и порядок ссылок — как в макете: Telegram, GitHub, Email, Privacy. */
+/** The set and order of links follow the mockup: Telegram, GitHub, Email, Privacy. */
 const links = computed(() => [
   { label: 'Telegram', href: siteSettings.value?.telegram_url ?? 'https://t.me/WhoStoleMySleepDev', external: true },
   { label: 'GitHub',   href: siteSettings.value?.github_url   ?? 'https://github.com/WhoStoleMySleepDev', external: true },

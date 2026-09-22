@@ -8,7 +8,7 @@ const { linkFor } = usePostLink()
 
 const link = computed(() => linkFor(props.item))
 
-/** Хост внешней ссылки — «github.com» вместо полного url. */
+/** The host of an external link — "github.com" instead of the full url. */
 const host = computed(() => {
   if (!props.item.url) return ''
   try {
@@ -50,9 +50,9 @@ const host = computed(() => {
   padding: clamp(20px, 2.4vw, 28px);
   background: var(--bg-1);
   transition: background 0.3s;
-  /* Каскад: карточки въезжают по очереди с шагом 40ms. Шаг упирается
-     в пятую — на длинной сетке последняя иначе ждала бы почти секунду,
-     и страница читалась бы как подтормаживающая. --i ставит v-for. */
+  /* Cascade: cards slide in one after another, 40ms apart. The step stops at the
+     fifth — on a long grid the last card would otherwise wait almost a second and
+     the page would read as sluggish. --i is set by v-for. */
   animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) calc(min(var(--i, 0), 5) * 40ms) both;
 }
 

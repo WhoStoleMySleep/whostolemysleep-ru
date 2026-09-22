@@ -3,11 +3,11 @@ import { db } from '../db'
 import * as schema from '../db/schema'
 
 /**
- * Резюме одним файлом: снимок всех четырёх блоков в обоих языках.
+ * The resume as one file: a snapshot of all four blocks in both languages.
  *
- * Нужен для двух вещей сразу — выгрузки («шаблон», по которому резюме
- * правится в текстовом редакторе) и загрузки обратно. Порядок записей
- * в массивах и есть порядок на странице.
+ * It serves two purposes at once — export (the "template" the resume is edited
+ * in inside a text editor) and import back. The order of the entries in the
+ * arrays is the order on the page.
  */
 
 export const CV_VERSION = 1
@@ -46,7 +46,7 @@ export interface CvSnapshot {
   skills:     CvSkillGroup[]
 }
 
-/* ── Чтение из базы ── */
+/* ── Reading from the database ── */
 
 async function readDb() {
   const [about, experience, education, skills] = await Promise.all([
@@ -99,7 +99,7 @@ export async function buildSnapshot(): Promise<CvSnapshot> {
   }
 }
 
-/* ── Разбор загруженного файла ── */
+/* ── Parsing the uploaded file ── */
 
 const str  = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 const date = (v: unknown) => {
@@ -108,9 +108,9 @@ const date = (v: unknown) => {
 }
 
 /**
- * Что не разобралось — отбрасывается молча: файл правят руками, и одна
- * опечатка в необязательном поле не должна отменять весь импорт.
- * Отсутствующий раздел не считается «удалить всё» — он просто не трогается.
+ * Whatever fails to parse is dropped silently: the file is edited by hand, and one
+ * typo in an optional field should not cancel the whole import. A missing section
+ * does not mean "delete everything" — it is simply left alone.
  */
 export function parseSnapshot(raw: unknown): Partial<CvSnapshot> {
   if (!raw || typeof raw !== 'object') {
@@ -140,7 +140,7 @@ export function parseSnapshot(raw: unknown): Partial<CvSnapshot> {
           bullets: (Array.isArray(e.bullets) ? e.bullets : [])
             .map((b) => {
               const bl = b as Record<string, unknown>
-              // Строка вместо объекта — частый способ записать пункт руками.
+              // A string instead of an object is a common way to write a bullet by hand.
               if (typeof b === 'string') return { text_ru: b.trim(), text_en: '' }
               return { text_ru: str(bl.text_ru), text_en: str(bl.text_en) }
             })
@@ -189,7 +189,7 @@ export function parseSnapshot(raw: unknown): Partial<CvSnapshot> {
   return out
 }
 
-/* ── Сравнение ── */
+/* ── Diffing ── */
 
 export type CvSection = 'about' | 'experience' | 'education' | 'skills'
 
@@ -197,16 +197,16 @@ export interface CvChange {
   id:      string
   section: CvSection
   kind:    'add' | 'update' | 'remove'
-  /** Как запись называется в списке изменений. */
+  /** How the row is labelled in the list of changes. */
   label:   string
   field?:  string
   before:  unknown
   after:   unknown
-  /** Скалярное поле можно поправить прямо в списке перед применением. */
+  /** A scalar field can be edited in the list itself before it is applied. */
   editable: boolean
 }
 
-/** Внутренняя привязка изменения к строке базы: наружу не отдаётся. */
+/** Internal link from a change to its database row; never sent to the client. */
 interface Bound { change: CvChange; targetId?: number; record?: unknown }
 
 const key = (...parts: string[]) => parts.map((p) => p.trim().toLowerCase()).join('|')
@@ -369,19 +369,19 @@ export async function diffSnapshot(input: Partial<CvSnapshot>): Promise<Bound[]>
   return out
 }
 
-/* ── Применение ── */
+/* ── Applying ── */
 
 /**
- * Применяет отобранные изменения по очереди.
+ * Applies the selected changes one by one.
  *
- * Neon ходит по HTTP, транзакций у драйвера нет — поэтому изменения
- * независимы: каждое либо прошло целиком, либо не прошло, и частично
- * применённый импорт остаётся валидным состоянием резюме.
+ * Neon talks over HTTP and the driver has no transactions, so the changes are
+ * independent: each one either went through completely or not at all, and a
+ * half-applied import is still a valid state of the resume.
  */
 export async function applyChanges(bounds: Bound[]): Promise<void> {
   const state = await readDb()
 
-  // Новые записи уходят в конец списка — порядок правится перетаскиванием.
+  // New rows go to the end of the list — the order is adjusted by dragging.
   const next = {
     experience: Math.max(-1, ...state.experience.map((e) => e.order)) + 1,
     education:  Math.max(-1, ...state.education.map((e) => e.order)) + 1,

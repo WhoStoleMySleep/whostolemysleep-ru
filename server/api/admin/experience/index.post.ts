@@ -15,9 +15,9 @@ interface Body {
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Добавить место работы',
-    description: 'Порядок пунктов задаётся порядком в массиве bullets.',
+    tags:        ['Admin: resume'],
+    summary:     'Add a job',
+    description: 'Bullet order follows the order of the bullets array.',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
@@ -40,7 +40,7 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: 'Созданная запись без пунктов', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
+      200: { description: 'The created row, without bullets', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

@@ -18,7 +18,7 @@ const api     = useAdminApi()
 const toast   = useAdminToast()
 const confirm = useAdminConfirm()
 
-/* ── Выгрузка ── */
+/* ── Export ── */
 
 const exporting = ref(false)
 
@@ -40,14 +40,14 @@ async function download() {
   }
 }
 
-/* ── Загрузка ── */
+/* ── Import ── */
 
 const raw      = ref('')
 const fileName = ref('')
 const comparing = ref(false)
 const changes  = ref<Change[] | null>(null)
 
-/** Подтверждённые изменения и правки значений — решение по каждому отдельно. */
+/** Accepted changes and edited values — each one is decided on separately. */
 const accepted  = ref<Record<string, boolean>>({})
 const overrides = ref<Record<string, string>>({})
 
@@ -79,7 +79,7 @@ async function compare() {
     changes.value = res.changes
     accepted.value  = {}
     overrides.value = {}
-    // Ничего не отмечено заранее: импорт не должен применять что-то молча.
+    // Nothing is pre-selected: an import must not apply anything silently.
     if (!res.changes.length) toast.ok('No differences — resume already matches the file')
   } catch (e) {
     toast.err(adminError(e))
@@ -134,7 +134,7 @@ async function apply() {
       overrides: { ...overrides.value },
     })
     toast.ok(`Applied ${res.applied} change(s) — added to cache queue`)
-    // Сравниваем заново: остаток показывает, что ещё не применено.
+    // Diff again: what is left shows what has not been applied yet.
     await compare()
   } catch (e) {
     toast.err(adminError(e))
@@ -143,7 +143,7 @@ async function apply() {
   }
 }
 
-/* ── Показ значений ── */
+/* ── Rendering values ── */
 
 function show(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—'

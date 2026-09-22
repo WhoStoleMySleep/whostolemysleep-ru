@@ -10,7 +10,7 @@ const TTL_S     = 7 * 24 * 3600
 const MAX_TRIES = 5
 const WINDOW_MS = 15 * 60 * 1000
 
-/** Осталось меньше этого — продлеваем сессию на следующий срок. */
+/** Less than this left — the session is extended by another full term. */
 const REFRESH_BELOW_S = TTL_S / 2
 
 function jwtSecret() {
@@ -27,7 +27,7 @@ export async function signAdminToken(): Promise<string> {
     .sign(jwtSecret())
 }
 
-/** Разбирает токен. null — подпись не сошлась, срок вышел или это не админ. */
+/** Parses the token. null means a bad signature, an expired token, or not an admin. */
 export async function readAdminToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, jwtSecret())
@@ -38,14 +38,15 @@ export async function readAdminToken(token: string): Promise<JWTPayload | null> 
 }
 
 /**
- * Единственное место, где описаны свойства куки: раньше их держали
- * и логин, и продление, и рассинхрон означал бы молча протухающую сессию.
+ * The only place the cookie's properties are described: login and renewal each
+ * used to hold their own copy, and any drift between them would have meant a
+ * session that quietly expired.
  *
- * sameSite: 'lax', а не 'strict'. При strict браузер не отдаёт куку,
- * когда на /admin приходят по ссылке с другого сайта, — админка
- * встречала формой входа, хотя сессия была жива. На кросс-сайтовые
- * POST/PATCH/DELETE lax куку тоже не отправляет, так что защита от
- * CSRF остаётся; отличается только переход по обычной ссылке.
+ * sameSite: 'lax', not 'strict'. With strict the browser withholds the cookie
+ * when /admin is opened from a link on another site, so the panel showed the
+ * login form despite a live session. lax also withholds it on cross-site
+ * POST/PATCH/DELETE, so the CSRF protection is unchanged; only plain
+ * navigation behaves differently.
  */
 export function setAdminCookie(event: H3Event, token: string): void {
   setCookie(event, ADMIN_COOKIE, token, {
@@ -58,9 +59,9 @@ export function setAdminCookie(event: H3Event, token: string): void {
 }
 
 /**
- * Скользящая сессия: пока админкой пользуются, срок сдвигается вперёд.
- * Без этого ровно через неделю после входа посреди работы выбрасывало
- * на логин, даже если заходили каждый день.
+ * Sliding session: while the panel is in use, the expiry keeps moving forward.
+ * Without it, exactly one week after logging in the session dropped mid-edit,
+ * even for someone who used the panel every day.
  */
 export async function slideAdminSession(event: H3Event, payload: JWTPayload): Promise<void> {
   const exp = payload.exp
@@ -71,11 +72,11 @@ export async function slideAdminSession(event: H3Event, payload: JWTPayload): Pr
 }
 
 /**
- * Проверяет, что админка вообще настроена.
+ * Checks that the admin panel is configured at all.
  *
- * Без этого отсутствующий ADMIN_PASSWORD_HASH выглядел как неверный
- * пароль: пять попыток «войти» — и 429 на ровном месте, хотя вводили
- * всё правильно. Ошибка настройки должна называться ошибкой настройки.
+ * Without this, a missing ADMIN_PASSWORD_HASH looked like a wrong password:
+ * five "attempts" and then a 429 out of nowhere, with the right password typed
+ * every time. A configuration error should say it is a configuration error.
  */
 export function assertAdminConfig(): void {
   const missing = (['ADMIN_JWT_SECRET', 'ADMIN_PASSWORD_HASH'] as const)
@@ -90,7 +91,7 @@ export async function checkAdminPassword(plain: string): Promise<boolean> {
   return bcrypt.compare(plain, process.env.ADMIN_PASSWORD_HASH!)
 }
 
-/** Проверяет и сразу засчитывает попытку входа: состояние общее для всех инстансов. */
+/** Checks and counts a login attempt in one go; the state is shared by every instance. */
 export async function hitLoginAttempt(ip: string): Promise<RateVerdict> {
   return hitRateLimit(`login:${ip}`, MAX_TRIES, WINDOW_MS)
 }

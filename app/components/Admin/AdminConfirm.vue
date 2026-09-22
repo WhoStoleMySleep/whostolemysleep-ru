@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const { request, confirm, cancel } = useAdminConfirm()
 
-// Esc закрывает так же, как кнопка: диалог модальный, и без клавиатуры
-// из него было бы не выйти.
+// Esc closes it just like the button does: the dialog is modal, and without the
+// keyboard there would be no way out of it.
 onMounted(() => {
   const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && request.value) cancel() }
   window.addEventListener('keydown', onKey)

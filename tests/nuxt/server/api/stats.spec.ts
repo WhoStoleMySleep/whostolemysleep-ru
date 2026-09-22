@@ -40,15 +40,15 @@ beforeEach(() => {
   })
 })
 
-describe('числа дашборда', () => {
-  test('черновики считаются как разница, а не отдельным запросом', async () => {
+describe('dashboard numbers', () => {
+  test('drafts are counted as a difference, not with a separate query', async () => {
     const out = await stats()
 
     expect(out.posts).toEqual({ total: 10, published: 7, drafts: 3 })
     expect(out.pending).toBe(4)
   })
 
-  test('пробелы английского приходят по разделам и суммой', async () => {
+  test('the English gaps arrive per section and as a total', async () => {
     const out = await stats()
 
     expect(out.missing_en).toEqual({
@@ -57,7 +57,7 @@ describe('числа дашборда', () => {
     })
   })
 
-  test('пустая база не ломает счётчики нулями из ниоткуда', async () => {
+  test('an empty database does not break the counters with zeros out of nowhere', async () => {
     plan(state)
     const out = await stats()
 

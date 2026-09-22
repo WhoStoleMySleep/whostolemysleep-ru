@@ -5,7 +5,7 @@ mockNuxtImport('useLocale', () => () => ({ t: (key: string) => `[${key}]` }))
 mockNuxtImport('useLocalePath', () => () => (path: string) => `/ru${path === '/' ? '' : path}`)
 
 describe('useNav', () => {
-  test('пять пунктов в неизменном порядке — на них завязана нумерация', async () => {
+  test('five items in a fixed order — the numbering depends on it', async () => {
     const { useNav } = await import('~/composables/useNav')
     const items = useNav().value
 
@@ -13,7 +13,7 @@ describe('useNav', () => {
     expect(items.map((i) => i.num)).toEqual(['00', '01', '02', '03', '04'])
   })
 
-  test('подписи берутся из переводов, ссылки — с префиксом языка', async () => {
+  test('captions come from the translations, links carry the language prefix', async () => {
     const { useNav } = await import('~/composables/useNav')
     const items = useNav().value
 

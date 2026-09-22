@@ -19,8 +19,8 @@ interface Flush {
 const api   = useAdminApi()
 const toast = useAdminToast()
 
-// Числа приходят посчитанными с сервера. Раньше дашборд ради трёх цифр
-// выкачивал все посты со всеми текстами и считал их на клиенте.
+// The numbers arrive already counted from the server. The dashboard used to pull
+// every post with every text and count three figures on the client.
 const { data: stats, refresh: refreshStats } = await useAsyncData(
   'admin-stats', () => api.get<Stats>('/api/admin/stats'),
 )
@@ -28,7 +28,7 @@ const { data: pending, refresh: refreshPending } = await useAsyncData(
   'admin-pending', () => api.get<Pending[]>('/api/admin/pending'), { default: () => [] },
 )
 
-/** Где правится английский каждого раздела — счётчик без ссылки бесполезен. */
+/** Where each section's English is edited — a counter without a link is useless. */
 const EN_SECTIONS: { key: EnSection; label: string; to: string }[] = [
   { key: 'posts',      label: 'Posts',      to: '/admin/posts' },
   { key: 'about',      label: 'About',      to: '/admin/about' },
@@ -49,8 +49,8 @@ async function flush() {
   flushing.value = true
   try {
     const res = await api.post<Flush>('/api/admin/revalidate', {})
-    // Провалы показываем отдельно: раньше кнопка всегда отчитывалась об
-    // успехе, даже когда кеш на самом деле не сбрасывался.
+    // Failures are reported separately: the button used to claim success even when
+    // the cache was not flushed at all.
     if (res.failed.length) {
       const first = res.failed[0]!
       toast.err(`${res.failed.length} failed — ${first.path}: ${first.reason}`)

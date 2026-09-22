@@ -3,17 +3,17 @@ import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 interface Body {
   snapshot:  unknown
-  /** id изменений, которые подтвердил пользователь. */
+  /** Ids of the changes the user accepted. */
   accept:    string[]
-  /** Правки значений, сделанные прямо в списке: id изменения → новое «после». */
+  /** Values edited in the list itself: change id to its new "after". */
   overrides?: Record<string, string>
 }
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Применить подтверждённые изменения',
-    description: 'Разница считается на сервере заново; от клиента приходят только id подтверждённых изменений.',
+    tags:        ['Admin: resume'],
+    summary:     'Apply the accepted changes',
+    description: 'The diff is recomputed on the server; the client sends only the ids of the accepted changes.',
     security:    [{ adminCookie: [] }],
     requestBody: {
       required: true,
@@ -24,15 +24,15 @@ defineRouteMeta({
             required: ['snapshot', 'accept'],
             properties: {
               snapshot:  { $ref: '#/components/schemas/CvSnapshot' },
-              accept:    { type: 'array', items: { type: 'string' }, description: 'id изменений из ответа diff' },
-              overrides: { type: 'object', additionalProperties: { type: 'string' }, description: 'id изменения — новое значение; работает только для editable' },
+              accept:    { type: 'array', items: { type: 'string' }, description: 'Change ids from the diff response' },
+              overrides: { type: 'object', additionalProperties: { type: 'string' }, description: 'Change id to a new value; works only for editable changes' },
             },
           },
         },
       },
     },
     responses: {
-      200: { description: 'Сколько изменений применено и сколько отброшено', content: { 'application/json': { schema: { type: 'object', properties: { applied: { type: 'integer' }, skipped: { type: 'integer' } } } } } },
+      200: { description: 'How many changes were applied and how many were dropped', content: { 'application/json': { schema: { type: 'object', properties: { applied: { type: 'integer' }, skipped: { type: 'integer' } } } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
@@ -40,9 +40,9 @@ defineRouteMeta({
 })
 
 /**
- * Разница считается на сервере заново, а от клиента приходят только id
- * подтверждённых изменений. Иначе запись в базу задавалась бы телом
- * запроса напрямую — то есть любым полем любой таблицы.
+ * The diff is recomputed on the server and the client sends only the ids of the
+ * accepted changes. Otherwise the request body would dictate the write directly —
+ * any field of any table.
  */
 export default defineEventHandler(async (event) => {
   const body = await readBody<Body>(event)
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
 
   for (const b of chosen) {
     const override = body.overrides?.[b.change.id]
-    // Править можно только скалярные поля — списки применяются как есть.
+    // Only scalar fields are editable — lists are applied as they are.
     if (override !== undefined && b.change.editable) b.change.after = override
   }
 

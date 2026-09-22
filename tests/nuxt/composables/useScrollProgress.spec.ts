@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest'
 
 describe('useScrollProgress', () => {
-  test('нулевая прокрутка и страница короче окна — прогресс 0, без деления на ноль', async () => {
+  test('no scroll and a page shorter than the window — progress 0, no division by zero', async () => {
     const { mount } = await import('@vue/test-utils')
     const { defineComponent } = await import('vue')
     const { useScrollProgress } = await import('~/composables/useScrollProgress')
@@ -13,7 +13,7 @@ describe('useScrollProgress', () => {
     wrapper.unmount()
   })
 
-  test('прокрутка до конца даёт единицу', async () => {
+  test('scrolling to the end gives one', async () => {
     const { mount } = await import('@vue/test-utils')
     const { defineComponent } = await import('vue')
     const { useScrollProgress } = await import('~/composables/useScrollProgress')
@@ -32,7 +32,7 @@ describe('useScrollProgress', () => {
     vi.restoreAllMocks()
   })
 
-  test('размонтирование снимает слушателей', async () => {
+  test('unmounting removes the listeners', async () => {
     const { mount } = await import('@vue/test-utils')
     const { defineComponent } = await import('vue')
     const { useScrollProgress } = await import('~/composables/useScrollProgress')

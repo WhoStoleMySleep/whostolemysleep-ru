@@ -4,11 +4,11 @@ import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: настройки'],
-    summary:  'Строка настроек',
+    tags:     ['Admin: settings'],
+    summary:  'The settings row',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Запись настроек; null, если её ещё нет', content: { 'application/json': { schema: { $ref: '#/components/schemas/SettingsRow' } } } },
+      200: { description: 'The settings row; null when it does not exist yet', content: { 'application/json': { schema: { $ref: '#/components/schemas/SettingsRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {

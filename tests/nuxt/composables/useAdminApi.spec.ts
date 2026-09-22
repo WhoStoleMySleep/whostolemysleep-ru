@@ -24,27 +24,27 @@ beforeEach(() => {
 })
 
 describe('adminError', () => {
-  test('берёт сообщение из тела ответа H3', async () => {
+  test('takes the message from the H3 response body', async () => {
     const { adminError } = await import('~/composables/useAdminApi')
     expect(adminError({ data: { message: 'Slug already exists' } })).toBe('Slug already exists')
   })
 
-  test('без тела откатывается на statusMessage', async () => {
+  test('falls back to statusMessage when there is no body', async () => {
     const { adminError } = await import('~/composables/useAdminApi')
     expect(adminError({ statusMessage: 'Unauthorized' })).toBe('Unauthorized')
   })
 
-  test('обычная ошибка JS показывается своим message', async () => {
+  test('a plain JS error is shown through its own message', async () => {
     const { adminError } = await import('~/composables/useAdminApi')
     expect(adminError(new Error('Failed to fetch'))).toBe('Failed to fetch')
   })
 
-  test('пустое сообщение не показывается пустотой', async () => {
+  test('an empty message is not shown as emptiness', async () => {
     const { adminError } = await import('~/composables/useAdminApi')
     expect(adminError({ data: { message: '' }, statusMessage: 'Bad Request' })).toBe('Bad Request')
   })
 
-  test('ни на что не похожее значение всё равно даёт текст для тоста', async () => {
+  test('a value that looks like nothing still yields text for a toast', async () => {
     const { adminError } = await import('~/composables/useAdminApi')
     expect(adminError(undefined)).toBe('Unknown error')
     expect(adminError({})).toBe('Unknown error')
@@ -52,30 +52,30 @@ describe('adminError', () => {
 })
 
 describe('useAdminApi', () => {
-  test('чтение уходит без опций, запись — с методом и телом', async () => {
+  test('a read goes out with no options, a write with a method and a body', async () => {
     const a = await api()
 
     await a.get('/api/admin/education')
     expect(m.request).toHaveBeenLastCalledWith('/api/admin/education', undefined)
 
-    await a.post('/api/admin/education', { institution: 'ВУЗ' })
-    expect(m.request).toHaveBeenLastCalledWith('/api/admin/education', { method: 'POST', body: { institution: 'ВУЗ' } })
+    await a.post('/api/admin/education', { institution: 'University' })
+    expect(m.request).toHaveBeenLastCalledWith('/api/admin/education', { method: 'POST', body: { institution: 'University' } })
 
-    await a.patch('/api/admin/education/1', { institution: 'ВУЗ' })
-    expect(m.request).toHaveBeenLastCalledWith('/api/admin/education/1', { method: 'PATCH', body: { institution: 'ВУЗ' } })
+    await a.patch('/api/admin/education/1', { institution: 'University' })
+    expect(m.request).toHaveBeenLastCalledWith('/api/admin/education/1', { method: 'PATCH', body: { institution: 'University' } })
 
     await a.remove('/api/admin/education/1')
     expect(m.request).toHaveBeenLastCalledWith('/api/admin/education/1', { method: 'DELETE' })
   })
 
-  test('запросы идут через useRequestFetch — иначе при SSR кука не уедет', async () => {
+  test('requests go through useRequestFetch — otherwise the cookie is lost on SSR', async () => {
     const a = await api()
     await a.get('/api/admin/posts')
 
     expect(m.request).toHaveBeenCalled()
   })
 
-  test('протухшая сессия сбрасывает признак входа и уводит на логин', async () => {
+  test('an expired session clears the logged-in flag and redirects to login', async () => {
     m.request.mockRejectedValue({ statusCode: 401 })
     const a = await api()
 
@@ -84,7 +84,7 @@ describe('useAdminApi', () => {
     expect(m.navigate).toHaveBeenCalledWith('/admin/login')
   })
 
-  test('401 из ответа fetch распознаётся так же', async () => {
+  test('a 401 from the fetch response is recognised the same way', async () => {
     m.request.mockRejectedValue({ response: { status: 401 } })
     const a = await api()
 
@@ -92,7 +92,7 @@ describe('useAdminApi', () => {
     expect(m.navigate).toHaveBeenCalledWith('/admin/login')
   })
 
-  test('прочие ошибки не выкидывают из админки', async () => {
+  test('other errors do not throw the user out of the admin panel', async () => {
     m.request.mockRejectedValue({ statusCode: 500, data: { message: 'Save failed' } })
     const a = await api()
 

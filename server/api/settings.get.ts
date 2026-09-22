@@ -26,22 +26,22 @@ async function fetchSettings() {
   }
 }
 
-/** Общие компоненты спецификации объявлены здесь и доступны всем маршрутам через $global. */
+/** The shared components of the spec live here; $global makes them visible to every route. */
 defineRouteMeta({
   openAPI: {
-    tags:    ['Публичные'],
-    summary: 'Настройки сайта',
+    tags:    ['Public'],
+    summary: 'Site settings',
     responses: {
-      200: { description: 'Флаги, ссылки и стаж, посчитанный от самой ранней записи опыта', content: { 'application/json': { schema: { $ref: '#/components/schemas/SiteSettings' } } } },
+      200: { description: 'Flags, links, and years of experience counted from the earliest job', content: { 'application/json': { schema: { $ref: '#/components/schemas/SiteSettings' } } } },
     },
     $global: {
       components: {
         securitySchemes: {
-          adminCookie:  { type: 'apiKey', in: 'cookie', name: 'wms_admin', description: 'JWT сессии админки, выдаётся POST /api/admin/login' },
-          publishToken: { type: 'http', scheme: 'bearer', description: 'PUBLISH_TOKEN внешнего публикатора' },
+          adminCookie:  { type: 'apiKey', in: 'cookie', name: 'wms_admin', description: 'The admin session JWT, issued by POST /api/admin/login' },
+          publishToken: { type: 'http', scheme: 'bearer', description: 'The external publisher PUBLISH_TOKEN' },
         },
         parameters: {
-          locale: { name: 'locale', in: 'query', required: false, description: 'Язык ответа; всё, кроме en, читается как ru', schema: { type: 'string', enum: ['ru', 'en'], default: 'ru' } },
+          locale: { name: 'locale', in: 'query', required: false, description: 'Response language; anything but en reads as ru', schema: { type: 'string', enum: ['ru', 'en'], default: 'ru' } },
         },
         schemas: {
           Error: {
@@ -66,10 +66,10 @@ defineRouteMeta({
           },
         },
         responses: {
-          BadRequest:      { description: 'Некорректный запрос',       content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          Unauthorized:    { description: 'Нет доступа',               content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          NotFound:        { description: 'Запись не найдена',         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          TooManyRequests: { description: 'Сработал лимит запросов',    content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          BadRequest:      { description: 'Bad request',       content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          Unauthorized:    { description: 'Not authorized',               content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          NotFound:        { description: 'Row not found',         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          TooManyRequests: { description: 'Rate limit hit',    content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
         },
       },
     },

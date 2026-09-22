@@ -41,7 +41,7 @@ async function form(toBody?: (f: { text: string }) => unknown) {
 }
 
 beforeEach(() => {
-  m.data = ref({ text_ru: 'исходный' }) as unknown as { value: unknown }
+  m.data = ref({ text_ru: 'original' }) as unknown as { value: unknown }
   m.leave = null
   m.api.patch.mockClear().mockResolvedValue({})
   m.toast.ok.mockClear()
@@ -51,27 +51,27 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  // Слушатели окна остаются на смонтированной странице и сработали бы в следующем тесте.
+  // Window listeners stay on the mounted page and would fire during the next test.
   mounted.splice(0).forEach((w) => w.unmount())
   vi.unstubAllGlobals()
 })
 
-describe('заполнение', () => {
-  test('форма берёт значения из ответа и считается сохранённой', async () => {
+describe('filling in', () => {
+  test('the form takes its values from the response and counts as saved', async () => {
     const { out } = await form()
 
-    expect(out.form.value).toEqual({ text: 'исходный' })
+    expect(out.form.value).toEqual({ text: 'original' })
     expect(out.dirty.value).toBe(false)
   })
 
-  test('правка поля включает признак несохранённых изменений', async () => {
+  test('editing a field raises the unsaved-changes flag', async () => {
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
 
     expect(out.dirty.value).toBe(true)
   })
 
-  test('пустой ответ не затирает форму', async () => {
+  test('an empty response does not wipe the form', async () => {
     m.data = ref(null) as unknown as { value: unknown }
     const { out } = await form()
 
@@ -79,40 +79,40 @@ describe('заполнение', () => {
     expect(out.dirty.value).toBe(false)
   })
 
-  test('новые данные с сервера становятся новым слепком', async () => {
+  test('fresh data from the server becomes the new snapshot', async () => {
     const { out } = await form()
-    ;(m.data as unknown as Ref<About>).value = { text_ru: 'с сервера' }
+    ;(m.data as unknown as Ref<About>).value = { text_ru: 'from the server' }
     await nextTick()
 
-    expect(out.form.value).toEqual({ text: 'с сервера' })
+    expect(out.form.value).toEqual({ text: 'from the server' })
     expect(out.dirty.value).toBe(false)
   })
 })
 
-describe('сохранение', () => {
-  test('уходит PATCH, признак изменений снимается, список перечитывается', async () => {
+describe('saving', () => {
+  test('a PATCH goes out, the changes flag drops, the list is re-read', async () => {
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await out.save()
 
-    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/about', { text: 'правка' })
+    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/about', { text: 'edit' })
     expect(out.dirty.value).toBe(false)
     expect(m.refresh).toHaveBeenCalled()
     expect(m.toast.ok).toHaveBeenCalledWith('About saved — added to cache queue')
   })
 
-  test('toBody решает форму запроса', async () => {
+  test('toBody decides the shape of the request', async () => {
     const { out } = await form((f) => ({ text_ru: f.text }))
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await out.save()
 
-    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/about', { text_ru: 'правка' })
+    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/about', { text_ru: 'edit' })
   })
 
-  test('ошибка не выдаёт правки за сохранённые', async () => {
+  test('an error does not pass edits off as saved', async () => {
     m.api.patch.mockRejectedValue({ data: { message: 'Unauthorized' } })
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await out.save()
 
     expect(m.toast.err).toHaveBeenCalledWith('Unauthorized')
@@ -121,10 +121,10 @@ describe('сохранение', () => {
   })
 })
 
-describe('защита правок', () => {
-  test('Cmd+S сохраняет, когда есть что сохранять', async () => {
+describe('protecting edits', () => {
+  test('Cmd+S saves when there is something to save', async () => {
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await nextTick()
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true }))
@@ -133,7 +133,7 @@ describe('защита правок', () => {
     expect(m.api.patch).toHaveBeenCalled()
   })
 
-  test('без изменений Cmd+S ничего не отправляет', async () => {
+  test('with no changes Cmd+S sends nothing', async () => {
     await form()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }))
     await nextTick()
@@ -141,34 +141,34 @@ describe('защита правок', () => {
     expect(m.api.patch).not.toHaveBeenCalled()
   })
 
-  test('закрытие вкладки с правками браузер переспрашивает', async () => {
+  test('the browser asks again when a tab with edits is closed', async () => {
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await nextTick()
 
     const dirty = window.dispatchEvent(new Event('beforeunload', { cancelable: true }))
     expect(dirty).toBe(false)
   })
 
-  test('уход со страницы без правок не спрашивает', async () => {
+  test('leaving the page with no edits asks nothing', async () => {
     await form()
 
     expect(m.leave?.()).toBe(true)
     expect(m.confirm).not.toHaveBeenCalled()
   })
 
-  test('уход с правками требует подтверждения', async () => {
+  test('leaving with edits requires confirmation', async () => {
     const { out } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await nextTick()
 
     await expect(m.leave?.()).resolves.toBe(true)
     expect(m.confirm).toHaveBeenCalled()
   })
 
-  test('размонтированная страница больше не слушает окно', async () => {
+  test('an unmounted page no longer listens to the window', async () => {
     const { out, wrapper } = await form()
-    out.form.value.text = 'правка'
+    out.form.value.text = 'edit'
     await nextTick()
     wrapper.unmount()
 

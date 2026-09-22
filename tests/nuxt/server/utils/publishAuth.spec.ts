@@ -18,25 +18,25 @@ afterEach(() => {
 })
 
 describe('requirePublishToken', () => {
-  test('верный Bearer пропускает', async () => {
+  test('a correct Bearer lets the request through', async () => {
     withHeader('Bearer right-token')
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')
     expect(() => requirePublishToken(event)).not.toThrow()
   })
 
-  test('чужой токен — 401', async () => {
+  test('a foreign token is a 401', async () => {
     withHeader('Bearer wrong-token')
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')
     expect(() => requirePublishToken(event)).toThrow(/Unauthorized/)
   })
 
-  test('токен короче настоящего тоже 401, а не падение сравнения', async () => {
+  test('a token shorter than the real one is also a 401, not a crash in the comparison', async () => {
     withHeader('Bearer x')
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')
     expect(() => requirePublishToken(event)).toThrow(/Unauthorized/)
   })
 
-  test('без заголовка и без схемы Bearer — 401', async () => {
+  test('no header and no Bearer scheme is a 401', async () => {
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')
     expect(() => requirePublishToken(event)).toThrow(/Unauthorized/)
 
@@ -44,7 +44,7 @@ describe('requirePublishToken', () => {
     expect(() => requirePublishToken(event)).toThrow(/Unauthorized/)
   })
 
-  test('ненастроенная интеграция — 503, а не «неверный токен»', async () => {
+  test('an unconfigured integration is a 503, not a wrong token', async () => {
     vi.stubEnv('PUBLISH_TOKEN', '')
     withHeader('Bearer right-token')
     const { requirePublishToken } = await import('~~/server/utils/publishAuth')

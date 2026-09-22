@@ -5,12 +5,12 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Админка: навыки'],
-    summary:    'Удалить навык',
+    tags:       ['Admin: skills'],
+    summary:    'Delete a skill',
     security:   [{ adminCookie: [] }],
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     responses: {
-      200: { description: 'Навык удалён', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Skill deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

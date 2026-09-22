@@ -15,7 +15,7 @@ vi.mock('~~/server/db', async () => {
 const TOKEN = 'publisher-token'
 const event = {} as H3Event
 
-// setResponseStatus приходит автоимпортом Nuxt, а не глобалью Nitro.
+// setResponseStatus comes from a Nuxt auto-import, not from a Nitro global.
 const res = vi.hoisted(() => ({ status: 200 }))
 mockNuxtImport('setResponseStatus', () => (_e: unknown, code: number) => { res.status = code })
 
@@ -43,10 +43,10 @@ const update = (id: string, body: unknown) =>
   call('~~/server/api/publish/posts/[id].put', body, { id }) as Promise<PublishResult>
 
 function payload(extra: Partial<PublishPayload> = {}): PublishPayload {
-  return { slug: 'novyy-post', title: 'Новый пост', body_md: '# Заголовок\n\nТекст поста', ...extra }
+  return { slug: 'novyy-post', title: 'A new post', body_md: '# Heading\n\nThe post body', ...extra }
 }
 
-/** Счётчик запросов публикатора: по умолчанию далеко от лимита. */
+/** The publisher request counter: by default well below the limit. */
 function quota(count: number) {
   return { 'insert:rate_limit': [[{ key: 'publish:1.2.3.4', count, reset_at: new Date(Date.now() + 600_000).toISOString() }]] }
 }
@@ -64,8 +64,8 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('публикация: создание → повторная отправка → обновление', () => {
-  test('новый пост создаётся, ответ 201 со ссылкой на страницу', async () => {
+describe('publishing: create → resend → update', () => {
+  test('a new post is created, the answer is a 201 with a link to the page', async () => {
     const out = await create(payload({ external_id: 'ext-1', tags: ['Rust'], cover_url: 'https://cdn/c.webp' }))
 
     expect(res.status).toBe(201)
@@ -73,7 +73,7 @@ describe('публикация: создание → повторная отпр
     expect(stepArg<Record<string, unknown>>(state.calls, 'insert:post', 'values')?.text_ru).toContain('<h1>')
   })
 
-  test('повторная отправка того же external_id обновляет запись', async () => {
+  test('resending the same external_id updates the entry', async () => {
     plan(state, { ...quota(2), 'select:post': [[created], []], 'update:post': [[created]] })
 
     const out = await create(payload({ external_id: 'ext-1' }))
@@ -82,33 +82,33 @@ describe('публикация: создание → повторная отпр
     expect(state.calls.some((c) => `${c.op}:${c.table}` === 'insert:post')).toBe(false)
   })
 
-  test('обновление по id проходит тем же путём', async () => {
+  test('an update by id takes the same path', async () => {
     plan(state, { ...quota(3), 'select:post': [[created], []], 'update:post': [[created]] })
 
-    const out = await update('42', payload({ title: 'Правленый заголовок' }))
+    const out = await update('42', payload({ title: 'An edited title' }))
 
     expect(out.slug).toBe('novyy-post')
-    expect(stepArg<Record<string, unknown>>(state.calls, 'update:post', 'set')?.title_ru).toBe('Правленый заголовок')
+    expect(stepArg<Record<string, unknown>>(state.calls, 'update:post', 'set')?.title_ru).toBe('An edited title')
   })
 
-  test('несуществующий id — 404', async () => {
+  test('a non-existent id is a 404', async () => {
     plan(state, { ...quota(1), 'select:post': [[]] })
     await expect(update('999', payload())).rejects.toThrow(/not found/i)
   })
 
-  test('нечисловой id — 400, до базы дело не доходит', async () => {
+  test('a non-numeric id is a 400 and never reaches the database', async () => {
     await expect(update('abc', payload())).rejects.toThrow(/Invalid id/)
     expect(state.calls.some((c) => c.table === 'post')).toBe(false)
   })
 
-  test('слаг чужого поста — 409, а не перезапись', async () => {
+  test('another post slug is a 409, not an overwrite', async () => {
     plan(state, { ...quota(1), 'select:post': [[], [{ id: 7 }]] })
     await expect(create(payload())).rejects.toThrow(/already taken/)
   })
 })
 
-describe('доступ и лимиты', () => {
-  test('без токена — 401 и ничего не пишется', async () => {
+describe('access and limits', () => {
+  test('with no token it is a 401 and nothing is written', async () => {
     await create(payload()).catch(() => {})
     plan(state, quota(1))
 
@@ -116,21 +116,21 @@ describe('доступ и лимиты', () => {
     expect(state.calls.some((c) => c.table === 'post')).toBe(false)
   })
 
-  test('чужой токен — 401', async () => {
+  test('a foreign token is a 401', async () => {
     await expect(create(payload(), { token: 'wrong' })).rejects.toThrow(/Unauthorized/)
   })
 
-  test('поток запросов останавливается лимитом раньше проверки токена', async () => {
+  test('a flood of requests is stopped by the limit before the token check', async () => {
     plan(state, quota(61))
 
     await expect(create(payload())).rejects.toThrow(/Too many requests/)
     expect(state.calls.some((c) => c.table === 'post')).toBe(false)
   })
 
-  test('неполное тело — 400', async () => {
-    await expect(create({ slug: 'a', title: 'б' })).rejects.toThrow(/required/)
+  test('an incomplete body is a 400', async () => {
+    await expect(create({ slug: 'a', title: 'b' })).rejects.toThrow(/required/)
 
     plan(state, quota(2))
-    await expect(create({ title: 'б', body_md: 'текст' })).rejects.toThrow(/required/)
+    await expect(create({ title: 'b', body_md: 'text' })).rejects.toThrow(/required/)
   })
 })

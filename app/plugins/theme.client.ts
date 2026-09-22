@@ -1,12 +1,12 @@
 /**
- * Синхронизирует состояние темы с тем, что уже применил критический
- * инлайн-скрипт из nuxt.config (он ставит класс .light до первой
- * отрисовки, чтобы не было вспышки).
+ * Brings the theme state in line with what the critical inline script from
+ * nuxt.config has already applied (it sets the .light class before the first
+ * paint so there is no flash).
  *
- * Вызов отложен до app:mounted намеренно. Если менять isDark раньше,
- * клиент успевает отрисовать другую иконку и aria-label, чем отдал
- * сервер, и гидратация падает с mismatch — это ловил PageSpeed.
- * Сама иконка от состояния не зависит, её выбирает CSS по классу .light.
+ * The call is deferred to app:mounted on purpose. Changing isDark any earlier
+ * lets the client render a different icon and aria-label than the server sent,
+ * and hydration fails with a mismatch — PageSpeed caught exactly that.
+ * The icon itself does not depend on the state; CSS picks it by the .light class.
  */
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.hook('app:mounted', () => {

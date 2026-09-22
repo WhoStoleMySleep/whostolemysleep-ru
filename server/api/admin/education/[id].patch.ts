@@ -5,13 +5,13 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Изменить образование',
+    tags:        ['Admin: resume'],
+    summary:     'Edit an education entry',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EducationRow' } } } },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/EducationRow' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/EducationRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },
     },

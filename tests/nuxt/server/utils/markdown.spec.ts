@@ -1,58 +1,58 @@
 import { describe, test, expect } from 'vitest'
 
 describe('markdownToHtml', () => {
-  test('превращает разметку в html', async () => {
+  test('turns markup into html', async () => {
     const { markdownToHtml } = await import('~~/server/utils/markdown')
-    expect(markdownToHtml('# Заголовок')).toContain('Заголовок')
-    expect(markdownToHtml('**жирный**')).toContain('<strong>жирный</strong>')
+    expect(markdownToHtml('# Heading')).toContain('Heading')
+    expect(markdownToHtml('**bold**')).toContain('<strong>bold</strong>')
   })
 
-  test('вырезает скрипт из присланного markdown', async () => {
+  test('strips a script out of the markdown that was sent', async () => {
     const { markdownToHtml } = await import('~~/server/utils/markdown')
-    const html = markdownToHtml('текст\n\n<script>alert(1)</script>')
+    const html = markdownToHtml('body\n\n<script>alert(1)</script>')
     expect(html).not.toContain('<script>')
-    expect(html).toContain('текст')
+    expect(html).toContain('body')
   })
 
-  test('одиночный перевод строки не становится <br> — breaks выключен', async () => {
+  test('a single line break does not become a <br> — breaks is off', async () => {
     const { markdownToHtml } = await import('~~/server/utils/markdown')
-    expect(markdownToHtml('первая\nвторая')).not.toContain('<br')
+    expect(markdownToHtml('first\nsecond')).not.toContain('<br')
   })
 
-  test('пустой ввод даёт пустую строку', async () => {
+  test('empty input gives an empty string', async () => {
     const { markdownToHtml } = await import('~~/server/utils/markdown')
     expect(markdownToHtml('')).toBe('')
   })
 })
 
 describe('excerptFromHtml', () => {
-  test('снимает теги и лишние пробелы', async () => {
+  test('strips tags and extra spaces', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
-    expect(excerptFromHtml('<p>Первый</p>\n<p>  Второй  </p>')).toBe('Первый Второй')
+    expect(excerptFromHtml('<p>First</p>\n<p>  Second  </p>')).toBe('First Second')
   })
 
-  test('&nbsp; превращается в обычный пробел', async () => {
+  test('&nbsp; becomes a plain space', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
-    expect(excerptFromHtml('<p>а&nbsp;б</p>')).toBe('а б')
+    expect(excerptFromHtml('<p>a&nbsp;b</p>')).toBe('a b')
   })
 
-  test('текст ровно по лимиту не обрезается и без многоточия', async () => {
+  test('text exactly at the limit is not cut and gets no ellipsis', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
     const text = 'a'.repeat(10)
     expect(excerptFromHtml(`<p>${text}</p>`, 10)).toBe(text)
   })
 
-  test('длинный текст режется по последнему пробелу, не по середине слова', async () => {
+  test('long text is cut at the last space, not in the middle of a word', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
-    expect(excerptFromHtml('<p>один два три</p>', 9)).toBe('один два…')
+    expect(excerptFromHtml('<p>one two three</p>', 9)).toBe('one two…')
   })
 
-  test('слово длиннее лимита режется как есть — резать больше негде', async () => {
+  test('a word longer than the limit is cut as is — there is nowhere else to cut', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
-    expect(excerptFromHtml('<p>ммммммммммм</p>', 5)).toBe('ммммм…')
+    expect(excerptFromHtml('<p>mmmmmmmmmmm</p>', 5)).toBe('mmmmm…')
   })
 
-  test('пустой html даёт пустой анонс', async () => {
+  test('empty html gives an empty excerpt', async () => {
     const { excerptFromHtml } = await import('~~/server/utils/markdown')
     expect(excerptFromHtml('')).toBe('')
   })

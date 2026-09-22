@@ -2,8 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import type { H3Event } from 'h3'
 
 /**
- * Проверяет Bearer-токен внешнего публикатора (NuxtPublish).
- * Токен один на всю интеграцию и живёт только в переменных окружения.
+ * Checks the bearer token of the external publisher (NuxtPublish).
+ * One token for the whole integration, and it lives only in the environment.
  */
 export function requirePublishToken(event: H3Event): void {
   const expected = process.env.PUBLISH_TOKEN
@@ -20,7 +20,7 @@ export function requirePublishToken(event: H3Event): void {
   }
 }
 
-/** Сравнение через хеши: одинаковая длина и постоянное время, без подсказок подбору. */
+/** Compared as hashes: equal length and constant time, so nothing leaks to a guesser. */
 function equalTokens(left: string, right: string): boolean {
   const digest = (value: string) => createHash('sha256').update(value).digest()
   return timingSafeEqual(digest(left), digest(right))

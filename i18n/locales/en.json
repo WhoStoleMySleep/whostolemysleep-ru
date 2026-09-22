@@ -6,7 +6,9 @@
     "resume": "Resume",
     "contacts": "Contacts",
     "privacy": "Privacy",
-    "hire": "Hire me"
+    "hire": "Hire me",
+    "aria": "Main navigation",
+    "toTop": "Back to top"
   },
   "hero": {
     "eyebrow": "Nuxt · Rust · Tauri · R-04",

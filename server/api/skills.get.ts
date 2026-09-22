@@ -20,11 +20,11 @@ async function fetchSkills(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Публичные'],
-    summary:    'Навыки по группам',
+    tags:       ['Public'],
+    summary:    'Skills by group',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Группы в порядке order, внутри — навыки в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/SkillGroup' } } } } },
+      200: { description: 'Groups in order, each with its skills in their own order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/SkillGroup' } } } } },
     },
     $global: {
       components: {

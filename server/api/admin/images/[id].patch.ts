@@ -4,13 +4,13 @@ import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Изменить подпись картинки',
+    tags:        ['Admin: posts'],
+    summary:     'Edit an image caption',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { alt_ru: { type: 'string' }, alt_en: { type: 'string' } } } } } },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/ImageRow' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/ImageRow' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
     },

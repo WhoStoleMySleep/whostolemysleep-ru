@@ -2,12 +2,12 @@ import { db } from '~~/server/db'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Список постов для таблицы',
-    description: 'Только колонки таблицы: тексты и связи сюда не тянутся, полный пост отдаёт GET /api/admin/posts/{id}.',
+    tags:        ['Admin: posts'],
+    summary:     'Post list for the admin table',
+    description: 'Table columns only: texts and relations are not loaded here, the whole post comes from GET /api/admin/posts/{id}.',
     security:    [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Посты от недавно изменённых к старым', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AdminPostRow' } } } } },
+      200: { description: 'Posts, most recently changed first', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AdminPostRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {
@@ -65,14 +65,14 @@ defineRouteMeta({
               type:         { type: 'string', enum: ['blog', 'project'] },
               title_ru:     { type: 'string' },
               title_en:     { type: 'string' },
-              text_ru:      { type: 'string', description: 'HTML, прогоняется через sanitizeHtml' },
-              text_en:      { type: 'string', description: 'HTML, прогоняется через sanitizeHtml' },
+              text_ru:      { type: 'string', description: 'HTML, passed through sanitizeHtml' },
+              text_en:      { type: 'string', description: 'HTML, passed through sanitizeHtml' },
               excerpt_ru:   { type: 'string' },
               excerpt_en:   { type: 'string' },
               url:          { type: 'string', nullable: true },
               is_published: { type: 'boolean' },
               published_at: { type: 'string', format: 'date-time', nullable: true },
-              tag_ids:      { type: 'array', items: { type: 'integer' }, description: 'Заменяет набор тегов целиком' },
+              tag_ids:      { type: 'array', items: { type: 'integer' }, description: 'Replaces the whole set of tags' },
             },
           },
         },
@@ -82,10 +82,10 @@ defineRouteMeta({
 })
 
 /**
- * Список для таблицы в админке. Колонки перечислены поимённо намеренно:
- * раньше запрос тянул text_ru/text_en вместе с тегами и картинками —
- * то есть всю базу постов целиком, — а таблица показывает пять полей.
- * Полный пост отдаёт /api/admin/posts/[id].
+ * The list behind the admin table. The columns are named one by one on purpose:
+ * the query used to pull text_ru/text_en along with tags and images — the entire
+ * post table, in other words — while the table shows five fields.
+ * The whole post is served by /api/admin/posts/[id].
  */
 export default defineEventHandler(async () => {
   return db.query.post.findMany({

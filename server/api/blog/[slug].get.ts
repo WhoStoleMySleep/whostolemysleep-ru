@@ -46,14 +46,14 @@ async function fetchPost(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:    ['Публичные'],
-    summary: 'Статья блога по слагу',
+    tags:    ['Public'],
+    summary: 'A blog post by slug',
     parameters: [
       { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
       { $ref: '#/components/parameters/locale' },
     ],
     responses: {
-      200: { description: 'Статья', content: { 'application/json': { schema: { $ref: '#/components/schemas/Post' } } } },
+      200: { description: 'A blog post', content: { 'application/json': { schema: { $ref: '#/components/schemas/Post' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       404: { $ref: '#/components/responses/NotFound' },
     },

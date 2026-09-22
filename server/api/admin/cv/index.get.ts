@@ -2,12 +2,12 @@ import { buildSnapshot } from '~~/server/utils/cv'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Выгрузить резюме одним файлом',
-    description: 'Тот же формат принимают diff и apply.',
+    tags:        ['Admin: resume'],
+    summary:     'Export the whole resume as one file',
+    description: 'diff and apply accept the same format.',
     security:    [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Снимок резюме', content: { 'application/json': { schema: { $ref: '#/components/schemas/CvSnapshot' } } } },
+      200: { description: 'A resume snapshot', content: { 'application/json': { schema: { $ref: '#/components/schemas/CvSnapshot' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {
@@ -68,9 +68,9 @@ defineRouteMeta({
               kind:     { type: 'string', enum: ['add', 'update', 'remove'] },
               label:    { type: 'string' },
               field:    { type: 'string' },
-              before:   { type: ['string', 'array', 'object', 'null'], description: 'Текущее значение' },
-              after:    { type: ['string', 'array', 'object', 'null'], description: 'Значение из файла' },
-              editable: { type: 'boolean', description: 'Скалярное поле можно поправить перед применением' },
+              before:   { type: ['string', 'array', 'object', 'null'], description: 'The current value' },
+              after:    { type: ['string', 'array', 'object', 'null'], description: 'The value from the file' },
+              editable: { type: 'boolean', description: 'A scalar field can be edited before it is applied' },
             },
           },
         },
@@ -79,5 +79,5 @@ defineRouteMeta({
   },
 })
 
-/** Выгрузка резюме одним файлом — он же шаблон для обратной загрузки. */
+/** The resume as one file — which is also the template for importing it back. */
 export default defineEventHandler(async () => buildSnapshot())

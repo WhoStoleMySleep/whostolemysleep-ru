@@ -15,14 +15,14 @@ interface PatchBody {
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Изменить пост',
-    description: 'tag_ids, если передан, заменяет набор тегов целиком.',
+    tags:        ['Admin: posts'],
+    summary:     'Edit a post',
+    description: 'tag_ids, when given, replaces the whole set of tags.',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PostInput' } } } },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },

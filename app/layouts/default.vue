@@ -14,13 +14,13 @@ function isActive(key: string) {
 }
 
 /**
- * Дисплейный шрифт разный по локали (Archivo на латиницу, Onest на
- * кириллицу), поэтому предзагружаем только тот, что реально нужен
- * странице. Базовый JetBrains Mono latin предзагружен в nuxt.config.
+ * The display font differs per locale (Archivo for latin, Onest for cyrillic), so
+ * only the one the page actually needs is preloaded. The base JetBrains Mono latin
+ * is preloaded in nuxt.config.
  */
 useHead(() => ({
-  // lang нужен не только для доступности: на него завязан --hero-size
-  // в main.css, который сбавляет кегль для кириллицы.
+  // lang is not only about accessibility: --hero-size in main.css keys off it and
+  // drops the type size for cyrillic.
   htmlAttrs: { lang: locale.value },
   link: locale.value === 'ru'
     ? [
@@ -51,7 +51,7 @@ useHead(() => ({
           W<span class="rail__dot">.</span>
         </NuxtLink>
 
-        <nav class="rail__nav" aria-label="Основная навигация">
+        <nav class="rail__nav" :aria-label="$t('nav.aria')">
           <NuxtLink
             v-for="item in nav"
             :key="item.key"
@@ -79,7 +79,7 @@ useHead(() => ({
       <button v-show="showToTop" class="totop" type="button" @click="toTop()">
         <span class="totop__pct">{{ progressPct }}</span>
         <span class="totop__btn" aria-hidden="true">↑</span>
-        <span class="sr-only">Наверх</span>
+        <span class="sr-only">{{ $t('nav.toTop') }}</span>
       </button>
     </Transition>
 
@@ -90,21 +90,20 @@ useHead(() => ({
 <style scoped>
 .shell {
   --shell-pad: clamp(10px, 2.2vw, 30px);
-  /* Высота панели = экран минус отступы оболочки. Тем же значением
-     задаётся высота рейла: если у него оставить 100vh, он как флекс-
-     элемент растянет панель до целого экрана, к ней прибавятся отступы
-     и страница станет выше экрана — на коротких страницах это заметно
-     обрезанным низом панели. */
+  /* Panel height = viewport minus the shell's padding. The rail gets the same
+     value: left at 100vh it would, as a flex item, stretch the panel to a full
+     screen, the padding would be added on top and the page would grow taller than
+     the viewport — visible on short pages as a clipped panel bottom. */
   --panel-h: calc(100dvh - var(--shell-pad) * 2);
-  /* Рейл лежит внутри панели, а её внутренняя область на 2px меньше
-     из-за верхней и нижней рамки. Без вычитания он не помещается и
-     растягивает панель на эти же 2px за пределы экрана. */
+  /* The rail sits inside the panel, whose inner area is 2px shorter because of the
+     top and bottom border. Without subtracting them it does not fit and stretches
+     the panel those same 2px past the edge of the screen. */
   --rail-h:  calc(var(--panel-h) - 2px);
 
   padding: var(--shell-pad);
 }
 
-/* ── Полоса прогресса ── */
+/* ── Progress bar ── */
 .progress {
   position: fixed;
   inset: 0 0 auto;
@@ -119,7 +118,7 @@ useHead(() => ({
   transition: width 0.12s linear;
 }
 
-/* ── Фон под панелью ── */
+/* ── Background behind the panel ── */
 .bg {
   position: fixed;
   inset: 0;
@@ -135,10 +134,10 @@ useHead(() => ({
   background-size: 26px 26px;
 }
 
-/* ── Панель ──
-   overflow: clip как в макете. Он обрезает круг героя по скруглённому
-   углу и заодно делает sticky у .rail неактивным — рейл едет вместе
-   со страницей, ровно как в дизайне. */
+/* ── Panel ──
+   overflow: clip, as in the mockup. It clips the hero circle along the rounded
+   corner and, as a side effect, disables sticky on .rail — the rail scrolls with
+   the page, exactly as designed. */
 .panel {
   position: relative;
   z-index: 10;
@@ -153,7 +152,7 @@ useHead(() => ({
   box-shadow: var(--shadow);
 }
 
-/* ── Боковой рейл ── */
+/* ── Side rail ── */
 .rail {
   flex: 0 0 78px;
   display: flex;
@@ -209,7 +208,7 @@ useHead(() => ({
   background: linear-gradient(var(--accent), transparent);
 }
 
-/* ── Правая колонка ── */
+/* ── Right column ── */
 .col {
   flex: 1 1 auto;
   min-width: 0;
@@ -218,9 +217,9 @@ useHead(() => ({
 }
 
 .col__main {
-  /* Отступы колонки объявлены переменными: секции, которым нужно
-     выйти в край панели (герой на главной), отменяют их через
-     отрицательный margin, не дублируя сами значения. */
+  /* The column's padding is declared as variables: sections that need to reach the
+     edge of the panel (the hero on the home page) cancel it with a negative margin
+     instead of repeating the values. */
   --main-pad-x: clamp(18px, 3vw, 56px);
   --main-pad-t: clamp(24px, 3.6vw, 60px);
 
@@ -228,16 +227,16 @@ useHead(() => ({
   padding: var(--main-pad-t) var(--main-pad-x) clamp(28px, 3vw, 44px);
 }
 
-/* Страховка: раму задаёт панель, поэтому у любого .container внутри
-   неё гасятся собственные поля и max-width — иначе отступы удвоятся.
-   Сейчас страницы .container не используют, он остался только в
-   app/error.vue, а тот рендерится вне лейаута и правила не касается. */
+/* A safety net: the frame is set by the panel, so any .container inside it has its
+   own padding and max-width zeroed — otherwise the spacing doubles. No page uses
+   .container any more; it survives only in app/error.vue, which renders outside the
+   layout and is not touched by this rule. */
 .col__main :deep(.container) {
   max-width: 100%;
   padding-inline: 0;
 }
 
-/* ── Кнопка «наверх» ── */
+/* ── Back-to-top button ── */
 .totop {
   position: fixed;
   right: clamp(10px, 1.8vw, 22px);

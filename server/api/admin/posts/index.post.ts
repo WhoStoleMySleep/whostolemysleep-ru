@@ -20,12 +20,12 @@ interface CreateBody {
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Создать пост',
+    tags:        ['Admin: posts'],
+    summary:     'Create a post',
     security:    [{ adminCookie: [] }],
     requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PostInput' } } } },
     responses: {
-      200: { description: 'Созданная запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
+      200: { description: 'The created row', content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPost' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
   },

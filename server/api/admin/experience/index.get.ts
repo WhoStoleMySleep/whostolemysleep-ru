@@ -2,11 +2,11 @@ import { db } from '~~/server/db'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: резюме'],
-    summary:  'Опыт работы списком',
+    tags:     ['Admin: resume'],
+    summary:  'Experience as a list',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Места работы в порядке order, внутри — пункты в своём порядке', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/ExperienceRow' } } } } },
+      200: { description: 'Jobs in order, each with its bullets in their own order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/ExperienceRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {

@@ -10,29 +10,29 @@ mockNuxtImport('useI18n', () => () => ({
 
 mockNuxtImport('useSwitchLocalePath', () => () => (l: string) => `/${l}`)
 
-describe('postCount по-русски', () => {
-  test('единственное число', async () => {
+describe('postCount in Russian', () => {
+  test('singular', async () => {
     state.locale = 'ru'
     const { useLocale } = await import('~/composables/useLocale')
     expect(useLocale().postCount(1)).toBe('1 запись')
     expect(useLocale().postCount(21)).toBe('21 запись')
   })
 
-  test('от двух до четырёх', async () => {
+  test('two to four', async () => {
     state.locale = 'ru'
     const { useLocale } = await import('~/composables/useLocale')
     expect(useLocale().postCount(3)).toBe('3 записи')
     expect(useLocale().postCount(102)).toBe('102 записи')
   })
 
-  test('множественное число', async () => {
+  test('plural', async () => {
     state.locale = 'ru'
     const { useLocale } = await import('~/composables/useLocale')
     expect(useLocale().postCount(5)).toBe('5 записей')
     expect(useLocale().postCount(0)).toBe('0 записей')
   })
 
-  test('второй десяток — исключение из правила для 1..4', async () => {
+  test('the teens are the exception to the 1..4 rule', async () => {
     state.locale = 'ru'
     const { useLocale } = await import('~/composables/useLocale')
     expect(useLocale().postCount(11)).toBe('11 записей')
@@ -41,8 +41,8 @@ describe('postCount по-русски', () => {
   })
 })
 
-describe('postCount по-английски', () => {
-  test('единственное только для одной записи', async () => {
+describe('postCount in English', () => {
+  test('singular only for a single entry', async () => {
     state.locale = 'en'
     const { useLocale } = await import('~/composables/useLocale')
     expect(useLocale().postCount(1)).toBe('1 post')

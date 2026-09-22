@@ -5,13 +5,13 @@ import { markDirty } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: навыки'],
-    summary:     'Изменить группу навыков',
+    tags:        ['Admin: skills'],
+    summary:     'Edit a skill group',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { slug: { type: 'string' }, name_ru: { type: 'string' }, name_en: { type: 'string' }, order: { type: 'integer' } } } } } },
     responses: {
-      200: { description: 'Обновлённая группа', content: { 'application/json': { schema: { $ref: '#/components/schemas/SkillGroupRow' } } } },
+      200: { description: 'The updated group', content: { 'application/json': { schema: { $ref: '#/components/schemas/SkillGroupRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },
     },

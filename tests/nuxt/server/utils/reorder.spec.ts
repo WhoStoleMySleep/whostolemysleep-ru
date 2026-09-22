@@ -15,27 +15,27 @@ beforeEach(() => {
 })
 
 describe('readOrderIds', () => {
-  test('берёт список id из тела запроса', async () => {
+  test('it takes the list of ids from the request body', async () => {
     const { readOrderIds } = await import('~~/server/utils/reorder')
     expect(readOrderIds({ ids: [3, 1, 2] })).toEqual([3, 1, 2])
   })
 
-  test('числа строками из JSON приводятся к числам', async () => {
+  test('numbers that arrive as JSON strings are coerced to numbers', async () => {
     const { readOrderIds } = await import('~~/server/utils/reorder')
     expect(readOrderIds({ ids: ['3', '1'] })).toEqual([3, 1])
   })
 
-  test('мусор среди id отбрасывается, остальной порядок сохраняется', async () => {
+  test('junk among the ids is dropped and the rest of the order is kept', async () => {
     const { readOrderIds } = await import('~~/server/utils/reorder')
     expect(readOrderIds({ ids: [1, 'abc', null, 2.5, -4, 0, 2] })).toEqual([1, 2])
   })
 
-  test('пустой массив — допустимое тело, применять просто нечего', async () => {
+  test('an empty array is a valid body, there is simply nothing to apply', async () => {
     const { readOrderIds } = await import('~~/server/utils/reorder')
     expect(readOrderIds({ ids: [] })).toEqual([])
   })
 
-  test('тело без массива ids — ошибка 400, а не молчаливый пустой список', async () => {
+  test('a body with no ids array is a 400, not a silent empty list', async () => {
     const { readOrderIds } = await import('~~/server/utils/reorder')
     expect(() => readOrderIds({})).toThrow()
     expect(() => readOrderIds(null)).toThrow()
@@ -44,7 +44,7 @@ describe('readOrderIds', () => {
 })
 
 describe('applyOrder', () => {
-  test('переставляет весь список одним запросом', async () => {
+  test('it reorders the whole list in a single query', async () => {
     const { applyOrder } = await import('~~/server/utils/reorder')
     await applyOrder(schema.education, [3, 1, 2])
 
@@ -52,7 +52,7 @@ describe('applyOrder', () => {
     expect(state.calls[0]?.op).toBe('execute')
   })
 
-  test('пустой список не ходит в базу', async () => {
+  test('an empty list never reaches the database', async () => {
     const { applyOrder } = await import('~~/server/utils/reorder')
     await applyOrder(schema.education, [])
 

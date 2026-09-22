@@ -1,7 +1,7 @@
 /**
- * Форматирование для админки. Отдельно от useFormatDate: тот берёт
- * локаль и подписи из i18n сайта, а в админке маршруты вне локалей
- * (defineI18nRoute(false)) и весь интерфейс английский.
+ * Formatting for the admin panel. Separate from useFormatDate, which takes its
+ * locale and labels from the site's i18n: admin routes live outside the locales
+ * (defineI18nRoute(false)) and the whole panel is in English.
  */
 export function useAdminFormat() {
   function period(from: string, to: string | null): string {

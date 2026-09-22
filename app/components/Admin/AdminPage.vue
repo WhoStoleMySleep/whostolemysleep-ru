@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   title: string
-  /** Строка под заголовком: сколько записей, когда сохраняли. */
+  /** The line under the title: how many entries, when they were saved. */
   note?: string
 }>()
 </script>

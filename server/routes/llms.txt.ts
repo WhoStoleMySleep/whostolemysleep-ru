@@ -3,24 +3,24 @@ import { db } from '~~/server/db'
 import { post, settings, experience, skillGroup, skill } from '~~/server/db/schema'
 
 /**
- * llms.txt — краткая выжимка сайта для языковых моделей (llmstxt.org).
- * Markdown с одним H1, дальше секции со ссылками.
+ * llms.txt — a short digest of the site for language models (llmstxt.org).
+ * Markdown with a single H1, then sections of links.
  *
- * Роут, а не статический public/llms.txt: проекты и статьи живут в базе
- * и правятся через админку — статический файл разошёлся бы с сайтом.
- * Логика та же, что у sitemap.xml.
+ * A route rather than a static public/llms.txt: projects and posts live in the
+ * database and are edited through the admin panel, so a static file would drift
+ * away from the site. Same reasoning as sitemap.xml.
  *
- * Язык — английский: это локаль по умолчанию и соглашение самого формата.
- * Ссылки ведут на /en, русское зеркало упомянуто отдельной секцией.
+ * English, because that is the default locale and the convention of the format
+ * itself. Links point at /en; the Russian mirror gets a section of its own.
  */
 
 const BASE_URL = 'https://whostolemysleep.ru'
 
-/** Excerpt в базе — markdown; для строки-описания нужен голый текст. */
+/** The stored excerpt is markdown; a description line needs plain text. */
 function plain(text: string, limit = 155) {
   const clean = text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')      // картинки
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')   // ссылки → текст
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')      // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')   // links to their text
     .replace(/[*_`#>]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -29,7 +29,7 @@ function plain(text: string, limit = 155) {
   return `${clean.slice(0, limit).replace(/[\s,.;:—-]+$/, '')}…`
 }
 
-/** Проекты со своим url ведут наружу, остальное — на страницу блога. */
+/** A project with its own url links out; everything else links to the blog page. */
 function linkFor(p: { slug: string, url: string | null }) {
   return p.url || `${BASE_URL}/en/blog/${p.slug}`
 }
@@ -40,9 +40,9 @@ function bullet(title: string, href: string, note: string) {
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Служебные'],
-    summary:     'Выжимка сайта для языковых моделей',
-    description: 'Формат llmstxt.org: markdown с одним H1 и секциями ссылок.',
+    tags:        ['Service'],
+    summary:     'Site digest for language models',
+    description: 'The llmstxt.org format: markdown with a single H1 and sections of links.',
     responses: {
       200: { description: 'Markdown', content: { 'text/plain': { schema: { type: 'string' } } } },
     },
@@ -73,7 +73,7 @@ export default defineCachedEventHandler(async (event) => {
       .orderBy(asc(skillGroup.order), asc(skill.order)),
   ])
 
-  // Тот же расчёт, что в /api/settings — стаж считается от первой работы.
+  // The same calculation as /api/settings — experience counts from the first job.
   const start = firstJob[0]?.date_from
   const years = start
     ? Math.floor((Date.now() - new Date(start).getTime()) / (365.25 * 24 * 3600 * 1000))
@@ -83,7 +83,7 @@ export default defineCachedEventHandler(async (event) => {
     new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()
   )
 
-  // title_en/excerpt_en в схеме могут быть пустыми — тогда берём русские.
+  // title_en/excerpt_en are allowed to be empty — the Russian ones stand in.
   const entries = (type: 'blog' | 'project') => sorted
     .filter(p => p.type === type)
     .map(p => bullet(

@@ -11,11 +11,11 @@ async function fetchAbout(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Публичные'],
-    summary:    'Блок «Обо мне»',
+    tags:       ['Public'],
+    summary:    'About block',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Текст блока; null, если запись ещё не заведена', content: { 'application/json': { schema: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, text: { type: 'string' } } } } } },
+      200: { description: 'The block text; null when the row does not exist yet', content: { 'application/json': { schema: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, text: { type: 'string' } } } } } },
     },
   },
 })

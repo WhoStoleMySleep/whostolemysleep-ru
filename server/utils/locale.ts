@@ -6,7 +6,7 @@ export function getLocale(event: H3Event): Locale {
   return locale === 'en' ? 'en' : 'ru'
 }
 
-/** Возвращает локализованное значение, с fallback на ru если en пустой */
+/** Returns the localized value, falling back to ru when en is empty. */
 export function pick(ru: string, en: string, locale: Locale): string {
   return locale === 'en' && en ? en : ru
 }

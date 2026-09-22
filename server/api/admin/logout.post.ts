@@ -2,11 +2,11 @@ import { ADMIN_COOKIE } from '~~/server/utils/auth'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: сессия'],
-    summary:  'Выход',
+    tags:     ['Admin: session'],
+    summary:  'Log out',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Кука удалена', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Cookie cleared', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
     },
   },
 })

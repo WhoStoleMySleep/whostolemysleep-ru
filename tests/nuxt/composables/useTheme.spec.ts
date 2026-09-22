@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 describe('useTheme.init', () => {
-  test('сохранённый выбор сильнее системной темы', async () => {
+  test('a saved choice outweighs the system theme', async () => {
     localStorage.setItem('wms-theme', 'light')
     stubMatchMedia({ dark: true })
 
@@ -36,7 +36,7 @@ describe('useTheme.init', () => {
     expect(document.documentElement.classList.contains('light')).toBe(true)
   })
 
-  test('без выбора берётся системная тема', async () => {
+  test('with no choice the system theme is used', async () => {
     stubMatchMedia({ dark: true })
 
     const { useTheme } = await import('~/composables/useTheme')
@@ -47,7 +47,7 @@ describe('useTheme.init', () => {
     expect(document.documentElement.classList.contains('light')).toBe(false)
   })
 
-  test('метки Dark Reader перевешивают всё и просят расширение отступить', async () => {
+  test('Dark Reader markers outweigh everything and ask the extension to back off', async () => {
     localStorage.setItem('wms-theme', 'light')
     document.documentElement.setAttribute('data-darkreader-scheme', 'dark')
 
@@ -60,8 +60,8 @@ describe('useTheme.init', () => {
     expect(sessionStorage.getItem('wms-ext-dark')).toBe('1')
   })
 
-  test('мусор в localStorage игнорируется как отсутствие выбора', async () => {
-    localStorage.setItem('wms-theme', 'неонка')
+  test('garbage in localStorage is ignored as no choice at all', async () => {
+    localStorage.setItem('wms-theme', 'neon')
     stubMatchMedia({ dark: true })
 
     const { useTheme } = await import('~/composables/useTheme')
@@ -73,7 +73,7 @@ describe('useTheme.init', () => {
 })
 
 describe('useTheme.toggle', () => {
-  test('переключение красит документ и запоминает выбор', async () => {
+  test('toggling paints the document and remembers the choice', async () => {
     const { useTheme } = await import('~/composables/useTheme')
     const theme = useTheme()
     theme.init()
@@ -86,7 +86,7 @@ describe('useTheme.toggle', () => {
     expect(document.documentElement.classList.contains('light')).toBe(false)
   })
 
-  test('цвет фона и theme-color меняются вместе с темой', async () => {
+  test('the background colour and theme-color change together with the theme', async () => {
     document.head.innerHTML = '<meta name="theme-color" content="#0a0a0c">'
 
     const { useTheme } = await import('~/composables/useTheme')
@@ -98,7 +98,7 @@ describe('useTheme.toggle', () => {
     expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0a0a0c')
   })
 
-  test('при отключённых анимациях переключение мгновенное, без волны', async () => {
+  test('with animations disabled the switch is instant, with no wave', async () => {
     stubMatchMedia({ reduced: true })
 
     const startViewTransition = vi.fn()
@@ -115,7 +115,7 @@ describe('useTheme.toggle', () => {
     Reflect.deleteProperty(document, 'startViewTransition')
   })
 
-  test('недоступное хранилище не роняет переключение', async () => {
+  test('unavailable storage does not break the switch', async () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('storage disabled')
     })

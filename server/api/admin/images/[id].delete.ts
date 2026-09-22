@@ -5,13 +5,13 @@ import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: посты'],
-    summary:     'Удалить картинку',
-    description: 'Файл в хранилище удаляется только если ссылка ведёт на Vercel Blob.',
+    tags:        ['Admin: posts'],
+    summary:     'Delete an image',
+    description: 'The stored file is deleted only when the URL points at Vercel Blob.',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     responses: {
-      200: { description: 'Картинка удалена', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
+      200: { description: 'Image deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },

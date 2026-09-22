@@ -35,36 +35,36 @@ afterEach(() => {
 })
 
 describe('admin-guard', () => {
-  test('публичные маршруты проходят без куки', async () => {
+  test('public routes pass without a cookie', async () => {
     request('/api/posts/blog')
     await expect((await guard())(event)).resolves.toBeUndefined()
     expect(auth.readAdminToken).not.toHaveBeenCalled()
   })
 
-  test('вход в админку не может требовать сессии', async () => {
+  test('the admin login cannot require a session', async () => {
     request('/api/admin/login')
     await expect((await guard())(event)).resolves.toBeUndefined()
     expect(auth.readAdminToken).not.toHaveBeenCalled()
   })
 
-  test('защищённый маршрут без куки — 401', async () => {
+  test('a protected route without a cookie is a 401', async () => {
     request('/api/admin/posts')
     await expect((await guard())(event)).rejects.toThrow(/Unauthorized/)
   })
 
-  test('негодный токен — 401, обработчик не запускается', async () => {
+  test('an invalid token is a 401 and the handler never runs', async () => {
     request('/api/admin/posts', 'bad')
     await expect((await guard())(event)).rejects.toThrow(/Invalid token/)
     expect(auth.slideAdminSession).not.toHaveBeenCalled()
   })
 
-  test('живая сессия проходит и сдвигается вперёд', async () => {
+  test('a live session passes and is pushed forward', async () => {
     request('/api/admin/posts', 'good')
     await expect((await guard())(event)).resolves.toBeUndefined()
     expect(auth.slideAdminSession).toHaveBeenCalledWith(event, { admin: true, exp: 1 })
   })
 
-  test('вложенные маршруты админки закрыты так же, как корневые', async () => {
+  test('nested admin routes are closed just like the root ones', async () => {
     request('/api/admin/cv/apply')
     await expect((await guard())(event)).rejects.toThrow(/Unauthorized/)
   })

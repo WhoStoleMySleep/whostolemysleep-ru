@@ -8,8 +8,8 @@ export interface SiteSettings {
 }
 
 /**
- * Тип ответа указан прямо у $fetch: без него TypeScript пытается вывести его
- * из таблицы маршрутов Nitro и упирается в предел вложенности (TS2321).
+ * The response type is given to $fetch explicitly: without it TypeScript tries to
+ * infer it from Nitro's route table and hits the nesting limit (TS2321).
  */
 export function useSettings() {
   return useAsyncData<SiteSettings>('site-settings', () => $fetch<SiteSettings>('/api/settings'))

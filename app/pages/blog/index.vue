@@ -19,8 +19,8 @@ const { data: posts, pending } = await useAsyncData(
 const localQuery = ref('')
 
 /**
- * Каскад проигрывается один раз — на первой отрисовке списка.
- * Иначе он шёл бы заново на каждый набранный в поиске символ.
+ * The cascade plays once, on the first render of the list.
+ * Otherwise it would replay on every character typed into the search box.
  */
 const cascade = ref(true)
 watch(localQuery, () => { cascade.value = false }, { once: true })
@@ -121,7 +121,7 @@ const filtered = computed(() => {
   white-space: nowrap;
 }
 
-/* ── Список ── */
+/* ── List ── */
 .rows { border-top: 1px dotted var(--dot); }
 
 .row {
@@ -131,8 +131,8 @@ const filtered = computed(() => {
   padding: clamp(20px, 2.6vw, 34px) clamp(4px, 1.2vw, 14px);
   border-bottom: 1px dotted var(--dot);
   transition: background 0.3s;
-  /* 100ms — общая пауза после шапки, дальше шаг 40ms по строкам.
-     Кап на пятой: ниже неё всё равно ничего не видно без прокрутки. */
+  /* 100ms is the shared pause after the header, then 40ms per row. Capped at the
+     fifth: below it nothing is visible without scrolling anyway. */
   animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) calc(100ms + min(var(--i, 0), 5) * 40ms) both;
 }
 
@@ -171,7 +171,7 @@ const filtered = computed(() => {
   text-wrap: pretty;
 }
 
-/* ── Состояния ── */
+/* ── States ── */
 .loading { display: flex; gap: 8px; padding: 48px 0; }
 
 .loading__dot {

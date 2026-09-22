@@ -1,11 +1,11 @@
 <script setup lang="ts" generic="T extends { id: number }">
 /**
- * Список с перетаскиванием. Заменяет числовое поле order, которое раньше
- * приходилось править руками в форме каждой записи — чтобы поменять две
- * местами, нужно было открыть обе и не сбиться в нумерации.
+ * A drag-and-drop list. It replaces the numeric order field that used to be
+ * edited by hand in every entry's form — swapping two entries meant opening both
+ * and keeping the numbering straight.
  *
- * Без библиотеки: HTML5 drag-and-drop покрывает нужное, а тянуть пакет
- * ради одного списка на семь строк смысла нет.
+ * No library: HTML5 drag-and-drop covers what is needed, and pulling in a package
+ * for one seven-row list is not worth it.
  */
 const props = defineProps<{ items: T[], disabled?: boolean }>()
 const emit  = defineEmits<{ reorder: [ids: number[]] }>()
@@ -23,7 +23,7 @@ function move(from: number, to: number) {
 
 function onDragStart(index: number, e: DragEvent) {
   dragIndex.value = index
-  // Без dataTransfer Firefox не начинает перетаскивание вовсе.
+  // Without dataTransfer Firefox does not start the drag at all.
   e.dataTransfer?.setData('text/plain', String(index))
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
 }
@@ -45,7 +45,7 @@ function onDragEnd() {
   overIndex.value = null
 }
 
-/** Тем, кто не пользуется мышью, порядок доступен стрелками с Alt. */
+/** For anyone not using a mouse, the order is reachable with Alt and the arrow keys. */
 function onKey(index: number, e: KeyboardEvent) {
   if (!e.altKey) return
   if (e.key === 'ArrowUp')   { e.preventDefault(); move(index, index - 1) }

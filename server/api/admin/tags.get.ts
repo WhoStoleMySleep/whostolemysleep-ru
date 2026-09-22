@@ -4,11 +4,11 @@ import { asc } from 'drizzle-orm'
 
 defineRouteMeta({
   openAPI: {
-    tags:     ['Админка: посты'],
-    summary:  'Все теги',
+    tags:     ['Admin: posts'],
+    summary:  'All tags',
     security: [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Теги по алфавиту русского названия', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/TagRow' } } } } },
+      200: { description: 'Tags alphabetically by their Russian name', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/TagRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {

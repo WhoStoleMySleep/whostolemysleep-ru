@@ -4,6 +4,8 @@ Personal portfolio site with a built-in CMS. Blog, projects, resume — all mana
 
 > Built for personal use and as a technical showcase. The stack is deliberately full — serverless DB, blob storage, JWT auth, ISR, i18n — because it is itself a project in the portfolio.
 
+The decisions behind the architecture — and what each one costs — are written down in [DESIGN.md](DESIGN.md).
+
 <p align="center">
   <img src="screenshots/hero.png" width="600" alt="Home" />
 </p>
@@ -84,6 +86,10 @@ ISR_BYPASS_TOKEN=           # 32 hex chars; lets the admin purge Vercel's ISR ca
 NUXT_PUBLIC_SITE_URL=       # https://whostolemysleep.ru
 PUBLISH_TOKEN=              # bearer token for the external publisher — leave unset to disable
 NEON_LOCAL_SQL_ENDPOINT=    # local dev only: HTTP proxy in front of a plain Postgres
+NUXT_PUBLIC_SENTRY_DSN=     # Sentry DSN — public by design, read by both client and server
+SENTRY_ORG=                 # build-time only: source map upload
+SENTRY_PROJECT=             # build-time only: source map upload
+SENTRY_AUTH_TOKEN=          # build-time only: write credential, never in the repo
 ```
 
 > Gmail App Password: Google Account → Security → 2-Step Verification → App passwords
@@ -258,7 +264,7 @@ Nitro serves it in dev only:
 
 `openAPI.production` is `false` in `nuxt.config.ts`: the spec is a development aid, and the deployed site has no reason to hand out a map of its admin endpoints. Flip it to `'prerender'` if a published reference is ever needed.
 
-Operations are tagged by area — `Публичные`, `Публикатор`, `Админка: посты / резюме / навыки / настройки / кеш / сессия / дашборд`, `Служебные`. Shared pieces (error shapes, the `locale` query parameter, both security schemes) live in the `$global` block of `server/api/settings.get.ts`; domain schemas sit in the route that first returns them and are reused through `$ref`.
+Operations are tagged by area — `Public`, `Publisher`, `Admin: posts / resume / skills / settings / cache / session / dashboard`, `Service`. Shared pieces (error shapes, the `locale` query parameter, both security schemes) live in the `$global` block of `server/api/settings.get.ts`; domain schemas sit in the route that first returns them and are reused through `$ref`.
 
 Two security schemes are described: `adminCookie` (the `wms_admin` JWT cookie, issued by `POST /api/admin/login`) and `publishToken` (the bearer token from `PUBLISH_TOKEN`). Everything under `/api/admin` except login is behind the cookie — `server/middleware/admin-guard.ts` enforces it before any handler runs.
 
@@ -277,6 +283,20 @@ ISR revalidation windows:
 | Resume, CV, Contacts | 2 hours |
 | Privacy | 24 hours |
 | Admin | Always SSR |
+
+## Monitoring
+
+Errors go to [Sentry](https://sentry.io) via `@sentry/nuxt` — browser exceptions through `sentry.client.config.ts`, Nitro handler failures through `sentry.server.config.ts`. Reporting is off in development, so a broken local branch does not spend the monthly budget.
+
+Vercel gives no start script to hook `--import` into, so the server SDK is loaded with `autoInjectServerSentry: 'top-level-import'`: unhandled errors and HTTP traces are captured, database-level spans are not.
+
+Set `NUXT_PUBLIC_SENTRY_DSN` in the Vercel project and reporting starts. The three `SENTRY_*` variables are build-time only — with them the build uploads source maps and stack traces name real files and lines; without them the build still succeeds and traces stay minified. Maps are deleted from the bundle after upload, so the site never serves its own sources.
+
+What is not sent: `sendDefaultPii` is off, and `beforeSend` strips cookies, the `authorization` header and the request body before the event leaves the process — a 500 in the login handler would otherwise carry the admin password in clear text.
+
+Traces are sampled at 10%. Errors are the reason this exists; spans are a bonus that has to fit in a free plan.
+
+The last piece is manual and lives in the Sentry UI: an alert rule on new issues. Without it nothing reaches you and the dashboard only helps once you already suspect something.
 
 ## Backup and restore
 

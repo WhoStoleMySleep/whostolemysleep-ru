@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest'
 
 describe('useAdminConfirm', () => {
-  test('подтверждение возвращает true, отказ — false', async () => {
+  test('confirming returns true, declining returns false', async () => {
     const { useAdminConfirm } = await import('~/composables/useAdminConfirm')
     const confirm = useAdminConfirm()
 
@@ -14,7 +14,7 @@ describe('useAdminConfirm', () => {
     expect(await no).toBe(false)
   })
 
-  test('запрос виден снаружи и закрывается после ответа', async () => {
+  test('the request is visible from outside and closes once answered', async () => {
     const { useAdminConfirm } = await import('~/composables/useAdminConfirm')
     const confirm = useAdminConfirm()
 
@@ -26,7 +26,7 @@ describe('useAdminConfirm', () => {
     expect(confirm.request.value).toBeNull()
   })
 
-  test('переданные подписи перекрывают значения по умолчанию', async () => {
+  test('the captions passed in override the defaults', async () => {
     const { useAdminConfirm } = await import('~/composables/useAdminConfirm')
     const confirm = useAdminConfirm()
 
@@ -36,12 +36,12 @@ describe('useAdminConfirm', () => {
     await promise
   })
 
-  test('второй запрос поверх первого не оставляет висеть чужой промис', async () => {
+  test('a second request on top of the first leaves no promise hanging', async () => {
     const { useAdminConfirm } = await import('~/composables/useAdminConfirm')
     const confirm = useAdminConfirm()
 
-    const first = confirm.ask({ title: 'Первый' })
-    const second = confirm.ask({ title: 'Второй' })
+    const first = confirm.ask({ title: 'First' })
+    const second = confirm.ask({ title: 'Second' })
 
     expect(await first).toBe(false)
     confirm.confirm()

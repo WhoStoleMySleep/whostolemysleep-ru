@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Поле формы: подпись, контрол и подсказка в одном месте.
- * До этого каждая страница верстала label + input вручную своим набором
- * классов, и отступы между страницами не совпадали.
+ * A form field: label, control and hint in one place.
+ * Every page used to lay out label + input by hand with its own set of classes,
+ * and the spacing did not match from page to page.
  */
 const props = withDefaults(defineProps<{
   label?: string
@@ -18,7 +18,7 @@ const model = defineModel<string | number | boolean | null>()
 
 const id = useId()
 
-/** Пустая строка в поле даты означает «нет даты», а не пустое значение колонки. */
+/** An empty date field means "no date", not an empty column value. */
 function onInput(e: Event) {
   const el = e.target as HTMLInputElement
   model.value = props.type === 'checkbox'

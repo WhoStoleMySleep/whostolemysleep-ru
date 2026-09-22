@@ -7,9 +7,9 @@ interface Bullet { text_ru: string; text_en: string }
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Изменить место работы',
-    description: 'bullets, если передан, заменяет список пунктов целиком.',
+    tags:        ['Admin: resume'],
+    summary:     'Edit a job',
+    description: 'bullets, when given, replaces the whole list of bullets.',
     security:    [{ adminCookie: [] }],
     parameters:  [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
     requestBody: {
@@ -32,7 +32,7 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/ExperienceRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },
     },

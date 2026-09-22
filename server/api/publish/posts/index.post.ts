@@ -2,23 +2,23 @@ import { requirePublishToken } from '~~/server/utils/publishAuth'
 import { clientIp, hitRateLimit } from '~~/server/utils/rateLimit'
 import { savePublishedPost, type PublishPayload } from '~~/server/utils/publishPost'
 
-/** Токен подобрать нереально, но поток запросов — это оплаченные вызовы функций. */
+/** The token cannot realistically be guessed, but a flood of requests is billed function calls. */
 const RATE_LIMIT  = 60
 const RATE_WINDOW = 60 * 60 * 1000
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Публикатор'],
-    summary:     'Создать пост',
-    description: 'Не больше 60 запросов с адреса в час. Markdown приходит в body_md, на сайте хранится готовый HTML.',
+    tags:        ['Publisher'],
+    summary:     'Create a post',
+    description: 'At most 60 requests per address per hour. Markdown arrives in body_md; the site stores rendered HTML.',
     security:    [{ publishToken: [] }],
     requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PublishPayload' } } } },
     responses: {
-      201: { description: 'Пост создан', content: { 'application/json': { schema: { $ref: '#/components/schemas/PublishResult' } } } },
+      201: { description: 'Post created', content: { 'application/json': { schema: { $ref: '#/components/schemas/PublishResult' } } } },
       400: { $ref: '#/components/responses/BadRequest' },
       401: { $ref: '#/components/responses/Unauthorized' },
       429: { $ref: '#/components/responses/TooManyRequests' },
-      503: { description: 'PUBLISH_TOKEN на сервере не задан', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+      503: { description: 'PUBLISH_TOKEN is not set on the server', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
     },
     $global: {
       components: {
@@ -27,7 +27,7 @@ defineRouteMeta({
             type: 'object',
             required: ['slug', 'title', 'body_md'],
             properties: {
-              external_id:  { type: 'string', nullable: true, description: 'id поста в публикаторе: повторная отправка обновляет запись, а не дублирует' },
+              external_id:  { type: 'string', nullable: true, description: 'The post id in the publisher: sending it again updates the row instead of duplicating it' },
               slug:         { type: 'string' },
               title:        { type: 'string' },
               lead:         { type: 'string', nullable: true },
@@ -36,7 +36,7 @@ defineRouteMeta({
               tags:         { type: 'array', items: { type: 'string' } },
               status:       { type: 'string', enum: ['published', 'draft'] },
               published_at: { type: 'string', format: 'date-time', nullable: true },
-              section:      { type: 'string', nullable: true, description: 'Начинается на proj — проект, иначе статья блога' },
+              section:      { type: 'string', nullable: true, description: 'Starts with proj — a project, otherwise a blog post' },
             },
           },
           PublishResult: {

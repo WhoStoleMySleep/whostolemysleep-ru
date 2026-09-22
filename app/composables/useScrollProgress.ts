@@ -1,6 +1,6 @@
 /**
- * Доля прокрученной страницы, 0..1.
- * Слушатели вешаются только на клиенте и снимаются при размонтировании.
+ * How much of the page is scrolled, 0..1.
+ * Listeners are attached on the client only and removed on unmount.
  */
 export const useScrollProgress = () => {
   const progress = ref(0)

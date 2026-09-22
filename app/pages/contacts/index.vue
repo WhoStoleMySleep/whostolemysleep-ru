@@ -71,9 +71,9 @@ async function submit() {
 }
 
 /**
- * Три способа связи показываются всегда, как в макете. Значения берутся
- * из настроек, если они заданы, иначе — постоянные: раньше блок целиком
- * исчезал, когда настройки не загрузились.
+ * All three contact methods are always shown, as in the mockup. The values come
+ * from the settings when they are set, and from constants otherwise: the whole
+ * block used to disappear when the settings failed to load.
  */
 const EMAIL    = 'whostolemysleep@gmail.com'
 const TELEGRAM = 'https://t.me/WhoStoleMySleepDev'
@@ -208,7 +208,7 @@ const contactLinks = computed(() => {
 </template>
 
 <style scoped>
-/* ── Способы связи ── */
+/* ── Contact methods ── */
 .methods { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .method {
@@ -238,7 +238,7 @@ const contactLinks = computed(() => {
   word-break: break-all;
 }
 
-/* ── Форма ── */
+/* ── Form ── */
 .form-section {
   display: flex;
   flex-wrap: wrap;
@@ -273,8 +273,8 @@ const contactLinks = computed(() => {
 
 .form-section__body { flex: 1 1 min(100%, 340px); min-width: 0; }
 
-/* position: relative нужен ханипоту ниже — он уезжает за левый край
-   и без опоры создавал бы горизонтальную прокрутку страницы. */
+/* position: relative is here for the honeypot below — it is moved off the left
+   edge and without an anchor it would give the page a horizontal scrollbar. */
 .form { position: relative; display: flex; flex-direction: column; gap: 14px; }
 
 .form__honeypot {
@@ -349,7 +349,7 @@ const contactLinks = computed(() => {
 .submit:hover:not(:disabled) { transform: translateY(-2px); }
 .submit:disabled { opacity: 0.6; cursor: default; }
 
-/* ── Успех ── */
+/* ── Success ── */
 .sent {
   border: 1px solid var(--accent-line);
   background: var(--accent-dim);

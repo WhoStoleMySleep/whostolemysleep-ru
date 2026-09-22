@@ -6,13 +6,13 @@ import { sanitizeHtml } from '~~/server/utils/sanitize'
 
 defineRouteMeta({
   openAPI: {
-    tags:        ['Админка: резюме'],
-    summary:     'Изменить блок «Обо мне»',
-    description: 'HTML прогоняется через sanitizeHtml. Страницы резюме уходят в очередь ревалидации.',
+    tags:        ['Admin: resume'],
+    summary:     'Edit the About block',
+    description: 'HTML is passed through sanitizeHtml. Resume pages are queued for revalidation.',
     security:    [{ adminCookie: [] }],
     requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { text_ru: { type: 'string' }, text_en: { type: 'string' } } } } } },
     responses: {
-      200: { description: 'Обновлённая запись', content: { 'application/json': { schema: { $ref: '#/components/schemas/AboutRow' } } } },
+      200: { description: 'The updated row', content: { 'application/json': { schema: { $ref: '#/components/schemas/AboutRow' } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
       404: { $ref: '#/components/responses/NotFound' },
     },

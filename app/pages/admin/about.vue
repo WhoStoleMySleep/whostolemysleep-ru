@@ -45,7 +45,7 @@ const text = computed({
     </template>
 
     <div class="admin-panel">
-      <!-- Текст хранится готовым HTML, поэтому превью — он сам. -->
+      <!-- The text is stored as rendered HTML, so it is its own preview. -->
         <div v-if="preview" class="preview prose" v-html="text" />
       <AdminField
         v-else

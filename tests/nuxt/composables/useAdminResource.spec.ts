@@ -25,7 +25,7 @@ mockNuxtImport('useAdminApi', () => () => m.api)
 mockNuxtImport('useAdminToast', () => () => m.toast)
 mockNuxtImport('useAdminConfirm', () => () => ({ ask: m.confirm }))
 
-/** Композабл вешает хуки жизненного цикла, поэтому вызывается внутри компонента. */
+/** The composable registers lifecycle hooks, so it is called inside a component. */
 function withSetup<T>(fn: () => T): T {
   let out!: T
   mount(defineComponent({ setup() { out = fn(); return () => null } }))
@@ -44,7 +44,7 @@ async function resource(toBody?: (form: { name: string }) => unknown) {
 }
 
 beforeEach(() => {
-  m.items  = [{ id: 1, name: 'один' }, { id: 2, name: 'два' }]
+  m.items  = [{ id: 1, name: 'one' }, { id: 2, name: 'two' }]
   m.status = 'success'
   m.data   = ref(m.items) as unknown as { value: unknown }
   m.api.post.mockClear().mockResolvedValue({})
@@ -56,8 +56,8 @@ beforeEach(() => {
   m.confirm.mockClear().mockResolvedValue(true)
 })
 
-describe('состояние формы', () => {
-  test('список приходит из useAsyncData, загрузка — из его статуса', async () => {
+describe('form state', () => {
+  test('the list comes from useAsyncData, the loading flag from its status', async () => {
     const r = await resource()
     expect(r.items.value).toHaveLength(2)
     expect(r.loading.value).toBe(false)
@@ -66,7 +66,7 @@ describe('состояние формы', () => {
     expect((await resource()).loading.value).toBe(true)
   })
 
-  test('новая запись открывает пустую форму', async () => {
+  test('a new entry opens an empty form', async () => {
     const r = await resource()
     r.startNew()
 
@@ -75,59 +75,59 @@ describe('состояние формы', () => {
     expect(r.form.value).toEqual({ name: '' })
   })
 
-  test('редактирование заполняет форму записью', async () => {
+  test('editing fills the form with the entry', async () => {
     const r = await resource()
-    r.startEdit({ id: 2, name: 'два' })
+    r.startEdit({ id: 2, name: 'two' })
 
     expect(r.isNew.value).toBe(false)
     expect(r.editId.value).toBe(2)
-    expect(r.form.value).toEqual({ name: 'два' })
+    expect(r.form.value).toEqual({ name: 'two' })
   })
 
-  test('отмена закрывает форму', async () => {
+  test('cancelling closes the form', async () => {
     const r = await resource()
-    r.startEdit({ id: 2, name: 'два' })
+    r.startEdit({ id: 2, name: 'two' })
     r.cancel()
 
     expect(r.editing.value).toBe(false)
   })
 })
 
-describe('сохранение', () => {
-  test('новая запись уходит POST, форма закрывается, список обновляется', async () => {
+describe('saving', () => {
+  test('a new entry goes out as POST, the form closes, the list refreshes', async () => {
     const r = await resource()
     r.startNew()
-    r.form.value.name = 'три'
+    r.form.value.name = 'three'
     await r.save()
 
-    expect(m.api.post).toHaveBeenCalledWith('/api/admin/education', { name: 'три' })
+    expect(m.api.post).toHaveBeenCalledWith('/api/admin/education', { name: 'three' })
     expect(m.refresh).toHaveBeenCalled()
     expect(r.editing.value).toBe(false)
     expect(m.toast.ok).toHaveBeenCalledWith('Education saved')
   })
 
-  test('существующая уходит PATCH на свой адрес', async () => {
+  test('an existing one goes out as PATCH to its own address', async () => {
     const r = await resource()
-    r.startEdit({ id: 2, name: 'два' })
+    r.startEdit({ id: 2, name: 'two' })
     await r.save()
 
-    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/education/2', { name: 'два' })
+    expect(m.api.patch).toHaveBeenCalledWith('/api/admin/education/2', { name: 'two' })
     expect(m.api.post).not.toHaveBeenCalled()
   })
 
-  test('toBody решает, что уходит в запрос', async () => {
+  test('toBody decides what goes into the request', async () => {
     const r = await resource((form) => ({ institution: form.name }))
     r.startNew()
-    r.form.value.name = 'ВУЗ'
+    r.form.value.name = 'University'
     await r.save()
 
-    expect(m.api.post).toHaveBeenCalledWith('/api/admin/education', { institution: 'ВУЗ' })
+    expect(m.api.post).toHaveBeenCalledWith('/api/admin/education', { institution: 'University' })
   })
 
-  test('ошибка показывается тостом, форма остаётся открытой — правки не теряются', async () => {
+  test('an error shows as a toast and the form stays open — no edits are lost', async () => {
     m.api.patch.mockRejectedValue({ data: { message: 'Slug already exists' } })
     const r = await resource()
-    r.startEdit({ id: 2, name: 'два' })
+    r.startEdit({ id: 2, name: 'two' })
     await r.save()
 
     expect(m.toast.err).toHaveBeenCalledWith('Slug already exists')
@@ -136,19 +136,19 @@ describe('сохранение', () => {
   })
 })
 
-describe('удаление', () => {
-  test('спрашивает подтверждение и без него не удаляет', async () => {
+describe('deleting', () => {
+  test('it asks for confirmation and deletes nothing without it', async () => {
     m.confirm.mockResolvedValue(false)
     const r = await resource()
-    await r.remove({ id: 2, name: 'два' })
+    await r.remove({ id: 2, name: 'two' })
 
     expect(m.api.remove).not.toHaveBeenCalled()
   })
 
-  test('удаляет, закрывает открытую форму той же записи и обновляет список', async () => {
+  test('it deletes, closes the open form of that same entry and refreshes the list', async () => {
     const r = await resource()
-    r.startEdit({ id: 2, name: 'два' })
-    await r.remove({ id: 2, name: 'два' }, 'два')
+    r.startEdit({ id: 2, name: 'two' })
+    await r.remove({ id: 2, name: 'two' }, 'two')
 
     expect(m.api.remove).toHaveBeenCalledWith('/api/admin/education/2')
     expect(r.editId.value).toBe(null)
@@ -156,25 +156,25 @@ describe('удаление', () => {
     expect(m.toast.ok).toHaveBeenCalledWith('Education deleted')
   })
 
-  test('форма другой записи остаётся открытой', async () => {
+  test('the form of a different entry stays open', async () => {
     const r = await resource()
-    r.startEdit({ id: 1, name: 'один' })
-    await r.remove({ id: 2, name: 'два' })
+    r.startEdit({ id: 1, name: 'one' })
+    await r.remove({ id: 2, name: 'two' })
 
     expect(r.editId.value).toBe(1)
   })
 
-  test('ошибка удаления — тост, а не молчание', async () => {
+  test('a failed delete is a toast, not silence', async () => {
     m.api.remove.mockRejectedValue(new Error('Failed to fetch'))
     const r = await resource()
-    await r.remove({ id: 2, name: 'два' })
+    await r.remove({ id: 2, name: 'two' })
 
     expect(m.toast.err).toHaveBeenCalledWith('Failed to fetch')
   })
 })
 
-describe('порядок', () => {
-  test('меняется сразу, а запрос уходит списком id', async () => {
+describe('ordering', () => {
+  test('it changes at once and the request goes out as a list of ids', async () => {
     const r = await resource()
     await r.reorder([2, 1])
 
@@ -182,7 +182,7 @@ describe('порядок', () => {
     expect(m.api.patch).toHaveBeenCalledWith('/api/admin/education/reorder', { ids: [2, 1] })
   })
 
-  test('неудачный запрос возвращает прежний порядок', async () => {
+  test('a failed request restores the previous order', async () => {
     m.api.patch.mockRejectedValue({ statusMessage: 'Unauthorized' })
     const r = await resource()
     await r.reorder([2, 1])
@@ -191,7 +191,7 @@ describe('порядок', () => {
     expect(m.toast.err).toHaveBeenCalledWith('Unauthorized')
   })
 
-  test('неизвестные id отбрасываются, список не получает пустот', async () => {
+  test('unknown ids are dropped and the list gets no holes', async () => {
     const r = await resource()
     await r.reorder([2, 99])
 

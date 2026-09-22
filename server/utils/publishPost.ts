@@ -5,7 +5,7 @@ import { markdownToHtml, excerptFromHtml } from './markdown'
 import { markDirty, postPaths } from './pending'
 import { slugify } from './slug'
 
-/** Тело, которое присылает NuxtPublish. */
+/** The body NuxtPublish sends. */
 export interface PublishPayload {
   external_id?:  string
   slug:          string
@@ -25,14 +25,14 @@ export interface PublishResult {
   url:  string
 }
 
-/** Раздел сайта: всё, что не помечено проектом, считается статьёй блога. */
+/** Section of the site: anything not marked as a project counts as a blog post. */
 function postType(section?: string | null): 'blog' | 'project' {
   return section?.toLowerCase().startsWith('proj') ? 'project' : 'blog'
 }
 
 /**
- * Английские поля намеренно остаются пустыми: `pick` на чтении откатывается на русский,
- * а перевод — ручная работа, которую публикатор за автора не сделает.
+ * English fields are left empty on purpose: `pick` falls back to Russian on read, and
+ * translation is manual work the publisher cannot do on the author's behalf.
  */
 function fields(payload: PublishPayload) {
   const text = markdownToHtml(payload.body_md)
@@ -50,7 +50,7 @@ function fields(payload: PublishPayload) {
   }
 }
 
-/** Находит теги по слагам, недостающие заводит — публикатор присылает названия, а не id. */
+/** Finds tags by slug and creates the missing ones — the publisher sends names, not ids. */
 async function tagIds(names: string[]): Promise<number[]> {
   const wanted = names
     .map((name) => ({ name: name.trim(), slug: slugify(name) }))
@@ -81,7 +81,7 @@ async function linkTags(postId: number, names: string[]): Promise<void> {
   }
 }
 
-/** Обложка живёт первой картинкой поста; повторная публикация её заменяет. */
+/** The cover is stored as the post's first image; republishing replaces it. */
 async function setCover(postId: number, url: string | null | undefined): Promise<void> {
   await db.delete(schema.image)
     .where(and(eq(schema.image.post_id, postId), eq(schema.image.position, 0)))
@@ -100,8 +100,8 @@ async function findExisting(payload: PublishPayload) {
     if (byExternal) return byExternal
   }
 
-  // По слагу подхватываем только записи без внешнего id — те, что завели руками в админке.
-  // Чужой пост с тем же слагом трогать нельзя: это конфликт, а не та же самая статья.
+  // A slug only adopts rows without an external id — the ones written by hand in the panel.
+  // Someone else's post with the same slug is a conflict, not the same article.
   const [bySlug] = await db.select().from(schema.post)
     .where(and(eq(schema.post.slug, payload.slug), isNull(schema.post.external_id)))
     .limit(1)
@@ -115,8 +115,8 @@ function publicUrl(slug: string): string {
 }
 
 /**
- * Сохраняет присланный пост. Повторная отправка того же `external_id` (или слага)
- * обновляет запись — публикатор повторяет запрос при сетевых сбоях.
+ * Stores an incoming post. Sending the same `external_id` (or slug) again updates the
+ * row — the publisher retries on network failures.
  */
 export async function savePublishedPost(
   payload: PublishPayload,
@@ -147,7 +147,7 @@ export async function savePublishedPost(
   return { id: saved.id, slug: saved.slug, url: publicUrl(saved.slug) }
 }
 
-/** Слаг уникален в таблице: понятная ошибка лучше, чем отказ базы по индексу. */
+/** The slug is unique in the table: a readable error beats an index violation. */
 async function assertSlugFree(slug: string, exceptId?: number): Promise<void> {
   const clash = await db.select({ id: schema.post.id }).from(schema.post)
     .where(exceptId ? and(eq(schema.post.slug, slug), ne(schema.post.id, exceptId)) : eq(schema.post.slug, slug))

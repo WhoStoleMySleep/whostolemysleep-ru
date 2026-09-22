@@ -1,23 +1,23 @@
 export interface AdminResourceOptions<T, F> {
-  /** Базовый путь: '/api/admin/education'. Элемент — `${endpoint}/${id}`. */
+  /** Base path: '/api/admin/education'. An item is `${endpoint}/${id}`. */
   endpoint: string
-  /** Форма для новой записи. */
+  /** The form for a new entry. */
   blank: () => F
-  /** Запись → форма редактирования. */
+  /** Entry to edit form. */
   toForm: (item: T) => F
-  /** Форма → тело запроса. По умолчанию отправляется форма как есть. */
+  /** Form to request body. By default the form is sent as it is. */
   toBody?: (form: F) => unknown
-  /** Как называть запись в тостах и подтверждении удаления. */
+  /** How to name an entry in toasts and in the delete confirmation. */
   title: string
 }
 
-/** Признак «форма открыта для новой записи», а не для существующей. */
+/** Marks "the form is open for a new entry" rather than an existing one. */
 const NEW = -1
 
 /**
- * Цикл «список → форма → сохранение → обновление», который до этого был
- * скопирован в education, experience, skills и posts почти дословно —
- * вместе с editId, saving, errMsg, confirm() и ручным refresh.
+ * The list to form to save to refresh cycle, which used to be copied almost
+ * word for word into education, experience, skills and posts — along with editId,
+ * saving, errMsg, confirm() and a manual refresh.
  */
 export function useAdminResource<T extends { id: number }, F extends object>(
   opts: AdminResourceOptions<T, F>,
@@ -91,13 +91,13 @@ export function useAdminResource<T extends { id: number }, F extends object>(
   }
 
   /**
-   * Порядок уходит одним запросом списком id. Раньше поле order правили
-   * руками в каждой форме, и чтобы поменять две записи местами, нужно было
-   * открыть обе и не ошибиться в числах.
+   * The order is sent as one request with a list of ids. The order field used to
+   * be edited by hand in every form, so swapping two entries meant opening both
+   * and getting the numbers right.
    */
   async function reorder(ids: number[]) {
     const before = data.value ? [...data.value] : []
-    // Оптимистично: перетаскивание должно ощущаться мгновенно.
+    // Optimistic: dragging has to feel instant.
     const byId = new Map(before.map((item) => [item.id, item]))
     data.value = ids.map((id) => byId.get(id)).filter(Boolean) as T[]
 

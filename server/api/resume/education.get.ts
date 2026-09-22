@@ -21,11 +21,11 @@ async function fetchEducation(event: H3Event) {
 
 defineRouteMeta({
   openAPI: {
-    tags:       ['Публичные'],
-    summary:    'Образование',
+    tags:       ['Public'],
+    summary:    'Education',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Записи в порядке order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Education' } } } } },
+      200: { description: 'Rows in order', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Education' } } } } },
     },
     $global: {
       components: {

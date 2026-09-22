@@ -16,7 +16,7 @@ const { data: projects, pending } = await useAsyncData(
 
 const activeTag = ref<string | null>(null)
 
-/** Тег → сколько проектов с ним, за один проход вместо filter в цикле. */
+/** Tag to the number of projects carrying it, in one pass instead of a filter per tag. */
 const tagCounts = computed(() => {
   const counts = new Map<string, number>()
   projects.value?.forEach(p =>
@@ -66,11 +66,11 @@ const filtered = computed(() => {
 
     <p v-else-if="!filtered.length" class="empty">{{ t('projects.empty') }}</p>
 
-    <!-- key по фильтру пересобирает сетку целиком, и каскад играет заново.
-         Без него Vue переиспользует карточки, уцелевшие после фильтрации:
-         они остались бы неподвижными, а въезжали бы только новые — вразнобой
-         со своими индексами. Смена фильтра — намеренный клик, и ответ на него
-         волной читается лучше, чем мгновенная подмена списка. -->
+    <!-- Keying the grid on the filter rebuilds it completely, so the cascade plays
+         again. Without it Vue reuses the cards that survived the filtering: they
+         would sit still while only the new ones slid in, out of step with their own
+         indices. Changing a filter is a deliberate click, and answering it with a
+         wave reads better than swapping the list instantly. -->
     <section v-else :key="activeTag ?? 'all'" class="grid">
       <UiCard
         v-for="(project, i) in filtered"
@@ -112,7 +112,7 @@ const filtered = computed(() => {
 
 .filters__count { opacity: 0.6; }
 
-/* ── Сетка ── */
+/* ── Grid ── */
 .grid {
   display: flex;
   flex-wrap: wrap;
@@ -121,7 +121,7 @@ const filtered = computed(() => {
   border: 1px solid var(--border);
 }
 
-/* ── Состояния ── */
+/* ── States ── */
 .loading { display: flex; gap: 8px; padding: 48px 0; }
 
 .loading__dot {

@@ -9,7 +9,7 @@ const api     = useAdminApi()
 const toast   = useAdminToast()
 const confirm = useAdminConfirm()
 
-/** Для новой записи id ещё нет — он появится после первого сохранения. */
+/** A new entry has no id yet — it appears after the first save. */
 const postId = ref<string | null>(route.params.id === 'new' ? null : String(route.params.id))
 const isNew  = computed(() => postId.value === null)
 
@@ -43,7 +43,7 @@ const { data: allTags } = await useAsyncData<Tag[]>(
   'admin-tags', () => api.get<Tag[]>('/api/admin/tags'), { default: () => [] },
 )
 
-/** Что отдаёт GET /api/admin/posts/:id: поля формы плюс связи. */
+/** What GET /api/admin/posts/:id returns: the form fields plus the relations. */
 type LoadedPost = Partial<Form> & {
   url?:          string | null
   published_at?: string | null
@@ -66,8 +66,8 @@ if (!isNew.value) {
   images.value = post.images ?? []
 }
 
-/* ── Несохранённые изменения ──
-   Прежний редактор молча терял текст при уходе со страницы. */
+/* ── Unsaved changes ──
+   The previous editor silently lost the text when the page was left. */
 
 const snapshot = ref(JSON.stringify(form.value))
 const dirty    = computed(() => JSON.stringify(form.value) !== snapshot.value)
@@ -89,7 +89,7 @@ async function save() {
     if (isNew.value) {
       const created = await api.post<{ id: number }>('/api/admin/posts', body.value)
       postId.value = String(created.id)
-      // replace, а не push: возврат назад не должен вести на пустую форму.
+      // replace, not push: going back should not land on an empty form.
       await router.replace(`/admin/posts/${created.id}`)
     } else {
       await api.patch(`/api/admin/posts/${postId.value}`, body.value)
@@ -133,7 +133,7 @@ onBeforeRouteLeave(async () => {
   })
 })
 
-/* ── Теги ── */
+/* ── Tags ── */
 
 function toggleTag(id: number) {
   const idx = form.value.tag_ids.indexOf(id)
@@ -141,7 +141,7 @@ function toggleTag(id: number) {
   else form.value.tag_ids.push(id)
 }
 
-/* ── Картинки ── */
+/* ── Images ── */
 
 const uploading = ref(false)
 
@@ -267,7 +267,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
             class="admin-input pane__area"
             rows="20"
           />
-          <!-- Текст хранится готовым HTML, поэтому превью — он сам. -->
+          <!-- The text is stored as rendered HTML, so it is its own preview. -->
           <div v-if="preview" class="pane__preview prose" v-html="previewHtml" />
         </div>
       </AdminField>

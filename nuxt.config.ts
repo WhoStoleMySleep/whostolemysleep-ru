@@ -6,7 +6,7 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ['@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt', '@nuxt/eslint'],
+  modules: ['@sentry/nuxt/module', '@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt', '@nuxt/eslint'],
 
   eslint: {
     config: {
@@ -27,9 +27,9 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    // Заголовки на всё, что отдаётся: CSP оставляет ровно те источники, которыми сайт пользуется —
-    // свой домен, картинки из Vercel Blob и телеметрия Vercel. Inline-стили и скрипты нужны Nuxt
-    // для гидрации, поэтому они разрешены явно, а не по недосмотру.
+    // Headers on everything that is served: the CSP allows exactly the origins the site
+    // uses — its own domain, images from Vercel Blob and Vercel telemetry. Inline styles and
+    // scripts are what Nuxt needs to hydrate, so they are allowed deliberately, not by oversight.
     '/**': {
       headers: {
         'Content-Security-Policy': [
@@ -45,10 +45,10 @@ export default defineNuxtConfig({
           "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
           'upgrade-insecure-requests',
         ].join('; '),
-        // Пароль админки уходит на сервер открытым текстом внутри TLS — как и
-        // везде. HSTS запрещает браузеру вообще пробовать http:// на домене,
-        // то есть закрывает окно, в котором запрос мог уйти без шифрования.
-        // Без preload: попасть в список браузеров легко, выйти — долго.
+        // The admin password travels to the server in clear text inside TLS — as
+        // everything does. HSTS forbids the browser from even trying http:// on this
+        // domain, closing the window in which a request could leave unencrypted.
+        // No preload: getting onto the browsers' list is easy, getting off it is slow.
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy':        'strict-origin-when-cross-origin',
@@ -67,13 +67,13 @@ export default defineNuxtConfig({
     '/en/projects':  { isr: 600 },
     '/ru/resume':    { isr: 7200 },
     '/en/resume':    { isr: 7200 },
-    // Печатная версия резюме: из поиска исключена, чтобы не конкурировать с /resume.
+    // The printable CV: kept out of search so it does not compete with /resume.
     '/ru/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
     '/en/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
-    // Страница состоит из формы и контактов из настроек — на каждый запрос
-    // ходить в базу за ними незачем. Окно длинное: settings.patch.ts кладёт
-    // оба пути в очередь ревалидации, так что правка в админке разъезжается
-    // по кнопке Flush, а не по истечении таймера.
+    // The page is a form plus the contacts from settings — no reason to hit the
+    // database for them on every request. The window is long on purpose:
+    // settings.patch.ts queues both paths for revalidation, so an edit in the admin
+    // panel propagates on the Flush button rather than when a timer runs out.
     '/ru/contacts':  { isr: 7200 },
     '/en/contacts':  { isr: 7200 },
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },
@@ -84,8 +84,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   app: {
-    // Классы .page-* лежат в main.css, но без этой настройки Nuxt их
-    // не применял — переходов между страницами не было вовсе.
+    // The .page-* classes live in main.css, but without this setting Nuxt never
+    // applied them — there were no page transitions at all.
     pageTransition: { name: 'page', mode: 'out-in' },
 
     head: {
@@ -93,13 +93,13 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       titleTemplate: '%s — whostolemysleep',
       link: [
-        // Базовый шрифт текста, нужен в обеих локалях. Дисплейный и
-        // кириллический подгружаются из layouts/default.vue по локали,
-        // чтобы не тянуть лишний файл на каждый визит.
+        // The base text font, needed in both locales. The display and Cyrillic faces
+        // are loaded from layouts/default.vue per locale, so no visit pulls a file it
+        // will not use.
         { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
           href: '/fonts/jetbrains-mono-400-normal-latin.woff2' },
-        // SVG тянется под любой размер, PNG — запасной вариант для
-        // браузеров без поддержки svg-фавикона.
+        // The SVG scales to any size; the PNGs are the fallback for browsers that do
+        // not support an svg favicon.
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
         { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
@@ -107,17 +107,17 @@ export default defineNuxtConfig({
       ],
       script: [
         {
-          // wms-ext-dark ставит useTheme, когда на странице замечен Dark Reader
-          // или похожее расширение: при следующей загрузке сайт сразу рисует
-          // свою тёмную тему, а не мигает светлой до появления расширения.
+          // useTheme sets wms-ext-dark once it spots Dark Reader or a similar extension
+          // on the page: on the next load the site paints its own dark theme straight
+          // away instead of flashing light until the extension kicks in.
           innerHTML: `try{const x=sessionStorage.getItem('wms-ext-dark')==='1';const t=localStorage.getItem('wms-theme');const p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(!x&&(t==='light'||(!t&&!p)))document.documentElement.classList.add('light')}catch(e){}`,
           tagPriority: 'critical',
         },
       ],
       meta: [
         { name: 'theme-color', content: '#0a0a0c' },
-        // Конкретную схему задаёт CSS-свойство color-scheme в main.css —
-        // оно переключается вместе с классом .light на <html>.
+        // The actual scheme comes from the color-scheme CSS property in main.css —
+        // it switches together with the .light class on <html>.
         { name: 'color-scheme', content: 'dark light' },
         {
           name: 'description',
@@ -137,8 +137,36 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       contactForm: process.env.NUXT_PUBLIC_CONTACT_FORM !== 'false',
+      sentry: {
+        dsn: process.env.NUXT_PUBLIC_SENTRY_DSN ?? '',
+      },
     },
   },
+
+  /**
+   * Error reporting. Without it a 500 on the publisher endpoint is discovered by
+   * noticing that a post never appeared — the site itself keeps serving cached
+   * pages and says nothing.
+   */
+  sentry: {
+    // Vercel runs the built server for us, so there is no start script to add
+    // `--import` to. A top-level import is the supported way in: it covers HTTP
+    // traces and every unhandled error, but not database-level spans.
+    autoInjectServerSentry: 'top-level-import',
+
+    // org, project and SENTRY_AUTH_TOKEN come from the environment: the token is
+    // a write credential and has no business in a public repository. Without it
+    // the build still succeeds, it just ships unreadable minified stack traces.
+    sourcemaps: {
+      // Maps are uploaded to Sentry and then removed from the bundle — otherwise
+      // the whole source of the site is served to anyone who asks for the .map.
+      filesToDeleteAfterUpload: ['./.nuxt/dist/client/**/*.map', './.output/**/*.map'],
+    },
+  },
+
+  // 'hidden' keeps the sourceMappingURL comment out of the shipped JavaScript:
+  // the maps exist for the upload step and for nothing else.
+  sourcemap: { client: 'hidden' },
 
   typescript: {
     strict: true,
@@ -154,7 +182,7 @@ export default defineNuxtConfig({
     openAPI: {
       meta: {
         title:       'whostolemysleep.ru API',
-        description: 'Публичные данные сайта, приём постов от внешнего публикатора и эндпоинты админки.',
+        description: 'Public site data, post intake from the external publisher, and the admin endpoints.',
         version:     '1.0.0',
       },
       production: false,
@@ -164,11 +192,11 @@ export default defineNuxtConfig({
       },
     },
 
-    // Токен попадает в .prerender-config.json рядом с каждым isr-маршрутом.
-    // Запрос страницы с таким же значением в заголовке x-prerender-revalidate
-    // заставляет Vercel перестроить её кеш — единственный способ сбросить
-    // эдж из приложения. Значит, одна и та же переменная нужна и на сборке,
-    // и в рантайме, где её читает server/utils/revalidate.ts.
+    // The token ends up in .prerender-config.json next to every isr route. Requesting
+    // a page with the same value in the x-prerender-revalidate header makes Vercel
+    // rebuild that page's cache — the only way to drop the edge copy from inside the
+    // application. Which means the same variable is needed both at build time and at
+    // runtime, where server/utils/revalidate.ts reads it.
     vercel: {
       config: {
         bypassToken: process.env.ISR_BYPASS_TOKEN,
