@@ -10,6 +10,14 @@ const m = vi.hoisted(() => ({
 
 mockNuxtImport('useLocale', () => () => ({ locale: m.locale }))
 
+/**
+ * $fetch is mocked as an auto-import, not as a global. Since Nuxt 4.5 it arrives
+ * through a generated `fetch.mjs` that captures `globalThis.$fetch` into a module
+ * binding once, at evaluation time — so replacing the global afterwards, which is
+ * what a test does, no longer reaches the code under test.
+ */
+mockNuxtImport('$fetch', () => m.fetch)
+
 const blog = [
   { id: 1, slug: 'rust', title: 'Backend in Rust', excerpt: 'about rust', tags: [{ name: 'Rust' }] },
   { id: 2, slug: 'vue',  title: 'Notes on Vue',   excerpt: 'about vue',  tags: [{ name: 'Vue' }] },
@@ -27,11 +35,9 @@ beforeEach(() => {
   setActivePinia(createPinia())
   m.locale = ref('ru') as unknown as { value: string }
   m.fetch.mockImplementation(async (url: string) => (url.includes('project') ? projects : blog))
-  vi.stubGlobal('$fetch', m.fetch)
 })
 
 afterEach(() => {
-  vi.unstubAllGlobals()
   m.fetch.mockReset()
 })
 

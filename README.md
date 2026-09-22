@@ -147,6 +147,11 @@ CI (`.github/workflows/ci.yml`) repeats lint, tests and build on every branch an
 
 Dependabot (`.github/dependabot.yml`) opens one grouped pull request a week for minor and patch bumps and separate ones for majors; GitHub Actions are checked monthly. CI is what decides whether a bump is safe — that is the point of having it.
 
+`h3` is a devDependency even though nothing imports it at runtime: server handlers
+take an `H3Event`, and with several copies of h3 in the tree — Nuxt's own and one
+pulled in by a dev tool — an undeclared `import type { H3Event } from 'h3'` resolves
+to whichever the package manager happened to hoist. Declaring it pins the answer.
+
 ESLint deliberately carries no formatting rules — values across this codebase are aligned into columns by hand, and an autoformatter would flatten them.
 
 ## Structure
