@@ -25,9 +25,9 @@ afterEach(() => {
 beforeEach(() => {
   plan(state, {
     'select:post': [[
-      { slug: 'kak-ya-pisal-bekend',  type: 'blog',    url: null },
-      { slug: 'publisher',            type: 'project',  url: null },
-      { slug: 'lives-elsewhere',      type: 'project',  url: 'https://example.com' },
+      { slug: 'kak-ya-pisal-bekend', type: 'blog',    url: null,                  updated_at: '2026-09-02T10:00:00.000Z' },
+      { slug: 'publisher',           type: 'project', url: null,                  updated_at: '2026-08-15T10:00:00.000Z' },
+      { slug: 'lives-elsewhere',     type: 'project', url: 'https://example.com', updated_at: '2026-08-01T10:00:00.000Z' },
     ]],
   })
 })
@@ -50,10 +50,21 @@ describe('sitemap', () => {
     expect(xml).toContain('/en/blog/kak-ya-pisal-bekend')
   })
 
-  test('every static page is there, /cv included', async () => {
+  test('every indexable static page is there', async () => {
     const xml = await sitemap()
-    for (const path of ['', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy'])
+    for (const path of ['', '/blog', '/projects', '/resume', '/contacts', '/privacy'])
       expect(xml).toContain(`<loc>https://whostolemysleep.ru/ru${path}</loc>`)
+  })
+
+  test('/cv stays out — routeRules serves it noindex', async () => {
+    const xml = await sitemap()
+    expect(xml).not.toContain('/cv</loc>')
+  })
+
+  test('a post carries lastmod, a static page does not — nothing here knows when its markup changed', async () => {
+    const xml = await sitemap()
+    expect(xml).toContain('<loc>https://whostolemysleep.ru/ru/blog/kak-ya-pisal-bekend</loc><lastmod>2026-09-02</lastmod>')
+    expect(xml).toContain('<url><loc>https://whostolemysleep.ru/ru/resume</loc></url>')
   })
 
   test('only published posts are queried', async () => {

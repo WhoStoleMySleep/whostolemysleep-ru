@@ -1,8 +1,8 @@
 /**
- * Печатает две строки для .env: ADMIN_JWT_SECRET и ADMIN_PASSWORD_HASH.
+ * Prints the two lines for .env: ADMIN_JWT_SECRET and ADMIN_PASSWORD_HASH.
  *
- * Пароль читается со скрытым вводом — чтобы он не остался ни в истории
- * командной строки, ни на экране. Запускать: node scripts/admin-secrets.mjs
+ * The password is read with hidden input, so it stays out of the shell history and
+ * off the screen. Run with: node scripts/admin-secrets.mjs
  */
 import { randomBytes } from 'node:crypto'
 import { createInterface } from 'node:readline'
@@ -21,14 +21,14 @@ function askHidden(question) {
   })
 }
 
-const password = await askHidden('Новый пароль админки: ')
+const password = await askHidden('New admin password: ')
 
 if (password.length < 12) {
-  console.error('\nСлишком короткий — нужно хотя бы 12 символов.')
+  console.error('\nToo short — 12 characters at least.')
   process.exit(1)
 }
 
-console.log('\nДобавьте в .env (и в переменные окружения Vercel):\n')
+console.log('\nAdd to .env (and to the Vercel project environment):\n')
 console.log(`ADMIN_JWT_SECRET="${randomBytes(32).toString('base64')}"`)
 console.log(`ADMIN_PASSWORD_HASH="${bcrypt.hashSync(password, 12)}"`)
-console.log('\nADMIN_JWT_SECRET меняется — все текущие сессии в админке завершатся.')
+console.log('\nChanging ADMIN_JWT_SECRET ends every open admin session.')

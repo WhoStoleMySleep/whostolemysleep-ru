@@ -15,9 +15,25 @@ if (error.value || !post.value) {
   throw createError({ statusCode: 404, message: 'Post not found' })
 }
 
+const SITE_URL = 'https://whostolemysleep.ru'
+
+/**
+ * A shared link is a card, and the card is built from these tags alone. The
+ * site-wide og:image in nuxt.config is the same picture for every url, which for a
+ * post is the one place it is worth replacing: the post's own cover says what was
+ * shared, the site logo says only where from.
+ */
 useSeoMeta({
-  title:       () => post.value?.title ?? t('blog.eyebrow'),
-  description: () => post.value?.excerpt ?? '',
+  title:                 () => post.value?.title ?? t('blog.eyebrow'),
+  description:           () => post.value?.excerpt ?? '',
+  ogType:                'article',
+  ogTitle:               () => post.value?.title ?? t('blog.eyebrow'),
+  ogDescription:         () => post.value?.excerpt ?? '',
+  ogUrl:                 () => `${SITE_URL}${localePath(`/blog/${slug}`)}`,
+  ogImage:               () => post.value?.images[0]?.url ?? `${SITE_URL}/og-image.png`,
+  twitterImage:          () => post.value?.images[0]?.url ?? `${SITE_URL}/og-image.png`,
+  articlePublishedTime:  () => post.value?.published_at ?? undefined,
+  articleModifiedTime:   () => post.value?.updated_at ?? undefined,
 })
 
 const { formatLong } = useFormatDate()

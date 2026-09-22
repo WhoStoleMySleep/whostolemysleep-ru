@@ -16,6 +16,7 @@ The decisions behind the architecture — and what each one costs — are writte
 - Blog and projects as a single `post` entity — two types, one editor
 - Resume section — experience, education, skills — all editable via admin
 - Full-text search via Fuse.js (client-side, no external index)
+- RSS per language — `/en/rss.xml`, `/ru/rss.xml`, full post text included
 - Contact form — manual validation, honeypot spam trap, rate limiting (3 req/hour/IP)
 - Light / Dark theme — persisted in `localStorage`, applied before render (no flash)
 - ISR caching for public routes, SSR for contacts and admin
@@ -42,7 +43,7 @@ The decisions behind the architecture — and what each one costs — are writte
 ## Setup
 
 ```bash
-git clone https://github.com/WhoStoleMySleepDev/whostolemysleep-ru
+git clone https://github.com/WhoStoleMySleep/whostolemysleep-ru
 cd whostolemysleep-ru
 pnpm install
 
@@ -187,6 +188,19 @@ public/
   fonts/                # Self-hosted woff2 (Cormorant + Martian Mono)
 ```
 
+## Feeds and crawlers
+
+| URL | What it is |
+|---|---|
+| `/en/rss.xml`, `/ru/rss.xml` | the blog as RSS 2.0 — the twenty latest posts, excerpt in `description` and the full stored html in `content:encoded` |
+| `/sitemap.xml` | every indexable page in both locales — `/cv` is left out, it is served `noindex`; posts carry `lastmod`, static pages do not, because nothing here knows when their markup last changed |
+| `/llms.txt` | a digest of the site for language models, in the llmstxt.org format |
+| `/robots.txt` | static, and the only one of the four that is a file rather than a route |
+
+Feeds carry blog posts only — a project entry is something to look at, not an
+article to read. Each page advertises the feed of the language it is written in, so
+subscribing from the Russian site does not start delivering English.
+
 ## Admin panel
 
 Route `/admin` is JWT-protected (httpOnly cookie, `SameSite=lax`, 7-day expiry, slid forward while the panel is in use). Failed logins are counted per client address — five in fifteen minutes and the address waits.
@@ -218,7 +232,7 @@ Nothing exotic, but worth knowing where the edges are:
 
 ## Publishing API
 
-An external publisher — [NuxtPublish](https://github.com/WhoStoleMySleepDev), which runs on a home server behind Tailscale — pushes finished posts here instead of me pasting them into the admin panel. Three endpoints, all under `/api/publish`, authorised by a bearer token from `PUBLISH_TOKEN`:
+An external publisher — [NuxtPublish](https://github.com/WhoStoleMySleep), which runs on a home server behind Tailscale — pushes finished posts here instead of me pasting them into the admin panel. Three endpoints, all under `/api/publish`, authorised by a bearer token from `PUBLISH_TOKEN`:
 
 | Endpoint | What it does |
 |---|---|

@@ -1,6 +1,7 @@
 import { asc, eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { post, settings, experience, skillGroup, skill } from '~~/server/db/schema'
+import { plainText } from '~~/server/utils/text'
 
 /**
  * llms.txt — a short digest of the site for language models (llmstxt.org).
@@ -15,19 +16,6 @@ import { post, settings, experience, skillGroup, skill } from '~~/server/db/sche
  */
 
 const BASE_URL = 'https://whostolemysleep.ru'
-
-/** The stored excerpt is markdown; a description line needs plain text. */
-function plain(text: string, limit = 155) {
-  const clean = text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')      // images
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')   // links to their text
-    .replace(/[*_`#>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  if (clean.length <= limit) return clean
-  return `${clean.slice(0, limit).replace(/[\s,.;:—-]+$/, '')}…`
-}
 
 /** A project with its own url links out; everything else links to the blog page. */
 function linkFor(p: { slug: string, url: string | null }) {
@@ -89,7 +77,7 @@ export default defineCachedEventHandler(async (event) => {
     .map(p => bullet(
       p.title || p.title_ru,
       linkFor(p),
-      plain(p.excerpt || p.excerpt_ru || ''),
+      plainText(p.excerpt || p.excerpt_ru || ''),
     ))
 
   const projects = entries('project')

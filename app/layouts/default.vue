@@ -34,6 +34,17 @@ useHead(() => ({
           href: '/fonts/archivo-900-normal-latin.woff2' },
       ],
 }))
+
+/**
+ * The feed of the language being read: someone subscribing from the Russian site
+ * should not start receiving English. Its own call rather than another entry in the
+ * list above, which is typed as font preloads and nothing else.
+ */
+useHead(() => ({
+  link: [
+    { rel: 'alternate', type: 'application/rss+xml', title: 'Blog', href: `/${locale.value}/rss.xml` },
+  ],
+}))
 </script>
 
 <template>
