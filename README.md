@@ -112,12 +112,22 @@ Vitest runs inside a real Nuxt environment (`@nuxt/test-utils`), so specs get th
 
 ```
 tests/nuxt/
-  components/   # rendering and props — mountSuspended
-  composables/  # app-side logic
-  server/utils/ # pure helpers, auth, cache invalidation
+  components/       # rendering and props — mountSuspended
+  composables/      # app-side logic
+  stores/           # Pinia — search index and its race conditions
+  middleware/       # route guard for /admin
+  server/utils/     # pure helpers, auth, cache invalidation
+  server/middleware/# the /api/admin guard
+  server/api/       # handlers whose arithmetic is worth pinning down
+  flows/            # several handlers in sequence, as the client calls them
+tests/helpers/      # fakeDb — a drizzle stub driven by a plan of answers
 ```
 
 Covered first are the places where a silent mistake is expensive: CV import parsing and diffing, ISR cache invalidation, admin session sliding, the publisher's token check, and HTML sanitising.
+
+`tests/nuxt/flows` goes one step further and drives whole scenarios through the real handlers with only the database replaced: logging in and reaching a guarded route with the issued cookie, importing a CV file (export → diff → apply), publishing a post and sending it again. The HTTP layer itself — routing, body parsing, cookie serialisation — is Nitro's and is not re-tested here; for that a disposable Postgres is needed (a Neon test branch, or `NEON_LOCAL_SQL_ENDPOINT` in front of a container).
+
+`pnpm test:coverage` measures the logic — composables, stores, middleware, server utils — and currently reports ~90% of statements. Pages and components are deliberately outside that number: their markup is checked by rendering tests, not by line counting.
 
 Git hooks (husky):
 
@@ -127,6 +137,8 @@ Git hooks (husky):
 | `pre-push` | the whole suite |
 
 CI (`.github/workflows/ci.yml`) repeats lint, tests and build on every branch and pull request.
+
+Dependabot (`.github/dependabot.yml`) opens one grouped pull request a week for minor and patch bumps and separate ones for majors; GitHub Actions are checked monthly. CI is what decides whether a bump is safe — that is the point of having it.
 
 ESLint deliberately carries no formatting rules — values across this codebase are aligned into columns by hand, and an autoformatter would flatten them.
 
@@ -181,6 +193,8 @@ Manages:
 - **Education** — institutions and dates
 - **Skills** — grouped skill lists
 - **Settings** — open-to-work toggle, social links, contact email
+
+The dashboard counts records whose English fields are still empty, by section, and links to the editor for each. Reading falls back to Russian when a translation is missing, so nothing breaks and nothing complains — which is exactly why the gap needs a number somewhere.
 
 After editing content, hit "Revalidate" in the admin settings to purge the ISR cache on Vercel. It works by requesting each queued page with the `x-prerender-revalidate` header, so `ISR_BYPASS_TOKEN` has to be set both at build time (it is baked into the generated prerender config) and at runtime.
 
@@ -263,6 +277,35 @@ ISR revalidation windows:
 | Resume, CV, Contacts | 2 hours |
 | Privacy | 24 hours |
 | Admin | Always SSR |
+
+## Backup and restore
+
+Neon keeps its own history: a branch can be restored to any moment within the retention window from the console (Branches → Restore), which covers the "deleted the wrong row" case without any local file. Anything that has to outlive the project's Neon account is a dump:
+
+```bash
+pg_dump "$POSTGRES_URL_NON_POOLING" --no-owner --no-privileges -Fc -f wms-$(date +%F).dump
+```
+
+The direct URL, not the pooled one — `pg_dump` holds a single long session, and the pooled endpoint is not meant for it.
+
+Restoring into an empty database (a fresh Neon branch is the safe target — never straight into production while the site is serving):
+
+```bash
+pg_restore --no-owner --no-privileges -d "$POSTGRES_URL_NON_POOLING" wms-2026-09-22.dump
+```
+
+Restoring over an existing schema means dropping it first, so this is the line to be careful with:
+
+```bash
+psql "$POSTGRES_URL_NON_POOLING" -c 'drop schema public cascade; create schema public;'
+```
+
+Alternatively `pnpm db:migrate` recreates the schema from the migration files and `pg_restore --data-only` brings the rows back into it.
+
+Two things a dump does not carry:
+
+- **Post images** live in Vercel Blob, and the database only stores their URLs. A row restored after its blob was deleted points at a 404.
+- **`rate_limit` and `pending_revalidation`** are working state, not content. They can be excluded (`--exclude-table`) and lose nothing.
 
 ## License
 
