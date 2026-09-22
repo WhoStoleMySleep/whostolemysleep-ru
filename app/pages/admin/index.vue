@@ -4,9 +4,11 @@ definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Admin — Dashboard' })
 
 interface Stats {
-  posts:   { total: number; published: number; drafts: number }
-  pending: number
+  posts:      { total: number; published: number; drafts: number }
+  pending:    number
+  missing_en: Record<EnSection, number> & { total: number }
 }
+type EnSection = 'posts' | 'about' | 'experience' | 'bullets' | 'education' | 'skills' | 'tags'
 interface Pending { path: string; added_at: string }
 interface Flush {
   ok:      boolean
@@ -25,6 +27,21 @@ const { data: stats, refresh: refreshStats } = await useAsyncData(
 const { data: pending, refresh: refreshPending } = await useAsyncData(
   'admin-pending', () => api.get<Pending[]>('/api/admin/pending'), { default: () => [] },
 )
+
+/** Где правится английский каждого раздела — счётчик без ссылки бесполезен. */
+const EN_SECTIONS: { key: EnSection; label: string; to: string }[] = [
+  { key: 'posts',      label: 'Posts',      to: '/admin/posts' },
+  { key: 'about',      label: 'About',      to: '/admin/about' },
+  { key: 'experience', label: 'Experience', to: '/admin/experience' },
+  { key: 'bullets',    label: 'Bullets',    to: '/admin/experience' },
+  { key: 'education',  label: 'Education',  to: '/admin/education' },
+  { key: 'skills',     label: 'Skills',     to: '/admin/skills' },
+  { key: 'tags',       label: 'Tags',       to: '/admin/posts' },
+]
+
+const enGaps = computed(() => EN_SECTIONS
+  .map((section) => ({ ...section, n: stats.value?.missing_en?.[section.key] ?? 0 }))
+  .filter((section) => section.n > 0))
 
 const flushing = ref(false)
 
@@ -66,6 +83,25 @@ const { date } = useAdminFormat()
         <p class="stat__val">{{ stats?.pending ?? 0 }}</p>
         <p class="stat__label">Pending flush</p>
       </div>
+      <div class="stat">
+        <p class="stat__val">{{ stats?.missing_en?.total ?? 0 }}</p>
+        <p class="stat__label">Missing EN</p>
+      </div>
+    </div>
+
+    <div class="admin-panel panel panel--en">
+      <div class="panel__head">
+        <p class="panel__title">English gaps</p>
+      </div>
+
+      <p v-if="!enGaps.length" class="panel__empty">Every English field is filled in</p>
+
+      <ul v-else class="queue">
+        <li v-for="section in enGaps" :key="section.label" class="queue__item">
+          <NuxtLink :to="section.to" class="queue__link">{{ section.label }}</NuxtLink>
+          <span class="queue__date">{{ section.n }} without translation</span>
+        </li>
+      </ul>
     </div>
 
     <div class="admin-panel panel">
@@ -121,6 +157,7 @@ const { date } = useAdminFormat()
 .stat__label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-4); }
 
 .panel { padding: 0; }
+.panel--en { margin-bottom: 12px; }
 
 .panel__head {
   display: flex;
@@ -148,5 +185,14 @@ const { date } = useAdminFormat()
 
 .queue__item:last-child { border-bottom: none; }
 .queue__path { font-size: 12px; color: var(--accent); }
+
+.queue__link {
+  font-size: 12px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.queue__link:hover { color: var(--accent); border-color: var(--accent); }
 .queue__date { font-size: 10px; color: var(--text-4); white-space: nowrap; }
 </style>
