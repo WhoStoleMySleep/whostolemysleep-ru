@@ -168,9 +168,12 @@ server utils.
 
 ## Known gaps
 
-- **Observability is error-only.** Sentry reports exceptions on both sides, but
-  there are no metrics: a route that gets slow, or a publish that succeeds while
-  writing the wrong thing, produces no signal at all.
+- **Metrics exist, alerts do not.** Sentry reports exceptions on both sides and
+  samples 10% of traces, Vercel Analytics counts traffic and Speed Insights collects
+  web vitals from real clients — so a route that gets slow is visible, but only to
+  whoever opens the dashboard. Nothing crosses a threshold and says so, and there
+  are no domain counters: a publish that succeeds while writing the wrong thing
+  still produces no signal at all.
 - **No degradation story.** If Neon is unavailable, cached pages keep serving until
   their window expires and then fail. There is no stale-while-error path.
 - **Single region.** Functions and database are both in one region; latency for
