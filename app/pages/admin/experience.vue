@@ -6,7 +6,8 @@ useHead({ title: 'Admin — Experience' })
 interface Bullet { id: number; text_ru: string; text_en: string }
 interface Exp {
   id: number
-  company: string
+  company_ru: string
+  company_en: string
   position_ru: string
   position_en: string
   date_from: string
@@ -16,7 +17,7 @@ interface Exp {
 
 function blank() {
   return {
-    company: '', position_ru: '', position_en: '',
+    company_ru: '', company_en: '', position_ru: '', position_en: '',
     date_from: '', date_to: '',
     bullets: [] as { text_ru: string; text_en: string }[],
   }
@@ -27,7 +28,8 @@ const res = useAdminResource<Exp, ReturnType<typeof blank>>({
   title:    'Experience entry',
   blank,
   toForm: (e) => ({
-    company:     e.company,
+    company_ru:  e.company_ru,
+    company_en:  e.company_en,
     position_ru: e.position_ru,
     position_en: e.position_en,
     date_from:   e.date_from,
@@ -51,7 +53,8 @@ function removeBullet(i: number) { res.form.value.bullets.splice(i, 1) }
 
     <div v-if="res.editing.value" class="admin-panel form">
       <div class="admin-grid">
-        <AdminField v-model="res.form.value.company" label="Company" required />
+        <AdminField v-model="res.form.value.company_ru" label="Company (RU)" required />
+        <AdminField v-model="res.form.value.company_en" label="Company (EN)" />
         <AdminField v-model="res.form.value.position_ru" label="Position (RU)" required />
         <AdminField v-model="res.form.value.position_en" label="Position (EN)" />
         <AdminField v-model="res.form.value.date_from" label="From" type="date" required />
@@ -86,12 +89,12 @@ function removeBullet(i: number) { res.form.value.bullets.splice(i, 1) }
         <div class="row">
           <div class="row__main">
             <p class="row__title">{{ item.position_ru }}</p>
-            <p class="row__sub">{{ item.company }} · {{ item.bullets.length }} bullets</p>
+            <p class="row__sub">{{ item.company_ru }} · {{ item.bullets.length }} bullets</p>
           </div>
           <span class="row__period">{{ period(item.date_from, item.date_to) }}</span>
           <div class="row__actions">
             <button class="admin-btn admin-btn--ghost" type="button" @click="res.startEdit(item)">Edit</button>
-            <button class="admin-btn admin-btn--danger" type="button" @click="res.remove(item, item.company)">Delete</button>
+            <button class="admin-btn admin-btn--danger" type="button" @click="res.remove(item, item.company_ru)">Delete</button>
           </div>
         </div>
       </template>

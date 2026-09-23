@@ -4,7 +4,8 @@ import { markDirty } from '~~/server/utils/pending'
 
 interface Bullet { text_ru: string; text_en: string }
 interface Body {
-  company: string
+  company_ru: string
+  company_en: string
   position_ru: string
   position_en: string
   date_from: string
@@ -25,9 +26,10 @@ defineRouteMeta({
         'application/json': {
           schema: {
             type: 'object',
-            required: ['company', 'position_ru', 'date_from'],
+            required: ['company_ru', 'position_ru', 'date_from'],
             properties: {
-              company:     { type: 'string' },
+              company_ru:  { type: 'string' },
+              company_en:  { type: 'string' },
               position_ru: { type: 'string' },
               position_en: { type: 'string' },
               date_from:   { type: 'string', format: 'date' },
@@ -50,7 +52,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<Body>(event)
 
   const [exp] = await db.insert(schema.experience).values({
-    company:     body.company,
+    company_ru:  body.company_ru,
+    company_en:  body.company_en,
     position_ru: body.position_ru,
     position_en: body.position_en,
     date_from:   body.date_from,

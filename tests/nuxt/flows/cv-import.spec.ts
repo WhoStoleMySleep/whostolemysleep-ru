@@ -33,7 +33,7 @@ const apply    = (body: unknown) => handler('~~/server/api/admin/cv/apply.post',
 const current = {
   aboutMe:    [{ id: 1, text_ru: 'the old text', text_en: '' }],
   experience: [{
-    id: 10, company: 'Acme', position_ru: 'Developer', position_en: '',
+    id: 10, company_ru: 'Acme', company_en: '', position_ru: 'Developer', position_en: '',
     date_from: '2020-01-01', date_to: null, order: 0,
     bullets: [{ id: 100, text_ru: 'did things', text_en: '', order: 0 }],
   }],
@@ -43,10 +43,10 @@ const current = {
 
 /** The edited file: an edited text, a promotion, a new university, a new skill. */
 const uploaded = {
-  version: 1,
+  version: 2,
   about: { text_ru: 'the new text', text_en: '' },
   experience: [{
-    company: 'Acme', position_ru: 'Senior developer', position_en: '',
+    company_ru: 'Acme', company_en: '', position_ru: 'Senior developer', position_en: '',
     date_from: '2020-01-01', date_to: null,
     bullets: [{ text_ru: 'did things', text_en: '' }],
   }],
@@ -70,7 +70,7 @@ afterEach(() => {
 describe('CV import: export → diff → apply', () => {
   test('an exported file loaded back gives no changes', async () => {
     const snapshot = await exportCv()
-    expect(snapshot.version).toBe(1)
+    expect(snapshot.version).toBe(2)
 
     const { changes } = await diff(snapshot)
     expect(changes).toEqual([])
@@ -134,7 +134,7 @@ describe('CV import: export → diff → apply', () => {
   })
 
   test('an unknown id counts as dropped, it is not applied at random', async () => {
-    const out = await apply({ snapshot: uploaded, accept: ['about:text_ru', 'experience:999:company'] })
+    const out = await apply({ snapshot: uploaded, accept: ['about:text_ru', 'experience:999:company_ru'] })
 
     expect(out).toEqual({ applied: 1, skipped: 1 })
   })
@@ -179,7 +179,7 @@ describe('CV import: additions and removals', () => {
   test('a new job is created together with its bullets and goes to the end of the list', async () => {
     const snapshot = {
       experience: [{
-        company: 'Newco', position_ru: 'Engineer', position_en: '',
+        company_ru: 'Newco', position_ru: 'Engineer', position_en: '',
         date_from: '2024-01-01', date_to: null,
         bullets: [{ text_ru: 'first', text_en: '' }, { text_ru: 'second', text_en: '' }],
       }],
@@ -187,7 +187,7 @@ describe('CV import: additions and removals', () => {
 
     await apply({ snapshot, accept: ['experience:add:0'] })
 
-    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:experience', 'values')).toMatchObject({ company: 'Newco', order: 1 })
+    expect(stepArg<Record<string, unknown>>(state.calls, 'insert:experience', 'values')).toMatchObject({ company_ru: 'Newco', order: 1 })
     expect(stepArg(state.calls, 'insert:experience_bullet', 'values')).toEqual([
       { experience_id: 11, text_ru: 'first', text_en: '', order: 0 },
       { experience_id: 11, text_ru: 'second', text_en: '', order: 1 },

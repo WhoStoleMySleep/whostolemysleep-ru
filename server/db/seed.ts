@@ -162,7 +162,8 @@ async function seed() {
   console.log('✓ images')
 
   const [expPochtaRu] = await db.insert(schema.experience).values({
-    company:     'Почта России',
+    company_ru:  'Почта России',
+    company_en:  'Russian Post',
     position_ru: 'Frontend-разработчик',
     position_en: 'Frontend Developer',
     date_from:   '2022-02-01',
@@ -171,7 +172,8 @@ async function seed() {
   }).returning()
 
   const [expSber] = await db.insert(schema.experience).values({
-    company:     'СберСпасибо',
+    company_ru:  'СберСпасибо',
+    company_en:  'SberSpasibo',
     position_ru: 'Frontend-разработчик',
     position_en: 'Frontend Developer',
     date_from:   '2023-04-01',

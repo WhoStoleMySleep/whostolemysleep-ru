@@ -78,7 +78,8 @@ export const aboutMe = pgTable('about_me', {
 
 export const experience = pgTable('experience', {
   id:          serial('id').primaryKey(),
-  company:     varchar('company', { length: 255 }).notNull(),
+  company_ru:  varchar('company_ru', { length: 255 }).notNull(),
+  company_en:  varchar('company_en', { length: 255 }).notNull().default(''),
   position_ru: varchar('position_ru', { length: 255 }).notNull(),
   position_en: varchar('position_en', { length: 255 }).notNull().default(''),
   date_from:   date('date_from').notNull(),

@@ -189,7 +189,7 @@ const KIND_LABEL: Record<Change['kind'], string> = { add: 'new', update: 'change
         v-model="raw"
         class="admin-input json"
         rows="12"
-        placeholder='{ "version": 1, "about": { … }, "experience": [ … ] }'
+        placeholder='{ "version": 2, "about": { … }, "experience": [ … ] }'
       />
 
       <div class="row">

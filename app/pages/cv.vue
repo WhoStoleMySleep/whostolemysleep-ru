@@ -196,9 +196,19 @@ const contacts = computed(() =>
     max-width: none;
     padding: 0;
     box-shadow: none;
-    font-size: 11pt;
+    font-size: 10.5pt;
+    line-height: 1.45;
   }
-  .sect { break-inside: avoid-page; }
+
+  /* A whole section must be free to flow across a page break: keeping one intact
+     pushed Experience onto a page of its own and stretched the CV to three sheets.
+     Only the smaller blocks stay whole, and a heading never ends up alone at the
+     bottom of a page. */
+  .sect { break-inside: auto; margin-bottom: 18px; }
+  .sect__title { break-after: avoid; }
+  .entry { break-inside: avoid; margin-bottom: 12px; }
+  .entry__title, .entry__period { break-after: avoid; }
+  .text :deep(p) { orphans: 2; widows: 2; }
 }
 
 @page { margin: 16mm 14mm; }
