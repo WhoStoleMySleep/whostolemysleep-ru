@@ -12,7 +12,7 @@ async function fetchExperience(event: H3Event) {
 
   return rows.map((row) => ({
     id:        row.id,
-    company:   row.company,
+    company:   pick(row.company_ru, row.company_en, locale),
     position:  pick(row.position_ru, row.position_en, locale),
     date_from: row.date_from,
     date_to:   row.date_to,

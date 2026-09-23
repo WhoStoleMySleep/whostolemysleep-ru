@@ -10,12 +10,13 @@ import * as schema from '../db/schema'
  * arrays is the order on the page.
  */
 
-export const CV_VERSION = 1
+export const CV_VERSION = 2
 
 export interface CvBullet { text_ru: string; text_en: string }
 
 export interface CvExperience {
-  company:     string
+  company_ru:  string
+  company_en:  string
   position_ru: string
   position_en: string
   date_from:   string
@@ -76,7 +77,8 @@ export async function buildSnapshot(): Promise<CvSnapshot> {
       text_en: state.about?.text_en ?? '',
     },
     experience: state.experience.map((e) => ({
-      company:     e.company,
+      company_ru:  e.company_ru,
+      company_en:  e.company_en,
       position_ru: e.position_ru,
       position_en: e.position_en,
       date_from:   e.date_from,
@@ -128,11 +130,13 @@ export function parseSnapshot(raw: unknown): Partial<CvSnapshot> {
     out.experience = src.experience
       .map((item): CvExperience | null => {
         const e = item as Record<string, unknown>
-        const company = str(e.company)
-        const from    = date(e.date_from)
-        if (!company || !from) return null
+        // Files exported before version 2 carry a single "company" field.
+        const companyRu = str(e.company_ru) || str(e.company)
+        const from      = date(e.date_from)
+        if (!companyRu || !from) return null
         return {
-          company,
+          company_ru:  companyRu,
+          company_en:  str(e.company_en),
           position_ru: str(e.position_ru),
           position_en: str(e.position_en),
           date_from:   from,
@@ -241,14 +245,14 @@ export async function diffSnapshot(input: Partial<CvSnapshot>): Promise<Bound[]>
 
   /* Experience */
   if (input.experience) {
-    const byKey = new Map(state.experience.map((e) => [key(e.company, e.date_from), e]))
+    const byKey = new Map(state.experience.map((e) => [key(e.company_ru, e.date_from), e]))
     const seen  = new Set<string>()
 
     input.experience.forEach((item, index) => {
-      const k = key(item.company, item.date_from)
+      const k = key(item.company_ru, item.date_from)
       seen.add(k)
       const row = byKey.get(k)
-      const label = `${item.company} — ${item.position_ru || item.position_en}`
+      const label = `${item.company_ru} — ${item.position_ru || item.position_en}`
 
       if (!row) {
         push({
@@ -258,7 +262,7 @@ export async function diffSnapshot(input: Partial<CvSnapshot>): Promise<Bound[]>
         return
       }
 
-      for (const field of ['company', 'position_ru', 'position_en', 'date_from', 'date_to'] as const) {
+      for (const field of ['company_ru', 'company_en', 'position_ru', 'position_en', 'date_from', 'date_to'] as const) {
         if ((row[field] ?? null) === (item[field] ?? null)) continue
         push({
           id: `experience:${row.id}:${field}`, section: 'experience', kind: 'update',
@@ -276,10 +280,10 @@ export async function diffSnapshot(input: Partial<CvSnapshot>): Promise<Bound[]>
     })
 
     for (const row of state.experience) {
-      if (seen.has(key(row.company, row.date_from))) continue
+      if (seen.has(key(row.company_ru, row.date_from))) continue
       push({
         id: `experience:remove:${row.id}`, section: 'experience', kind: 'remove',
-        label: `${row.company} — ${row.position_ru}`, before: row.position_ru, after: null,
+        label: `${row.company_ru} — ${row.position_ru}`, before: row.position_ru, after: null,
       }, row.id)
     }
   }
@@ -407,7 +411,8 @@ async function applyOne({ change, targetId, record }: Bound, next: NextOrder): P
     if (change.kind === 'add') {
       const item = record as CvExperience
       const [created] = await db.insert(schema.experience).values({
-        company:     item.company,
+        company_ru:  item.company_ru,
+        company_en:  item.company_en,
         position_ru: item.position_ru,
         position_en: item.position_en,
         date_from:   item.date_from,

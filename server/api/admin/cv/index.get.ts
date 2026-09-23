@@ -24,7 +24,8 @@ defineRouteMeta({
                 items: {
                   type: 'object',
                   properties: {
-                    company:     { type: 'string' },
+                    company_ru:  { type: 'string' },
+                    company_en:  { type: 'string' },
                     position_ru: { type: 'string' },
                     position_en: { type: 'string' },
                     date_from:   { type: 'string', format: 'date' },

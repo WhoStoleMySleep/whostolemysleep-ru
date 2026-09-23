@@ -19,7 +19,8 @@ defineRouteMeta({
           schema: {
             type: 'object',
             properties: {
-              company:     { type: 'string' },
+              company_ru:  { type: 'string' },
+              company_en:  { type: 'string' },
               position_ru: { type: 'string' },
               position_en: { type: 'string' },
               date_from:   { type: 'string', format: 'date' },
@@ -42,7 +43,8 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody<{
-    company?: string
+    company_ru?: string
+    company_en?: string
     position_ru?: string
     position_en?: string
     date_from?: string

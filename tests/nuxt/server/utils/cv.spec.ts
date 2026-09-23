@@ -31,7 +31,7 @@ describe('parseSnapshot', () => {
     const out = parseSnapshot({
       about: { text_ru: ' about me ', text_en: 'about' },
       experience: [{
-        company: 'Acme', position_ru: 'Developer', position_en: 'Developer',
+        company_ru: 'Acme', company_en: '', position_ru: 'Developer', position_en: 'Developer',
         date_from: '2020-01-01', date_to: null,
         bullets: [{ text_ru: 'did things', text_en: 'did' }],
       }],
@@ -68,25 +68,34 @@ describe('parseSnapshot', () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
       experience: [
-        { company: '', date_from: '2020-01-01' },
-        { company: 'Acme', date_from: '01.01.2020' },
-        { company: 'Beta', date_from: '2021-03-01' },
+        { company_ru: '', date_from: '2020-01-01' },
+        { company_ru: 'Acme', date_from: '01.01.2020' },
+        { company_ru: 'Beta', date_from: '2021-03-01' },
       ],
     })
     expect(out.experience).toHaveLength(1)
-    expect(out.experience?.[0]?.company).toBe('Beta')
+    expect(out.experience?.[0]?.company_ru).toBe('Beta')
+  })
+
+  test('a file exported before the company name became bilingual still imports', async () => {
+    const { parseSnapshot } = await import('~~/server/utils/cv')
+    const out = parseSnapshot({
+      version: 1,
+      experience: [{ company: 'Acme', position_ru: 'Developer', date_from: '2020-01-01' }],
+    })
+    expect(out.experience?.[0]).toMatchObject({ company_ru: 'Acme', company_en: '' })
   })
 
   test('an unfilled end date means to this day, not an error', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
-    const out = parseSnapshot({ experience: [{ company: 'Acme', date_from: '2020-01-01', date_to: 'now' }] })
+    const out = parseSnapshot({ experience: [{ company_ru: 'Acme', date_from: '2020-01-01', date_to: 'now' }] })
     expect(out.experience?.[0]?.date_to).toBeNull()
   })
 
   test('a bullet as a string instead of an object is a common way to write it by hand', async () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
-      experience: [{ company: 'Acme', date_from: '2020-01-01', bullets: [' brought a service up '] }],
+      experience: [{ company_ru: 'Acme', date_from: '2020-01-01', bullets: [' brought a service up '] }],
     })
     expect(out.experience?.[0]?.bullets).toEqual([{ text_ru: 'brought a service up', text_en: '' }])
   })
@@ -95,8 +104,8 @@ describe('parseSnapshot', () => {
     const { parseSnapshot } = await import('~~/server/utils/cv')
     const out = parseSnapshot({
       experience: [
-        { company: 'Acme', date_from: '2020-01-01', bullets: ['', { text_ru: '', text_en: '' }, 'ok'] },
-        { company: 'Beta', date_from: '2020-01-01', bullets: 'a string' },
+        { company_ru: 'Acme', date_from: '2020-01-01', bullets: ['', { text_ru: '', text_en: '' }, 'ok'] },
+        { company_ru: 'Beta', date_from: '2020-01-01', bullets: 'a string' },
       ],
     })
     expect(out.experience?.[0]?.bullets).toHaveLength(1)
@@ -141,29 +150,29 @@ describe('diffSnapshot', () => {
   test('an unknown job is an add', async () => {
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
-      experience: [{ company: 'Acme', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
+      experience: [{ company_ru: 'Acme', company_en: '', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
     })
     expect(out.map((b) => b.change.kind)).toEqual(['add'])
   })
 
-  test('a row is matched by company and start date, case and spaces do not matter', async () => {
+  test('a row is matched by the Russian company name and start date, case and spaces do not matter', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'Developer', position_en: '',
+      id: 7, order: 0, company_ru: 'Acme', company_en: '', position_ru: 'Developer', position_en: '',
       date_from: '2020-01-01', date_to: null, bullets: [],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
-      experience: [{ company: ' ACME ', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
+      experience: [{ company_ru: ' ACME ', company_en: '', position_ru: 'Developer', position_en: '', date_from: '2020-01-01', date_to: null, bullets: [] }],
     })
 
     expect(out.map((b) => b.change.kind)).toEqual(['update'])
     expect(out[0]?.targetId).toBe(7)
-    expect(out[0]?.change.field).toBe('company')
+    expect(out[0]?.change.field).toBe('company_ru')
   })
 
   test('a job that vanished from the file is a remove', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'Developer', position_en: '',
+      id: 7, order: 0, company_ru: 'Acme', company_en: '', position_ru: 'Developer', position_en: '',
       date_from: '2020-01-01', date_to: null, bullets: [],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
@@ -176,14 +185,14 @@ describe('diffSnapshot', () => {
 
   test('bullets are compared as a whole list — a reorder is a change too', async () => {
     dbState.experience = [{
-      id: 7, order: 0, company: 'Acme', position_ru: 'D', position_en: '',
+      id: 7, order: 0, company_ru: 'Acme', company_en: '', position_ru: 'D', position_en: '',
       date_from: '2020-01-01', date_to: null,
       bullets: [{ text_ru: 'one', text_en: '' }, { text_ru: 'two', text_en: '' }],
     }]
     const { diffSnapshot } = await import('~~/server/utils/cv')
     const out = await diffSnapshot({
       experience: [{
-        company: 'Acme', position_ru: 'D', position_en: '', date_from: '2020-01-01', date_to: null,
+        company_ru: 'Acme', company_en: '', position_ru: 'D', position_en: '', date_from: '2020-01-01', date_to: null,
         bullets: [{ text_ru: 'two', text_en: '' }, { text_ru: 'one', text_en: '' }],
       }],
     })
