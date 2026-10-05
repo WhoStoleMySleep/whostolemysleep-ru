@@ -86,6 +86,7 @@ ADMIN_PASSWORD_HASH=        # bcrypt hash of the admin password
 ISR_BYPASS_TOKEN=           # 32 hex chars; lets the admin purge Vercel's ISR cache
 NUXT_PUBLIC_SITE_URL=       # https://whostolemysleep.ru
 PUBLISH_TOKEN=              # bearer token for the external publisher — leave unset to disable
+CV_TOKEN=                   # read-only bearer token for the job-search hub — leave unset to disable
 NEON_LOCAL_SQL_ENDPOINT=    # local dev only: HTTP proxy in front of a plain Postgres
 NUXT_PUBLIC_SENTRY_DSN=     # Sentry DSN — public by design, read by both client and server
 SENTRY_ORG=                 # build-time only: source map upload
@@ -237,13 +238,14 @@ Nothing exotic, but worth knowing where the edges are:
 
 ## Publishing API
 
-An external publisher — [NuxtPublish](https://github.com/WhoStoleMySleep), which runs on a home server behind Tailscale — pushes finished posts here instead of me pasting them into the admin panel. Three endpoints, all under `/api/publish`, authorised by a bearer token from `PUBLISH_TOKEN`:
+An external publisher — [NuxtPublish](https://github.com/WhoStoleMySleep), which runs on a home server behind Tailscale — pushes finished posts here instead of me pasting them into the admin panel. Endpoints live under `/api/publish` and are authorised by a bearer token from `PUBLISH_TOKEN`:
 
 | Endpoint | What it does |
 |---|---|
 | `GET /health` | connectivity check; no token required, and it reveals nothing beyond whether publishing is configured |
 | `POST /posts` | creates or updates a post; repeating the same `external_id` updates it instead of adding a duplicate |
 | `PUT /posts/{id}` | updates a specific post |
+| `GET /cv` | the whole resume as one snapshot — the same format as the admin export; authorised by `CV_TOKEN` instead |
 
 The payload is Markdown-first, because that is what the publisher stores:
 
@@ -269,6 +271,8 @@ What happens on the way in:
 - **A slug that belongs to someone else is a 409**, not a silent overwrite. Posts written in the admin panel have no `external_id`, so the publisher may adopt one by slug; a post that already belongs to a different `external_id` is left alone.
 - **ISR paths are queued** exactly as the admin panel does it, so the new post appears without a manual revalidate.
 
+`GET /cv` goes the other way: a personal job-search hub, also behind Tailscale, reads the resume to match it against vacancies. It has its own token, `CV_TOKEN`, because it only needs to read — a leaked hub token cannot post. The answer is never cached: the hub hashes it to notice a new version.
+
 ## API reference
 
 Every handler under `server/api` and `server/routes` carries a `defineRouteMeta({ openAPI: … })` block, so the specification is generated from the routes themselves and cannot drift away from them — a renamed field is a diff in the same file as the code.
@@ -285,13 +289,13 @@ Nitro serves it in dev only:
 
 Operations are tagged by area — `Public`, `Publisher`, `Admin: posts / resume / skills / settings / cache / session / dashboard`, `Service`. Shared pieces (error shapes, the `locale` query parameter, both security schemes) live in the `$global` block of `server/api/settings.get.ts`; domain schemas sit in the route that first returns them and are reused through `$ref`.
 
-Two security schemes are described: `adminCookie` (the `wms_admin` JWT cookie, issued by `POST /api/admin/login`) and `publishToken` (the bearer token from `PUBLISH_TOKEN`). Everything under `/api/admin` except login is behind the cookie — `server/middleware/admin-guard.ts` enforces it before any handler runs.
+Three security schemes are described: `adminCookie` (the `wms_admin` JWT cookie, issued by `POST /api/admin/login`) `publishToken` (the bearer token from `PUBLISH_TOKEN`) and `cvToken` (the read-only bearer token from `CV_TOKEN`). Everything under `/api/admin` except login is behind the cookie — `server/middleware/admin-guard.ts` enforces it before any handler runs.
 
 ## Deployment
 
 Deployed on Vercel. Neon and Vercel Blob are both provisioned through the Vercel marketplace — environment variables are set automatically.
 
-`PUBLISH_TOKEN` is the exception: generate it (`openssl rand -base64 32`), add it to the Vercel project, and paste the same value into the publisher's site target. Without it `/api/publish` answers 503 and nothing can be posted.
+`PUBLISH_TOKEN` is the exception: generate it (`openssl rand -base64 32`), add it to the Vercel project, and paste the same value into the publisher's site target. Without it `/api/publish` answers 503 and nothing can be posted. `CV_TOKEN` is set the same way and pasted into the hub as `SITE_CV_TOKEN`.
 
 ISR revalidation windows:
 

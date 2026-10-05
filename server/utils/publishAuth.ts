@@ -6,10 +6,20 @@ import type { H3Event } from 'h3'
  * One token for the whole integration, and it lives only in the environment.
  */
 export function requirePublishToken(event: H3Event): void {
-  const expected = process.env.PUBLISH_TOKEN
+  requireBearer(event, process.env.PUBLISH_TOKEN, 'Publishing is not configured')
+}
 
+/**
+ * Checks the bearer token of the job-search hub, which only reads the resume.
+ * Kept apart from PUBLISH_TOKEN so a leaked read token cannot post anything.
+ */
+export function requireCvToken(event: H3Event): void {
+  requireBearer(event, process.env.CV_TOKEN, 'Resume export is not configured')
+}
+
+function requireBearer(event: H3Event, expected: string | undefined, unconfigured: string): void {
   if (!expected) {
-    throw createError({ statusCode: 503, message: 'Publishing is not configured' })
+    throw createError({ statusCode: 503, message: unconfigured })
   }
 
   const header = getRequestHeader(event, 'authorization') ?? ''

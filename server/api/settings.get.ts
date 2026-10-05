@@ -39,6 +39,7 @@ defineRouteMeta({
         securitySchemes: {
           adminCookie:  { type: 'apiKey', in: 'cookie', name: 'wms_admin', description: 'The admin session JWT, issued by POST /api/admin/login' },
           publishToken: { type: 'http', scheme: 'bearer', description: 'The external publisher PUBLISH_TOKEN' },
+          cvToken:      { type: 'http', scheme: 'bearer', description: 'The job-search hub CV_TOKEN, read-only' },
         },
         parameters: {
           locale: { name: 'locale', in: 'query', required: false, description: 'Response language; anything but en reads as ru', schema: { type: 'string', enum: ['ru', 'en'], default: 'ru' } },
