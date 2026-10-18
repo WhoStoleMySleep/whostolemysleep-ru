@@ -11,24 +11,24 @@
     "toTop": "Back to top"
   },
   "hero": {
-    "eyebrow": "Nuxt · Rust · Tauri · R-04",
-    "line1": "Nuxt in front,",
+    "eyebrow": "Vue · React · Rust · Tauri · R-04",
+    "line1": "Web in front,",
     "line2": "Rust behind",
     "years": "years",
     "status": "Open to remote work worldwide",
-    "lede": "Full-stack developer with {years} of experience. Production web apps in Nuxt and Vue, native desktop and mobile apps in Rust with Tauri. Before that — high-load interfaces for two of Russia's largest banks.",
+    "lede": "Full-stack developer with {years} of experience. Production web apps in Vue/Nuxt and React, native desktop and mobile apps in Rust with Tauri. Before that — high-load interfaces for two of Russia's largest banks.",
     "cta_cv": "Download CV",
     "cta_projects": "View projects"
   },
   "stack": {
     "f1_k": "Nuxt / Vue",
-    "f1_v": "Architecture, SSR/ISR/SSG, Nitro, i18n. React and Next.js too.",
-    "f2_k": "Rust / Tauri",
-    "f2_v": "Cross-platform desktop and mobile, native plugins, system APIs.",
-    "f3_k": "TypeScript / Node",
-    "f3_v": "REST and GraphQL APIs, tooling, published npm packages.",
-    "f4_k": "Performance",
-    "f4_v": "Core Web Vitals as a budget, not an afterthought. This site: 100/100 on mobile."
+    "f1_v": "Architecture, SSR/ISR/SSG, Nitro, i18n.",
+    "f2_k": "React / Next",
+    "f2_v": "React 19, Next.js, Zustand, virtualized lists, motion. See Wave.",
+    "f3_k": "Rust / Tauri",
+    "f3_v": "Cross-platform desktop and mobile, native plugins, system APIs.",
+    "f4_k": "TS / Node / Perf",
+    "f4_v": "REST and GraphQL APIs, published npm packages. Core Web Vitals as a budget — this site: 100/100 on mobile."
   },
   "about": {
     "eyebrow": "About me",
@@ -40,7 +40,7 @@
     "b1": "Built for distributed teams. I take a task from spec to production without hand-holding, write decisions down, and work asynchronously in English.",
     "b2": "One person across the whole product — web frontend, native desktop and mobile, and the backend behind them. Fewer handoffs, fewer things lost between teams.",
     "b3": "I ship and maintain what I build: published npm packages, a Tauri plugin, open-source apps other people actually run. Not demos.",
-    "looking": "Looking for: long-term remote work with product teams that care about craft — Nuxt and Vue on the web, Rust where it needs to be fast or native. Any timezone.",
+    "looking": "Looking for: long-term remote work with product teams that care about craft — Vue/Nuxt or React on the web, Rust where it needs to be fast or native. Any timezone.",
     "cta": "Let's talk"
   },
   "news": {

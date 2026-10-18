@@ -98,8 +98,8 @@ export default defineCachedEventHandler(async (event) => {
   const md = [
     '# whostolemysleep',
     '',
-    `> Full-stack developer with ${years}+ years of experience. Production web apps in Nuxt `
-      + 'and Vue, native desktop and mobile apps in Rust with Tauri. Previously built '
+    `> Full-stack developer with ${years}+ years of experience. Production web apps in Vue/Nuxt `
+      + 'and React, native desktop and mobile apps in Rust with Tauri. Previously built '
       + "high-load interfaces for two of Russia's largest banks. Open to remote work worldwide.",
     '',
     'Personal site and portfolio. Every page exists in two languages: English under `/en` '
@@ -120,10 +120,10 @@ export default defineCachedEventHandler(async (event) => {
     '',
     '## Focus',
     '',
-    '- **Nuxt / Vue** — architecture, SSR/ISR/SSG, Nitro, i18n; also React and Next.js',
+    '- **Vue / Nuxt** — architecture, SSR/ISR/SSG, Nitro, i18n',
+    '- **React / Next** — React 19, Next.js, Zustand, virtualized lists, motion',
     '- **Rust / Tauri** — cross-platform desktop and mobile, native plugins, system APIs',
-    '- **TypeScript / Node** — REST and GraphQL APIs, tooling, published npm packages',
-    '- **Performance** — Core Web Vitals as a budget; this site scores 100/100 on mobile',
+    '- **TypeScript / Node** — REST and GraphQL APIs, published npm packages; Core Web Vitals as a budget, this site scores 100/100 on mobile',
     '',
     ...(Object.keys(skills).length
       ? [
