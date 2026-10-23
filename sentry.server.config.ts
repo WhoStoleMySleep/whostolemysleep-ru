@@ -14,10 +14,20 @@ Sentry.init({
   environment: process.env.NODE_ENV,
 
   tracesSampleRate: 0.1,
-  sendDefaultPii: false,
+
+  // SDK 11 collects user data, cookies, bodies and stack-frame locals by
+  // default. A frame inside the login handler holds the password in a local,
+  // so locals are off along with the rest.
+  dataCollection: {
+    userInfo: false,
+    cookies: false,
+    httpBodies: [],
+    stackFrameVariables: false,
+    databaseQueryData: false,
+  },
 
   /**
-   * Second line of defence over `sendDefaultPii`.
+   * Second line of defence over `dataCollection`.
    *
    * A 500 thrown inside the login handler carries the request that caused it:
    * the body holds the admin password in clear text and the headers hold the
