@@ -22,6 +22,11 @@ Sentry.init({
   tracesSampleRate: 0.1,
 
   // No IP addresses, no cookies, no form values. The admin panel posts a
-  // password, and a crash report is not a place for it.
-  sendDefaultPii: false,
+  // password, and a crash report is not a place for it. SDK 11 collects all of
+  // this by default, so every category is switched off by name.
+  dataCollection: {
+    userInfo: false,
+    cookies: false,
+    httpBodies: [],
+  },
 })
