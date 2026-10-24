@@ -9,16 +9,23 @@ export function useLocale() {
 
   async function setLocale(l: Locale) {
     const isFading = useState('lang-fade', () => false)
+    // A second click mid-fade would start a second navigation on top of the first.
+    if (isFading.value) return
 
     isFading.value = true
-    await new Promise<void>((resolve) => setTimeout(resolve, FADE_MS))
+    // finally: a failed navigation must not leave the page faded out and every
+    // further click ignored by the guard above.
+    try {
+      await new Promise<void>((resolve) => setTimeout(resolve, FADE_MS))
 
-    useCookie('locale', { maxAge: 365 * 24 * 3600, path: '/', sameSite: 'lax' }).value = l
-    await navigateTo(switchLocalePath(l))
+      useCookie('locale', { maxAge: 365 * 24 * 3600, path: '/', sameSite: 'lax' }).value = l
+      await navigateTo(switchLocalePath(l))
 
-    await nextTick()
-    await nextTick()
-    isFading.value = false
+      await nextTick()
+      await nextTick()
+    } finally {
+      isFading.value = false
+    }
   }
 
   function postCount(n: number): string {

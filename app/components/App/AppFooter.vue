@@ -4,11 +4,14 @@ const { t } = useLocale()
 const localePath = useLocalePath()
 const { data: siteSettings } = await useSettings()
 
-/** The set and order of links follow the mockup: Telegram, GitHub, Email, Privacy. */
+/**
+ * The set and order of links follow the mockup: Telegram, GitHub, Email, Privacy.
+ * An unfilled setting arrives as an empty string, hence `||`.
+ */
 const links = computed(() => [
-  { label: 'Telegram', href: siteSettings.value?.telegram_url ?? 'https://t.me/WhoStoleMySleepDev', external: true },
-  { label: 'GitHub',   href: siteSettings.value?.github_url   ?? 'https://github.com/WhoStoleMySleepDev', external: true },
-  { label: 'Email',    href: `mailto:${siteSettings.value?.email ?? 'whostolemysleep@gmail.com'}`, external: true },
+  { label: 'Telegram', href: siteSettings.value?.telegram_url || CONTACTS.telegram },
+  { label: 'GitHub',   href: siteSettings.value?.github_url   || CONTACTS.github },
+  { label: 'Email',    href: `mailto:${siteSettings.value?.email || CONTACTS.email}` },
 ])
 </script>
 

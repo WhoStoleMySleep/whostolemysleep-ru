@@ -4,6 +4,7 @@ import * as schema from '~~/server/db/schema'
 import { markdownToHtml, excerptFromHtml } from './markdown'
 import { markDirty, postPaths } from './pending'
 import { slugify } from './slug'
+import { SITE_URL } from '~~/shared/utils/site'
 
 /** The body NuxtPublish sends. */
 export interface PublishPayload {
@@ -110,7 +111,7 @@ async function findExisting(payload: PublishPayload) {
 }
 
 function publicUrl(slug: string): string {
-  const base = process.env.NUXT_PUBLIC_SITE_URL ?? 'https://whostolemysleep.ru'
+  const base = process.env.NUXT_PUBLIC_SITE_URL ?? SITE_URL
   return `${base.replace(/\/$/, '')}/blog/${slug}`
 }
 

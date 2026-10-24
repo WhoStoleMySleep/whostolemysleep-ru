@@ -1,7 +1,8 @@
 import { db } from '../../db'
 import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
-import { getLocale, pick } from '../../utils/locale'
+import { getLocale } from '../../utils/locale'
+import { toPostSummary } from '../../utils/publicPost'
 import type { H3Event } from 'h3'
 
 async function fetchPosts(event: H3Event) {
@@ -13,7 +14,8 @@ async function fetchPosts(event: H3Event) {
   const locale = getLocale(event)
 
   const rows = await db.query.post.findMany({
-    where: and(eq(post.type, type), eq(post.is_published, true)),
+    where:   and(eq(post.type, type), eq(post.is_published, true)),
+    columns: { text_ru: false, text_en: false },
     with: {
       postTags: { with: { tag: true } },
       images:   { orderBy: (img, { asc }) => [asc(img.position)] },
@@ -21,28 +23,7 @@ async function fetchPosts(event: H3Event) {
     orderBy: (p, { desc }) => [desc(p.published_at)],
   })
 
-  return rows.map((row) => ({
-    id:           row.id,
-    slug:         row.slug,
-    type:         row.type,
-    title:        pick(row.title_ru, row.title_en, locale),
-    text:         pick(row.text_ru, row.text_en, locale),
-    excerpt:      pick(row.excerpt_ru, row.excerpt_en, locale),
-    url:          row.url,
-    published_at: row.published_at,
-    updated_at:   row.updated_at,
-    tags: row.postTags.map((pt) => ({
-      id:   pt.tag.id,
-      slug: pt.tag.slug,
-      name: pick(pt.tag.name_ru, pt.tag.name_en, locale),
-    })),
-    images: row.images.map((img) => ({
-      id:       img.id,
-      url:      img.url,
-      alt:      pick(img.alt_ru, img.alt_en, locale),
-      position: img.position,
-    })),
-  }))
+  return rows.map((row) => toPostSummary(row, locale))
 }
 
 defineRouteMeta({
@@ -54,7 +35,7 @@ defineRouteMeta({
       { $ref: '#/components/parameters/locale' },
     ],
     responses: {
-      200: { description: 'Posts, newest first', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Post' } } } } },
+      200: { description: 'Posts, newest first, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
       400: { $ref: '#/components/responses/BadRequest' },
     },
     $global: {
@@ -77,14 +58,13 @@ defineRouteMeta({
               position: { type: 'integer' },
             },
           },
-          Post: {
+          PostSummary: {
             type: 'object',
             properties: {
               id:           { type: 'integer' },
               slug:         { type: 'string' },
               type:         { type: 'string', enum: ['blog', 'project'] },
               title:        { type: 'string' },
-              text:         { type: 'string', description: 'HTML, passed through sanitizeHtml' },
               excerpt:      { type: 'string' },
               url:          { type: 'string', nullable: true },
               published_at: { type: 'string', format: 'date-time', nullable: true },
@@ -92,6 +72,13 @@ defineRouteMeta({
               tags:         { type: 'array', items: { $ref: '#/components/schemas/Tag' } },
               images:       { type: 'array', items: { $ref: '#/components/schemas/PostImage' } },
             },
+          },
+          Post: {
+            type: 'object',
+            allOf: [
+              { $ref: '#/components/schemas/PostSummary' },
+              { type: 'object', properties: { text: { type: 'string', description: 'HTML, passed through sanitizeHtml' } } },
+            ],
           },
         },
       },
@@ -101,5 +88,5 @@ defineRouteMeta({
 
 export default defineCachedEventHandler(fetchPosts, {
   maxAge:  600,
-  getKey:  (event) => `posts-${getRouterParam(event, 'type')}-${getQuery(event).locale ?? 'ru'}`,
+  getKey:  (event) => `posts-${getRouterParam(event, 'type')}-${getLocale(event)}`,
 })

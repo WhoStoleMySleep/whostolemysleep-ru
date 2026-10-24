@@ -13,6 +13,9 @@ const BG_LIGHT = '#f4f1ec'
  *  button's coordinates and the whole animation runs through WAAPI. */
 const WAVE_MS = 520
 
+/** How long a remembered extension gets to show its marks before the latch is released. */
+const EXT_GRACE_MS = 3000
+
 /**
  * The marks Dark Reader and its relatives leave on the page.
  * The attributes go on <html>, style.darkreader goes into <head>.
@@ -216,7 +219,7 @@ export const useTheme = () => {
         extLatched = false
         markExternal(false)
         sync()
-      }, 3000)
+      }, EXT_GRACE_MS)
     }
   }
 

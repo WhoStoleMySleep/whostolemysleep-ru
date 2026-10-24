@@ -50,6 +50,28 @@ describe('opening and closing', () => {
     expect(m.fetch).toHaveBeenCalledTimes(2)
   })
 
+  test('two quick openings share one request', async () => {
+    const s = await store()
+    await Promise.all([s.open(), s.open()])
+
+    expect(m.fetch).toHaveBeenCalledTimes(2)
+  })
+
+  test('a failed load is not remembered — the next opening tries again', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    m.fetch.mockRejectedValueOnce(new Error('offline'))
+    const s = await store()
+
+    await s.open()
+    s.close()
+    await s.open()
+    await s.search('Rust')
+
+    expect(error).toHaveBeenCalled()
+    expect(s.results.map((p) => p.slug)).toContain('rust')
+    error.mockRestore()
+  })
+
   test('opening again does not hit the network a second time', async () => {
     const s = await store()
     await s.open()
@@ -130,6 +152,26 @@ describe('switching language', () => {
 
     expect(m.fetch).toHaveBeenCalledTimes(2)
     expect(m.fetch.mock.calls[0]?.[1]).toMatchObject({ query: { locale: 'en' } })
+  })
+
+  test('a response for the previous language does not overwrite the new one', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    m.fetch.mockImplementation(async (url: string, opts: { query: { locale: string } }) => {
+      if (opts.query.locale === 'ru') await gate
+      const items = url.includes('project') ? projects : blog
+      return items.map((p) => ({ ...p, title: `${p.title} ${opts.query.locale}` }))
+    })
+
+    const s = await store()
+    const stale = s.open()
+    m.locale.value = 'en'
+    await nextTick()
+    release()
+    await stale
+    await s.search('Rust')
+
+    expect(s.results.map((p) => p.title)).toEqual(['Backend in Rust en'])
   })
 
   test('a closed search waits to be opened instead of loading for nothing', async () => {

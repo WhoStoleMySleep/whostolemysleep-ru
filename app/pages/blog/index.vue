@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Post } from '~/types'
+import type { PostSummary } from '~/types'
 
-const { locale, t, postCount } = useLocale()
+const { t, postCount } = useLocale()
 const { format } = useFormatDate()
 const { linkFor } = usePostLink()
 
@@ -10,11 +10,7 @@ useSeoMeta({
   description: () => t('seo.blog_desc'),
 })
 
-const { data: posts, pending } = await useAsyncData(
-  () => `posts-blog-${locale.value}`,
-  () => $fetch<Post[]>('/api/posts/blog', { query: { locale: locale.value } }),
-  { lazy: true },
-)
+const { data: posts, pending } = await useLocaleData<PostSummary[]>('/api/posts/blog', { lazy: true })
 
 const localQuery = ref('')
 

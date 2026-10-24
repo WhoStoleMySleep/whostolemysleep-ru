@@ -5,6 +5,8 @@ export interface Toast {
 }
 
 let nextId = 0
+/** Pending auto-dismissals: closing a toast by hand must not leave its timer behind. */
+const timers = new Map<number, ReturnType<typeof setTimeout>>()
 
 const LIFETIME_MS = 3500
 
@@ -16,13 +18,15 @@ export const useAdminToast = () => {
   const toasts = useState<Toast[]>('admin:toasts', () => [])
 
   function dismiss(id: number) {
+    clearTimeout(timers.get(id))
+    timers.delete(id)
     toasts.value = toasts.value.filter((t) => t.id !== id)
   }
 
   function push(kind: Toast['kind'], text: string) {
     const id = ++nextId
     toasts.value = [...toasts.value, { id, kind, text }]
-    if (import.meta.client) setTimeout(() => dismiss(id), LIFETIME_MS)
+    if (import.meta.client) timers.set(id, setTimeout(() => dismiss(id), LIFETIME_MS))
   }
 
   return {

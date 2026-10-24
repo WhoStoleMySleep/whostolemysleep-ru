@@ -9,17 +9,12 @@ useSeoMeta({
   description: () => t('seo.contacts_desc'),
 })
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const blankForm    = () => ({ name: '', email: '', message: '', consent: false })
+const blankTouched = () => ({ name: false, email: false, message: false, consent: false })
 
-const VALIDATORS = {
-  name:    (v: string) => v.trim().length >= 2,
-  email:   (v: string) => EMAIL_RE.test(v.trim()),
-  message: (v: string) => v.trim().length >= 10,
-}
-
-const savedForm = useState('contact-form', () => ({ name: '', email: '', message: '', consent: false }))
+const savedForm = useState('contact-form', blankForm)
 const form    = reactive({ ...savedForm.value, website: '' })
-const touched = reactive({ name: false, email: false, message: false, consent: false })
+const touched = reactive(blankTouched())
 const status  = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const sendError = ref('')
 
@@ -28,23 +23,29 @@ watch(() => ({ name: form.name, email: form.email, message: form.message, consen
 })
 
 const errors = computed(() => ({
-  name:    touched.name    && !VALIDATORS.name(form.name)       ? t('contacts.err_name')    : '',
-  email:   touched.email   && !VALIDATORS.email(form.email)     ? t('contacts.err_email')   : '',
-  message: touched.message && !VALIDATORS.message(form.message) ? t('contacts.err_message') : '',
+  name:    touched.name    && !contactValidators.name(form.name)       ? t('contacts.err_name')    : '',
+  email:   touched.email   && !contactValidators.email(form.email)     ? t('contacts.err_email')   : '',
+  message: touched.message && !contactValidators.message(form.message) ? t('contacts.err_message') : '',
   consent: touched.consent && !form.consent                     ? t('contacts.err_consent') : '',
 }))
 
 const isValid = computed(() =>
-  VALIDATORS.name(form.name) && VALIDATORS.email(form.email) && VALIDATORS.message(form.message) && form.consent
+  contactValidators.name(form.name)
+    && contactValidators.email(form.email)
+    && contactValidators.message(form.message)
+    && form.consent
 )
 
 function touch(field: keyof typeof touched) { touched[field] = true }
 
+function clearFields() {
+  Object.assign(form, blankForm())
+  Object.assign(savedForm.value, blankForm())
+  Object.assign(touched, blankTouched())
+}
+
 function resetForm() {
-  const empty = { name: '', email: '', message: '', consent: false }
-  Object.assign(form, empty)
-  Object.assign(savedForm.value, empty)
-  Object.assign(touched, { name: false, email: false, message: false, consent: false })
+  clearFields()
   status.value = 'idle'
   sendError.value = ''
 }
@@ -58,10 +59,7 @@ async function submit() {
 
   try {
     await $fetch('/api/contact', { method: 'POST', body: form })
-    const empty = { name: '', email: '', message: '', consent: false }
-    Object.assign(form, empty)
-    Object.assign(savedForm.value, empty)
-    Object.assign(touched, { name: false, email: false, message: false, consent: false })
+    clearFields()
     status.value = 'success'
   } catch (e: unknown) {
     status.value    = 'error'
@@ -73,18 +71,15 @@ async function submit() {
 /**
  * All three contact methods are always shown, as in the mockup. The values come
  * from the settings when they are set, and from constants otherwise: the whole
- * block used to disappear when the settings failed to load.
+ * block used to disappear when the settings failed to load. `||`, not `??`: an
+ * unfilled setting arrives as an empty string.
  */
-const EMAIL    = 'whostolemysleep@gmail.com'
-const TELEGRAM = 'https://t.me/WhoStoleMySleepDev'
-const GITHUB   = 'https://github.com/WhoStoleMySleepDev'
-
 const contactLinks = computed(() => {
-  const email = siteSettings.value?.email ?? EMAIL
+  const email = siteSettings.value?.email || CONTACTS.email
   return [
     { label: 'Email',    value: email,                          href: `mailto:${email}` },
-    { label: 'Telegram', value: '@whostolemysleep',             href: siteSettings.value?.telegram_url ?? TELEGRAM },
-    { label: 'GitHub',   value: 'github.com/whostolemysleep',   href: siteSettings.value?.github_url ?? GITHUB },
+    { label: 'Telegram', value: '@whostolemysleep',             href: siteSettings.value?.telegram_url || CONTACTS.telegram },
+    { label: 'GitHub',   value: 'github.com/whostolemysleep',   href: siteSettings.value?.github_url || CONTACTS.github },
   ]
 })
 </script>
@@ -139,6 +134,7 @@ const contactLinks = computed(() => {
               <span class="field__label">{{ t('contacts.name') }}</span>
               <input
                 v-model="form.name"
+                :maxlength="CONTACT_LIMITS.name.max"
                 class="field__input"
                 :class="{ 'field__input--error': errors.name }"
                 type="text"
@@ -153,6 +149,7 @@ const contactLinks = computed(() => {
               <span class="field__label">Email</span>
               <input
                 v-model="form.email"
+                :maxlength="CONTACT_LIMITS.email.max"
                 class="field__input"
                 :class="{ 'field__input--error': errors.email }"
                 type="email"
@@ -167,6 +164,7 @@ const contactLinks = computed(() => {
               <span class="field__label">{{ t('contacts.message') }}</span>
               <textarea
                 v-model="form.message"
+                :maxlength="CONTACT_LIMITS.message.max"
                 class="field__input field__input--area"
                 :class="{ 'field__input--error': errors.message }"
                 rows="5"

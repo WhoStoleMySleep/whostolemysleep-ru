@@ -51,28 +51,7 @@ export function useAdminForm<T, F extends object>(opts: AdminFormOptions<T, F>) 
     }
   }
 
-  if (import.meta.client) {
-    const warn = (e: BeforeUnloadEvent) => { if (dirty.value) e.preventDefault() }
-    window.addEventListener('beforeunload', warn)
-    onBeforeUnmount(() => window.removeEventListener('beforeunload', warn))
-
-    // Ctrl/Cmd+S is muscle memory from every editor; the browser's "save page"
-    // is useless here, so the shortcut is intercepted.
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); if (dirty.value) save() }
-    }
-    window.addEventListener('keydown', onKey)
-    onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
-  }
-
-  onBeforeRouteLeave(() => {
-    if (!dirty.value) return true
-    return useAdminConfirm().ask({
-      title:  'Leave with unsaved changes?',
-      text:   'Edits on this page will be lost.',
-      action: 'Leave',
-    })
-  })
+  useUnsavedGuard({ dirty, save })
 
   return { form, dirty, saving, save, refresh }
 }

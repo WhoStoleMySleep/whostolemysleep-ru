@@ -1,5 +1,5 @@
 import type FuseType from 'fuse.js'
-import type { Post } from '~/types'
+import type { PostSummary } from '~/types'
 
 const FUSE_OPTIONS = {
   keys:         ['title', 'excerpt', 'tags.name'],
@@ -10,19 +10,22 @@ const FUSE_OPTIONS = {
 export const useSearchStore = defineStore('search', () => {
   const isOpen   = ref(false)
   const query    = ref('')
-  const results  = ref<Post[]>([])
-  const allItems = ref<Post[]>([])
+  const results  = ref<PostSummary[]>([])
+  const allItems = ref<PostSummary[]>([])
   const isLoaded = ref(false)
 
   /** The index is built once per set of entries, not on every keystroke. */
-  let index: FuseType<Post> | null = null
+  let index: FuseType<PostSummary> | null = null
+  /** The request in flight: opening twice in a row must not load twice. */
+  let loading: Promise<void> | null = null
 
   const { locale } = useLocale()
 
   watch(locale, () => {
     isLoaded.value = false
     allItems.value = []
-    index = null
+    index   = null
+    loading = null
     if (isOpen.value) loadItems()
   })
 
@@ -37,14 +40,33 @@ export const useSearchStore = defineStore('search', () => {
     results.value = []
   }
 
-  async function loadItems() {
-    const [blog, projects] = await Promise.all([
-      $fetch<Post[]>('/api/posts/blog',    { query: { locale: locale.value } }),
-      $fetch<Post[]>('/api/posts/project', { query: { locale: locale.value } }),
-    ])
-    allItems.value = [...(blog ?? []), ...(projects ?? [])]
-    index = null
-    isLoaded.value = true
+  function loadItems(): Promise<void> {
+    if (!loading) {
+      const request = fetchItems().finally(() => { if (loading === request) loading = null })
+      loading = request
+    }
+    return loading
+  }
+
+  /**
+   * A failure is logged and left unloaded, so the next opening tries again. A
+   * response for a language that is no longer selected is dropped: it would fill
+   * the index with the wrong translations.
+   */
+  async function fetchItems() {
+    const requested = locale.value
+    try {
+      const [blog, projects] = await Promise.all([
+        $fetch<PostSummary[]>('/api/posts/blog',    { query: { locale: requested } }),
+        $fetch<PostSummary[]>('/api/posts/project', { query: { locale: requested } }),
+      ])
+      if (requested !== locale.value) return
+      allItems.value = [...(blog ?? []), ...(projects ?? [])]
+      index = null
+      isLoaded.value = true
+    } catch (e) {
+      console.error('[search] failed to load entries', e)
+    }
   }
 
   /**

@@ -3,8 +3,7 @@ import { db } from '~~/server/db'
 import { post } from '~~/server/db/schema'
 import { pick } from '~~/server/utils/locale'
 import { plainText, escapeXml } from '~~/server/utils/text'
-
-const BASE_URL = 'https://whostolemysleep.ru'
+import { SITE_URL as BASE_URL } from '~~/shared/utils/site'
 
 /** Enough for a reader to catch up on; the rest is on the site. */
 const ITEMS = 20

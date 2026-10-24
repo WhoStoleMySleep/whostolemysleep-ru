@@ -10,6 +10,8 @@ const pageTransition = computed(() =>
 const { locale } = useI18n()
 const head = useLocaleHead({ seo: true })
 useHead(() => ({
+  // The one place lang is set. It is not only about accessibility: --hero-size in
+  // main.css keys off it and drops the type size for cyrillic.
   htmlAttrs: { ...head.value.htmlAttrs, lang: locale.value },
   link:      head.value.link,
   meta:      head.value.meta,

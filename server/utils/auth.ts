@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose'
 import bcrypt from 'bcryptjs'
 import type { H3Event } from 'h3'
-import { clearRateLimit, clientIp, hitRateLimit, type RateVerdict } from './rateLimit'
+import { clearRateLimit, hitRateLimit, type RateVerdict } from './rateLimit'
 
 export const ADMIN_COOKIE = 'wms_admin'
 
@@ -98,8 +98,4 @@ export async function hitLoginAttempt(ip: string): Promise<RateVerdict> {
 
 export async function clearFailures(ip: string): Promise<void> {
   await clearRateLimit(`login:${ip}`)
-}
-
-export function getClientIp(event: H3Event): string {
-  return clientIp(event)
 }

@@ -25,6 +25,7 @@ describe('useScrollProgress', () => {
     let out!: ReturnType<typeof useScrollProgress>
     const wrapper = mount(defineComponent({ setup() { out = useScrollProgress(); return () => null } }))
     window.dispatchEvent(new Event('scroll'))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
 
     expect(out.progress.value).toBe(1)
 

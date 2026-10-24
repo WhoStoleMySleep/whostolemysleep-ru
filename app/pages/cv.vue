@@ -8,7 +8,7 @@ import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
  */
 definePageMeta({ layout: false })
 
-const { locale, t } = useLocale()
+const { t } = useLocale()
 const localePath = useLocalePath()
 const { formatPeriod } = useFormatDate()
 
@@ -19,11 +19,11 @@ const [
   { data: skillGroups },
   { data: settings },
 ] = await Promise.all([
-  useAsyncData(() => `cv-about-${locale.value}`,      () => $fetch<AboutMe>('/api/about',                  { query: { locale: locale.value } })),
-  useAsyncData(() => `cv-experience-${locale.value}`, () => $fetch<Experience[]>('/api/resume/experience', { query: { locale: locale.value } })),
-  useAsyncData(() => `cv-education-${locale.value}`,  () => $fetch<Education[]>('/api/resume/education',   { query: { locale: locale.value } })),
-  useAsyncData(() => `cv-skills-${locale.value}`,     () => $fetch<SkillGroup[]>('/api/skills',            { query: { locale: locale.value } })),
-  useAsyncData('cv-settings', () => $fetch<{ email: string; github_url: string; telegram_url: string }>('/api/settings')),
+  useLocaleData<AboutMe>('/api/about'),
+  useLocaleData<Experience[]>('/api/resume/experience'),
+  useLocaleData<Education[]>('/api/resume/education'),
+  useLocaleData<SkillGroup[]>('/api/skills'),
+  useSettings(),
 ])
 
 // The document name is the filename "Save as PDF" will suggest.
@@ -31,7 +31,6 @@ const docTitle = computed(() => `${t('cv.name')} — CV`)
 
 useHead(() => ({
   title: docTitle.value,
-  htmlAttrs: { lang: locale.value },
   meta: [{ name: 'robots', content: 'noindex' }],
 }))
 

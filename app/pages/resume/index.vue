@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AboutMe, Experience, Education, SkillGroup } from '~/types'
 
-const { locale, t } = useLocale()
+const { t } = useLocale()
 const localePath = useLocalePath()
 
 useSeoMeta({
@@ -15,10 +15,10 @@ const [
   { data: education },
   { data: skillGroups },
 ] = await Promise.all([
-  useAsyncData(() => `about-${locale.value}`,      () => $fetch<AboutMe>('/api/about',                  { query: { locale: locale.value } }), { lazy: true }),
-  useAsyncData(() => `experience-${locale.value}`, () => $fetch<Experience[]>('/api/resume/experience', { query: { locale: locale.value } }), { lazy: true }),
-  useAsyncData(() => `education-${locale.value}`,  () => $fetch<Education[]>('/api/resume/education',   { query: { locale: locale.value } }), { lazy: true }),
-  useAsyncData(() => `skills-${locale.value}`,     () => $fetch<SkillGroup[]>('/api/skills',            { query: { locale: locale.value } }), { lazy: true }),
+  useLocaleData<AboutMe>('/api/about', { lazy: true }),
+  useLocaleData<Experience[]>('/api/resume/experience', { lazy: true }),
+  useLocaleData<Education[]>('/api/resume/education', { lazy: true }),
+  useLocaleData<SkillGroup[]>('/api/skills', { lazy: true }),
 ])
 
 const { formatPeriod } = useFormatDate()

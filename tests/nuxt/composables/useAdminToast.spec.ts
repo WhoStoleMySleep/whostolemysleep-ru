@@ -52,4 +52,16 @@ describe('useAdminToast', () => {
     vi.advanceTimersByTime(3500)
     expect(toast.toasts.value).toHaveLength(0)
   })
+
+  test('closing a message by hand cancels its timer', async () => {
+    vi.useFakeTimers()
+    const { useAdminToast } = await import('~/composables/useAdminToast')
+    const toast = useAdminToast()
+    toast.toasts.value = []
+
+    toast.ok('Saved')
+    toast.dismiss(toast.toasts.value[0]!.id)
+
+    expect(vi.getTimerCount()).toBe(0)
+  })
 })

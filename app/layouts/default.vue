@@ -8,20 +8,12 @@ const { progress, toTop } = useScrollProgress()
 const progressPct = computed(() => `${Math.round(progress.value * 100)}%`)
 const showToTop = computed(() => progress.value > 0.02)
 
-function isActive(key: string) {
-  const path = route.path.replace(/^\/(ru|en)/, '') || '/'
-  return key === 'home' ? path === '/' : path.startsWith(`/${key}`)
-}
-
 /**
  * The display font differs per locale (Archivo for latin, Onest for cyrillic), so
  * only the one the page actually needs is preloaded. The base JetBrains Mono latin
  * is preloaded in nuxt.config.
  */
 useHead(() => ({
-  // lang is not only about accessibility: --hero-size in main.css keys off it and
-  // drops the type size for cyrillic.
-  htmlAttrs: { lang: locale.value },
   link: locale.value === 'ru'
     ? [
         { rel: 'preload', as: 'font', type: 'font/woff2', crossorigin: '',
@@ -50,7 +42,7 @@ useHead(() => ({
 <template>
   <div class="shell">
     <div class="progress" aria-hidden="true">
-      <div class="progress__bar" :style="{ width: progressPct }" />
+      <div class="progress__bar" :style="{ transform: `scaleX(${progress})` }" />
     </div>
 
     <div class="bg bg--diagonal" aria-hidden="true" />
@@ -68,7 +60,7 @@ useHead(() => ({
             :key="item.key"
             :to="item.to"
             class="rail__link"
-            :class="{ 'rail__link--active': isActive(item.key) }"
+            :class="{ 'rail__link--active': isNavActive(item.key, route.path) }"
           >
             {{ item.label }}
           </NuxtLink>
@@ -123,10 +115,13 @@ useHead(() => ({
   background: var(--soft);
 }
 
+/* scaleX rather than width: a transform is composited and does not lay the
+   page out again on every scroll event. */
 .progress__bar {
   height: 100%;
   background: var(--accent-flat);
-  transition: width 0.12s linear;
+  transform-origin: left;
+  transition: transform 0.12s linear;
 }
 
 /* ── Background behind the panel ── */

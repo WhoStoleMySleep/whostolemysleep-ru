@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer'
+import { hitRateLimit, clientIp } from '~~/server/utils/rateLimit'
+import { parseContact } from '~~/shared/utils/contact'
 
 const RATE_LIMIT  = 3
 const RATE_WINDOW = 60 * 60 * 1000
@@ -14,11 +16,12 @@ defineRouteMeta({
         'application/json': {
           schema: {
             type: 'object',
-            required: ['name', 'email', 'message'],
+            required: ['name', 'email', 'message', 'consent'],
             properties: {
-              name:    { type: 'string' },
+              name:    { type: 'string', description: '2 to 200 characters' },
               email:   { type: 'string', format: 'email' },
-              message: { type: 'string' },
+              message: { type: 'string', description: '10 to 5000 characters' },
+              consent: { type: 'boolean', description: 'Consent to personal data processing, must be true' },
               website: { type: 'string', description: 'Honeypot, must stay empty' },
             },
           },
@@ -34,14 +37,19 @@ defineRouteMeta({
 })
 
 export default defineEventHandler(async (event) => {
+  // The free checks go first: the counter below is a database write, and a flood of
+  // bot or malformed requests should be turned away without reaching Neon.
+  const body = await readBody(event)
+  if (body?.website) throw createError({ statusCode: 400, message: 'bad_request' })
+
+  const contact = parseContact(body)
+  if (!contact) throw createError({ statusCode: 400, message: 'invalid' })
+  const { name, email, message } = contact
+
   // clientIp reads the platform header, not whatever the client sent.
   const ip = clientIp(event)
-  const allowed = await checkRateLimit(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW)
+  const { allowed } = await hitRateLimit(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW)
   if (!allowed) throw createError({ statusCode: 429, message: 'rate_limit' })
-
-  const { name, email, message, website } = await readBody(event)
-  if (website) throw createError({ statusCode: 400, message: 'bad_request' })
-  if (!name || !email || !message) throw createError({ statusCode: 400, message: 'required' })
 
   const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 

@@ -1,7 +1,8 @@
 import {
   assertAdminConfig, checkAdminPassword, signAdminToken, setAdminCookie,
-  hitLoginAttempt, clearFailures, getClientIp,
+  hitLoginAttempt, clearFailures,
 } from '~~/server/utils/auth'
+import { clientIp } from '~~/server/utils/rateLimit'
 
 defineRouteMeta({
   openAPI: {
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   // Before the counter: a server that is not configured should not spend login attempts.
   assertAdminConfig()
 
-  const ip = getClientIp(event)
+  const ip = clientIp(event)
 
   // The attempt is counted before the password is checked: otherwise a request
   // abandoned halfway through would never reach the counter.

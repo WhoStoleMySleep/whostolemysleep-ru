@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Post, AboutMe } from '~/types'
+import type { PostSummary, AboutMe } from '~/types'
 
-const { locale, t } = useLocale()
+const { t } = useLocale()
 const localePath = useLocalePath()
 const { format } = useFormatDate()
 const { linkFor } = usePostLink()
@@ -18,33 +18,23 @@ useHead({
       '@context': 'https://schema.org',
       '@type': 'Person',
       name: 'whostolemysleep',
-      url: 'https://whostolemysleep.ru',
+      url: SITE_URL,
       jobTitle: 'Full-Stack Developer',
-      email: 'whostolemysleep@gmail.com',
-      sameAs: [
-        'https://github.com/WhoStoleMySleepDev',
-        'https://t.me/WhoStoleMySleepDev',
-      ],
+      email: CONTACTS.email,
+      sameAs: [CONTACTS.github, CONTACTS.telegram],
       knowsAbout: ['Nuxt', 'Vue', 'TypeScript', 'Rust', 'Tauri', 'React', 'Next.js', 'Node.js'],
     }),
   }],
 })
 
 const { data: siteSettings } = await useSettings()
-const { data: about }    = await useAsyncData(() => `about-${locale.value}`,         () => $fetch<AboutMe>('/api/about',          { query: { locale: locale.value } }), { lazy: true })
-const { data: blog }     = await useAsyncData(() => `posts-blog-${locale.value}`,    () => $fetch<Post[]>('/api/posts/blog',      { query: { locale: locale.value } }), { lazy: true })
-const { data: projects } = await useAsyncData(() => `posts-project-${locale.value}`, () => $fetch<Post[]>('/api/posts/project',   { query: { locale: locale.value } }), { lazy: true })
+const { data: about }  = await useLocaleData<AboutMe>('/api/about', { lazy: true })
+const { data: latest } = await useLocaleData<PostSummary[]>('/api/posts/latest', { lazy: true })
 
-const news = computed(() => {
-  const all = [...(blog.value ?? []), ...(projects.value ?? [])]
-  return all
-    .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
-    .slice(0, 4)
-    .map(post => ({ ...post, ...linkFor(post) }))
-})
+const news = computed(() => (latest.value ?? []).map(post => ({ ...post, ...linkFor(post) })))
 
 /** Years of experience live here only — the heading no longer repeats them. */
-const years = computed(() => siteSettings.value?.years_experience ?? 5)
+const years = computed(() => siteSettings.value?.years_experience ?? DEFAULT_YEARS)
 
 const stack = computed(() => [
   { k: t('stack.f1_k'), v: t('stack.f1_v') },

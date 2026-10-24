@@ -13,18 +13,22 @@ export interface PostImage {
   position: number
 }
 
-export interface Post {
+/** A post as lists return it: everything but the body. */
+export interface PostSummary {
   id: number
   slug: string
   type: 'blog' | 'project'
   title: string
-  text: string
   excerpt: string
   url: string | null
   tags: Tag[]
   images: PostImage[]
   published_at: string | null
   updated_at: string
+}
+
+export interface Post extends PostSummary {
+  text: string
 }
 
 export interface AboutMe {
@@ -68,10 +72,4 @@ export interface SkillGroup {
   slug: string
   name: string
   skills: Skill[]
-}
-
-export interface ContactPayload {
-  name: string
-  email: string
-  message: string
 }

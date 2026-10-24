@@ -1,3 +1,14 @@
+import { OG_IMAGE, SITE_URL } from './shared/utils/site'
+
+/**
+ * An ISR rule that ignores the query string. Without allowQuery Vercel caches every
+ * distinct query on its own, so /ru?x=1, /ru?x=2… each ran a render in a function:
+ * a free way around the edge cache. No ISR page reads the query — the blog and
+ * project filters live in component state. Nitro adds its own __isr_route param,
+ * which is what keeps one cache entry per post under /blog/**.
+ */
+const isr = (expiration: number) => ({ isr: { expiration, allowQuery: [] as string[] } })
+
 export default defineNuxtConfig({
   future: { compatibilityVersion: 4 },
   compatibilityDate: '2026-05-22',
@@ -15,7 +26,7 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    baseUrl: 'https://whostolemysleep.ru',
+    baseUrl: SITE_URL,
     strategy: 'prefix',
     defaultLocale: 'en',
     langDir: 'locales/',
@@ -57,28 +68,28 @@ export default defineNuxtConfig({
       },
     },
     '/':             { ssr: true },
-    '/ru':           { isr: 3600 },
-    '/en':           { isr: 3600 },
-    '/ru/blog':      { isr: 600 },
-    '/en/blog':      { isr: 600 },
-    '/ru/blog/**':   { isr: 600 },
-    '/en/blog/**':   { isr: 600 },
-    '/ru/projects':  { isr: 600 },
-    '/en/projects':  { isr: 600 },
-    '/ru/resume':    { isr: 7200 },
-    '/en/resume':    { isr: 7200 },
+    '/ru':           isr(3600),
+    '/en':           isr(3600),
+    '/ru/blog':      isr(600),
+    '/en/blog':      isr(600),
+    '/ru/blog/**':   isr(600),
+    '/en/blog/**':   isr(600),
+    '/ru/projects':  isr(600),
+    '/en/projects':  isr(600),
+    '/ru/resume':    isr(7200),
+    '/en/resume':    isr(7200),
     // The printable CV: kept out of search so it does not compete with /resume.
-    '/ru/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
-    '/en/cv':        { isr: 7200, headers: { 'X-Robots-Tag': 'noindex' } },
+    '/ru/cv':        { ...isr(7200), headers: { 'X-Robots-Tag': 'noindex' } },
+    '/en/cv':        { ...isr(7200), headers: { 'X-Robots-Tag': 'noindex' } },
     // The page is a form plus the contacts from settings — no reason to hit the
     // database for them on every request. The window is long on purpose:
     // settings.patch.ts queues both paths for revalidation, so an edit in the admin
     // panel propagates on the Flush button rather than when a timer runs out.
-    '/ru/contacts':  { isr: 7200 },
-    '/en/contacts':  { isr: 7200 },
+    '/ru/contacts':  isr(7200),
+    '/en/contacts':  isr(7200),
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },
-    '/ru/privacy':   { isr: 86400 },
-    '/en/privacy':   { isr: 86400 },
+    '/ru/privacy':   isr(86400),
+    '/en/privacy':   isr(86400),
   },
 
   css: ['~/assets/css/main.css'],
@@ -128,9 +139,9 @@ export default defineNuxtConfig({
         // No og:image:width/height here: blog posts replace og:image with their own
         // cover, and a declared size that belongs to a different picture is worse
         // than none — the crawler measures the file it actually fetched.
-        { property: 'og:image', content: 'https://whostolemysleep.ru/og-image.png' },
+        { property: 'og:image', content: OG_IMAGE },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:image', content: 'https://whostolemysleep.ru/og-image.png' },
+        { name: 'twitter:image', content: OG_IMAGE },
       ],
     },
   },
@@ -150,10 +161,9 @@ export default defineNuxtConfig({
    * pages and says nothing.
    */
   sentry: {
-    // Vercel runs the built server for us, so there is no start script to add
-    // `--import` to. A top-level import is the supported way in: it covers HTTP
-    // traces and every unhandled error, but not database-level spans.
-    autoInjectServerSentry: 'top-level-import',
+    // No autoInjectServerSentry: since @sentry/nuxt 11 the server config is bundled
+    // into the Nitro build by default, which is what 'top-level-import' did by hand
+    // for Vercel, where there is no start script to add `--import` to.
 
     // org, project and SENTRY_AUTH_TOKEN come from the environment: the token is
     // a write credential and has no business in a public repository. Without it
