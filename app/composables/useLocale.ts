@@ -9,6 +9,8 @@ export function useLocale() {
 
   async function setLocale(l: Locale) {
     const isFading = useState('lang-fade', () => false)
+    // A second click mid-fade would start a second navigation on top of the first.
+    if (isFading.value) return
 
     isFading.value = true
     await new Promise<void>((resolve) => setTimeout(resolve, FADE_MS))

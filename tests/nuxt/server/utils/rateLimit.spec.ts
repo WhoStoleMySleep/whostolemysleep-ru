@@ -84,16 +84,6 @@ describe('clearRateLimit', () => {
   })
 })
 
-describe('checkRateLimit', () => {
-  test('it returns only yes/no — the contact form caller expects a boolean', async () => {
-    plan(state, { 'insert:rate_limit': [[row(1)], [row(99)]] })
-    const { checkRateLimit } = await import('~~/server/utils/rateLimit')
-
-    expect(await checkRateLimit('contact:ip', 3, 60_000)).toBe(true)
-    expect(await checkRateLimit('contact:ip', 3, 60_000)).toBe(false)
-  })
-})
-
 describe('clientIp', () => {
   function headers(map: Record<string, string | undefined>, socket?: string) {
     vi.stubGlobal('getRequestHeader', (_: unknown, name: string) => map[name])

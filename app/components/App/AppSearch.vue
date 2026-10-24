@@ -3,7 +3,9 @@ const search = useSearchStore()
 const input  = ref<HTMLInputElement | null>(null)
 const route  = useRoute()
 const { t }  = useLocale()
-const localePath = useLocalePath()
+const { linkFor } = usePostLink()
+
+const results = computed(() => search.results.map((item) => ({ ...item, ...linkFor(item) })))
 
 watch(() => search.isOpen, (val) => {
   if (val) {
@@ -15,6 +17,12 @@ watch(() => search.isOpen, (val) => {
 })
 
 watch(() => route.path, () => search.close())
+
+// Unmounted with the overlay open (an error page, a layout swap), the page would
+// otherwise stay unscrollable.
+onBeforeUnmount(() => {
+  if (search.isOpen) document.body.style.overflow = ''
+})
 
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape') search.close()
@@ -51,14 +59,15 @@ const { formatLong } = useFormatDate()
 
           <div class="search-body">
             <div v-if="search.query && search.results.length === 0" class="search-empty">
-              {{ t('search.empty').replace('{q}', search.query) }}
+              {{ t('search.empty', { q: search.query }) }}
             </div>
 
-            <ul v-else-if="search.results.length > 0" class="search-results">
-              <li v-for="item in search.results" :key="item.id" class="search-result">
+            <ul v-else-if="results.length > 0" class="search-results">
+              <li v-for="item in results" :key="item.id" class="search-result">
                 <NuxtLink
-                  :to="item.url ?? localePath(`/blog/${item.slug}`)"
-                  :target="item.url ? '_blank' : ''"
+                  :to="item.href"
+                  :target="item.isExternal ? '_blank' : undefined"
+                  :rel="item.isExternal ? 'noopener noreferrer' : undefined"
                   class="search-result__link"
                   @click="search.close()"
                 >

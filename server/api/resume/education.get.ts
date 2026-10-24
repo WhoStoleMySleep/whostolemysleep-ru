@@ -49,5 +49,5 @@ defineRouteMeta({
 
 export default defineCachedEventHandler(fetchEducation, {
   maxAge:  7200,
-  getKey:  (event) => `education-${getQuery(event).locale ?? 'ru'}`,
+  getKey:  (event) => `education-${getLocale(event)}`,
 })

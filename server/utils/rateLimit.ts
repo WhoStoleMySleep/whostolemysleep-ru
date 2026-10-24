@@ -40,12 +40,6 @@ export async function clearRateLimit(key: string): Promise<void> {
   await db.delete(schema.rateLimit).where(eq(schema.rateLimit.key, key))
 }
 
-/** Kept for the older call site in the contact form. */
-export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
-  const { allowed } = await hitRateLimit(key, limit, windowMs)
-  return allowed
-}
-
 /**
  * The client address used by the limiters. `x-forwarded-for` is deliberately ignored:
  * the client sends it itself, and spoofing it would reset any counter. On Vercel the

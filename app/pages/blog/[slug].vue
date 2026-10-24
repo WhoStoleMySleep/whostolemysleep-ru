@@ -3,19 +3,15 @@ import type { Post } from '~/types'
 
 const route  = useRoute()
 const slug   = route.params.slug as string
-const { locale, t } = useLocale()
+const { t } = useLocale()
 const localePath = useLocalePath()
 
-const { data: post, error } = await useAsyncData(
-  () => `blog-${slug}-${locale.value}`,
-  () => $fetch<Post>(`/api/blog/${slug}`, { query: { locale: locale.value } }),
-)
+const { data: post, error } = await useLocaleData<Post>(`/api/blog/${slug}`)
 
-if (error.value || !post.value) {
-  throw createError({ statusCode: 404, message: 'Post not found' })
-}
-
-const SITE_URL = 'https://whostolemysleep.ru'
+// Only a missing post is a 404: a database outage answered as "not found" would
+// hide the failure and tell crawlers to drop the page.
+if (error.value && error.value.statusCode !== 404) throw createError(error.value)
+if (!post.value) throw createError({ statusCode: 404, message: 'Post not found' })
 
 /**
  * A shared link is a card, and the card is built from these tags alone. The
@@ -30,8 +26,8 @@ useSeoMeta({
   ogTitle:               () => post.value?.title ?? t('blog.eyebrow'),
   ogDescription:         () => post.value?.excerpt ?? '',
   ogUrl:                 () => `${SITE_URL}${localePath(`/blog/${slug}`)}`,
-  ogImage:               () => post.value?.images[0]?.url ?? `${SITE_URL}/og-image.png`,
-  twitterImage:          () => post.value?.images[0]?.url ?? `${SITE_URL}/og-image.png`,
+  ogImage:               () => post.value?.images[0]?.url ?? OG_IMAGE,
+  twitterImage:          () => post.value?.images[0]?.url ?? OG_IMAGE,
   articlePublishedTime:  () => post.value?.published_at ?? undefined,
   articleModifiedTime:   () => post.value?.updated_at ?? undefined,
 })

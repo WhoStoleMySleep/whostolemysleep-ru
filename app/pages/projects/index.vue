@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import type { Post } from '~/types'
+import type { PostSummary } from '~/types'
 
-const { locale, t } = useLocale()
+const { t } = useLocale()
 
 useSeoMeta({
   title:       () => t('seo.projects_title'),
   description: () => t('seo.projects_desc'),
 })
 
-const { data: projects, pending } = await useAsyncData(
-  () => `posts-project-${locale.value}`,
-  () => $fetch<Post[]>('/api/posts/project', { query: { locale: locale.value } }),
-  { lazy: true },
-)
+const { data: projects, pending } = await useLocaleData<PostSummary[]>('/api/posts/project', { lazy: true })
 
 const activeTag = ref<string | null>(null)
 

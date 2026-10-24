@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Post } from '~/types'
+import type { PostSummary } from '~/types'
 
-const props = defineProps<{ item: Post }>()
+const props = defineProps<{ item: PostSummary }>()
 const { format } = useFormatDate()
 const { t } = useLocale()
 const { linkFor } = usePostLink()

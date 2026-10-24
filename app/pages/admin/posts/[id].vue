@@ -54,8 +54,19 @@ type LoadedPost = Partial<Form> & {
 const form   = ref<Form>(blank())
 const images = ref<PostImage[]>([])
 
-if (!isNew.value) {
-  const post = await api.get<LoadedPost>(`/api/admin/posts/${postId.value}`)
+// Through useAsyncData so the post fetched during SSR reaches the client in the
+// payload; a bare await ran the same request again on hydration.
+const { data: loaded, error: loadError } = await useAsyncData(
+  `admin-post-${postId.value}`,
+  () => api.get<LoadedPost>(`/api/admin/posts/${postId.value}`),
+  { immediate: !isNew.value },
+)
+
+// A blank form over an existing id would overwrite the post on the first save.
+if (loadError.value) throw createError(loadError.value)
+
+if (loaded.value) {
+  const post = loaded.value
   form.value = {
     ...blank(),
     ...post,
@@ -103,35 +114,7 @@ async function save() {
   }
 }
 
-function onKey(e: KeyboardEvent) {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
-    e.preventDefault()
-    save()
-  }
-}
-
-function onBeforeUnload(e: BeforeUnloadEvent) {
-  if (dirty.value) e.preventDefault()
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', onKey)
-  window.addEventListener('beforeunload', onBeforeUnload)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKey)
-  window.removeEventListener('beforeunload', onBeforeUnload)
-})
-
-onBeforeRouteLeave(async () => {
-  if (!dirty.value) return true
-  return confirm.ask({
-    title:  'Leave without saving?',
-    text:   'Unsaved changes will be lost.',
-    action: 'Leave',
-  })
-})
+useUnsavedGuard({ dirty, save })
 
 /* ── Tags ── */
 

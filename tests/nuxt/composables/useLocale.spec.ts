@@ -10,6 +10,10 @@ mockNuxtImport('useI18n', () => () => ({
 
 mockNuxtImport('useSwitchLocalePath', () => () => (l: string) => `/${l}`)
 
+const nav = vi.hoisted(() => ({ to: vi.fn(async () => {}) }))
+mockNuxtImport('navigateTo', () => nav.to)
+mockNuxtImport('useCookie', () => () => ({ value: '' }))
+
 describe('postCount in Russian', () => {
   test('singular', async () => {
     state.locale = 'ru'
@@ -48,5 +52,21 @@ describe('postCount in English', () => {
     expect(useLocale().postCount(1)).toBe('1 post')
     expect(useLocale().postCount(0)).toBe('0 posts')
     expect(useLocale().postCount(21)).toBe('21 posts')
+  })
+})
+
+describe('setLocale', () => {
+  test('a second click during the fade does not start a second navigation', async () => {
+    vi.useFakeTimers()
+    const { useLocale } = await import('~/composables/useLocale')
+
+    const first  = useLocale().setLocale('en')
+    const second = useLocale().setLocale('en')
+    await vi.runAllTimersAsync()
+    await Promise.all([first, second])
+
+    expect(nav.to).toHaveBeenCalledTimes(1)
+    expect(nav.to).toHaveBeenCalledWith('/en')
+    vi.useRealTimers()
   })
 })

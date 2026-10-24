@@ -14,11 +14,6 @@ watch(() => route.path, () => { mobileOpen.value = false })
 function toggleLocale() {
   setLocale(locale.value === 'ru' ? 'en' : 'ru')
 }
-
-function isActive(key: string) {
-  const path = route.path.replace(/^\/(ru|en)/, '') || '/'
-  return key === 'home' ? path === '/' : path.startsWith(`/${key}`)
-}
 </script>
 
 <template>
@@ -118,7 +113,7 @@ function isActive(key: string) {
           :key="item.key"
           :to="item.to"
           class="head__mobile-link"
-          :class="{ 'head__mobile-link--active': isActive(item.key) }"
+          :class="{ 'head__mobile-link--active': isNavActive(item.key, route.path) }"
         >
           <span class="head__mobile-num">{{ item.num }}</span>
           {{ item.label }}

@@ -12,7 +12,7 @@ vi.mock('~~/server/db', async () => {
 
 async function sitemap() {
   vi.stubGlobal('defineRouteMeta', () => {})
-  vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
+  vi.stubGlobal('defineCachedEventHandler', (fn: unknown) => fn)
   vi.stubGlobal('setHeader', () => {})
   const mod = await import('~~/server/routes/sitemap.xml')
   return (mod.default as (e: H3Event) => Promise<string>)({} as H3Event)

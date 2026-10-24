@@ -1,3 +1,5 @@
+import { SITE_URL } from '~~/shared/utils/site'
+
 /**
  * Flushing the cache of rendered pages.
  *
@@ -16,7 +18,7 @@
  * still works: there the cache really does sit next to the server.
  */
 
-const BASE = process.env.NUXT_PUBLIC_SITE_URL ?? 'https://whostolemysleep.ru'
+const BASE = process.env.NUXT_PUBLIC_SITE_URL ?? SITE_URL
 
 export interface RevalidateResult {
   revalidated: string[]

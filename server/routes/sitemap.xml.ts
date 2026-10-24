@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { post } from '~~/server/db/schema'
+import { SITE_URL as BASE_URL } from '~~/shared/utils/site'
 
-const BASE_URL = 'https://whostolemysleep.ru'
 const LOCALES  = ['en', 'ru']
 
 // /cv is missing on purpose: routeRules serves it with X-Robots-Tag: noindex, so
@@ -19,7 +19,7 @@ defineRouteMeta({
   },
 })
 
-export default defineEventHandler(async (event) => {
+export default defineCachedEventHandler(async (event) => {
   const posts = await db
     .select({ slug: post.slug, type: post.type, url: post.url, updated_at: post.updated_at })
     .from(post)
@@ -58,4 +58,8 @@ export default defineEventHandler(async (event) => {
 
   setHeader(event, 'Content-Type', 'application/xml; charset=utf-8')
   return xml
+}, {
+  // Crawlers ask for it far more often than posts appear; the same window as llms.txt.
+  maxAge: 3600,
+  getKey: () => 'sitemap-xml',
 })

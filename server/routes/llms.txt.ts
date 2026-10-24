@@ -2,6 +2,7 @@ import { asc, eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { post, settings, experience, skillGroup, skill } from '~~/server/db/schema'
 import { plainText } from '~~/server/utils/text'
+import { SITE_URL as BASE_URL, yearsSince } from '~~/shared/utils/site'
 
 /**
  * llms.txt — a short digest of the site for language models (llmstxt.org).
@@ -14,8 +15,6 @@ import { plainText } from '~~/server/utils/text'
  * English, because that is the default locale and the convention of the format
  * itself. Links point at /en; the Russian mirror gets a section of its own.
  */
-
-const BASE_URL = 'https://whostolemysleep.ru'
 
 /** A project with its own url links out; everything else links to the blog page. */
 function linkFor(p: { slug: string, url: string | null }) {
@@ -61,11 +60,7 @@ export default defineCachedEventHandler(async (event) => {
       .orderBy(asc(skillGroup.order), asc(skill.order)),
   ])
 
-  // The same calculation as /api/settings — experience counts from the first job.
-  const start = firstJob[0]?.date_from
-  const years = start
-    ? Math.floor((Date.now() - new Date(start).getTime()) / (365.25 * 24 * 3600 * 1000))
-    : 5
+  const years = yearsSince(firstJob[0]?.date_from)
 
   const sorted = [...posts].sort((a, b) =>
     new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()
