@@ -51,3 +51,11 @@ describe('parseContact', () => {
     expect(parseContact({})).toBeNull()
   })
 })
+
+describe('CONTACT_LIMITS', () => {
+  test('the maximums the form puts on its fields are the ones the server enforces', async () => {
+    const { CONTACT_LIMITS, contactValidators } = await import('~~/shared/utils/contact')
+    expect(contactValidators.name('x'.repeat(CONTACT_LIMITS.name.max))).toBe(true)
+    expect(contactValidators.name('x'.repeat(CONTACT_LIMITS.name.max + 1))).toBe(false)
+  })
+})

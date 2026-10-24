@@ -134,6 +134,7 @@ const contactLinks = computed(() => {
               <span class="field__label">{{ t('contacts.name') }}</span>
               <input
                 v-model="form.name"
+                :maxlength="CONTACT_LIMITS.name.max"
                 class="field__input"
                 :class="{ 'field__input--error': errors.name }"
                 type="text"
@@ -148,6 +149,7 @@ const contactLinks = computed(() => {
               <span class="field__label">Email</span>
               <input
                 v-model="form.email"
+                :maxlength="CONTACT_LIMITS.email.max"
                 class="field__input"
                 :class="{ 'field__input--error': errors.email }"
                 type="email"
@@ -162,6 +164,7 @@ const contactLinks = computed(() => {
               <span class="field__label">{{ t('contacts.message') }}</span>
               <textarea
                 v-model="form.message"
+                :maxlength="CONTACT_LIMITS.message.max"
                 class="field__input field__input--area"
                 :class="{ 'field__input--error': errors.message }"
                 rows="5"

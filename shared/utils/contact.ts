@@ -4,8 +4,12 @@ export interface ContactMessage {
   message: string
 }
 
-/** Upper bounds keep a scripted request from mailing a novel. */
-const LIMITS = {
+/**
+ * Upper bounds keep a scripted request from mailing a novel. The form puts the
+ * maximums on its fields as maxlength, so the only error a person can hit is the
+ * minimum — which is the only one the error texts describe.
+ */
+export const CONTACT_LIMITS = {
   name:    { min: 2,  max: 200 },
   email:   { min: 3,  max: 320 },
   message: { min: 10, max: 5000 },
@@ -23,9 +27,9 @@ function fits(value: string, { min, max }: { min: number, max: number }): boolea
  * client that can post to /api/contact.
  */
 export const contactValidators = {
-  name:    (v: string) => fits(v, LIMITS.name),
-  email:   (v: string) => fits(v, LIMITS.email) && EMAIL_RE.test(v.trim()),
-  message: (v: string) => fits(v, LIMITS.message),
+  name:    (v: string) => fits(v, CONTACT_LIMITS.name),
+  email:   (v: string) => fits(v, CONTACT_LIMITS.email) && EMAIL_RE.test(v.trim()),
+  message: (v: string) => fits(v, CONTACT_LIMITS.message),
 }
 
 function isText(value: unknown): value is string {

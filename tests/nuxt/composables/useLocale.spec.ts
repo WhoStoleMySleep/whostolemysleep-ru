@@ -69,4 +69,23 @@ describe('setLocale', () => {
     expect(nav.to).toHaveBeenCalledWith('/en')
     vi.useRealTimers()
   })
+
+  test('a failed navigation does not leave the page faded out and the switch locked', async () => {
+    vi.useFakeTimers()
+    const { useLocale } = await import('~/composables/useLocale')
+    nav.to.mockClear().mockRejectedValueOnce(new Error('navigation aborted'))
+
+    const failed = useLocale().setLocale('en')
+    const settled = expect(failed).rejects.toThrow('navigation aborted')
+    await vi.runAllTimersAsync()
+    await settled
+
+    expect(useState('lang-fade').value).toBe(false)
+
+    const retry = useLocale().setLocale('en')
+    await vi.runAllTimersAsync()
+    await retry
+    expect(nav.to).toHaveBeenCalledTimes(2)
+    vi.useRealTimers()
+  })
 })
