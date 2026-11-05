@@ -24,13 +24,13 @@ watch(localQuery, () => { cascade.value = false }, { once: true })
 const filtered = computed(() => {
   const list = posts.value ?? []
   const q = localQuery.value.trim().toLowerCase()
-  const matched = !q
-    ? list
-    : list.filter(p =>
+  const matched = q
+    ? list.filter(p =>
         p.title.toLowerCase().includes(q) ||
         p.excerpt.toLowerCase().includes(q) ||
         p.tags.some(tag => tag.name.toLowerCase().includes(q)),
       )
+    : list
   return matched.map(post => ({ ...post, ...linkFor(post) }))
 })
 </script>

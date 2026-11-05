@@ -17,6 +17,7 @@ function isUnauthorized(e: unknown): boolean {
     || (e as { response?: { status?: number } })?.response?.status === 401
 }
 
+/** Requests of the admin panel: they keep the session cookie during SSR and send an expired session back to the login page. */
 export const useAdminApi = () => {
   const authed = useState('admin:authed', () => false)
   // On the server a plain $fetch does not forward the browser's cookies — the

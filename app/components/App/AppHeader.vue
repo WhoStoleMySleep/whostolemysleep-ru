@@ -12,7 +12,7 @@ const mobileOpen = ref(false)
 watch(() => route.path, () => { mobileOpen.value = false })
 
 function toggleLocale() {
-  setLocale(locale.value === 'ru' ? 'en' : 'ru')
+  void setLocale(locale.value === 'ru' ? 'en' : 'ru')
 }
 </script>
 

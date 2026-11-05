@@ -9,7 +9,7 @@ const results = computed(() => search.results.map((item) => ({ ...item, ...linkF
 
 watch(() => search.isOpen, (val) => {
   if (val) {
-    nextTick(() => input.value?.focus())
+    void nextTick(() => input.value?.focus())
     document.body.style.overflow = 'hidden'
   } else {
     document.body.style.overflow = ''

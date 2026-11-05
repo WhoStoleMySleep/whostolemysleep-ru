@@ -18,7 +18,7 @@ async function submit() {
     await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
     // The cookie is already set — this spares the middleware a verification request.
     useState('admin:authed', () => false).value = true
-    router.push('/admin')
+    void router.push('/admin')
   } catch (e) {
     error.value = (e as { data?: { message?: string } })?.data?.message ?? 'Login failed'
   } finally {
