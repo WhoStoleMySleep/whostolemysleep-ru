@@ -18,6 +18,11 @@ updates:
       # its first request. The version in package.json is pinned exactly; unpin it
       # together with this entry once upstream ships a release that loads.
       - dependency-name: sanitize-html
+      # Declared only for the H3Event type and has to match the copy Nuxt runs on, so
+      # CI cannot tell a major bump is wrong: it would describe a version the server
+      # does not use. Unignore it when Nuxt moves to h3 2.
+      - dependency-name: h3
+        update-types: ["version-update:semver-major"]
     groups:
       # Small bumps go in one PR: CI runs the whole suite either way, and nobody
       # reads ten separate merge requests a week.
