@@ -21,16 +21,18 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm lint
 
+      - run: pnpm lint:css
+
       - run: pnpm typecheck
 
-      - run: pnpm test
+      - run: pnpm test:coverage
 
       - run: pnpm build
 

@@ -1,3 +1,4 @@
+/** Date formatters that follow the current locale, so a language switch reformats dates without a reload. */
 export function useFormatDate() {
   const { locale, t } = useLocale()
   const dateLocale = computed(() => locale.value === 'en' ? 'en-US' : 'ru-RU')

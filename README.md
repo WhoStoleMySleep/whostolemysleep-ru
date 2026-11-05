@@ -108,7 +108,10 @@ SENTRY_AUTH_TOKEN=          # build-time only: write credential, never in the re
 | `pnpm test:coverage` | Test run with a coverage report |
 | `pnpm lint` | ESLint over the whole repo (warnings fail too) |
 | `pnpm lint:fix` | Same, applying the fixes it can |
+| `pnpm lint:css` | Stylelint over CSS and `<style>` blocks |
+| `pnpm lint:css:fix` | Same, applying the fixes it can |
 | `pnpm typecheck` | `vue-tsc` over the project |
+| `pnpm check` | Lint, Stylelint, types and tests: what to run before calling something done |
 | `pnpm db:generate` | Generate Drizzle migration from schema changes |
 | `pnpm db:migrate` | Apply pending migrations |
 | `pnpm db:studio` | Open Drizzle Studio (visual DB browser) |
@@ -141,10 +144,11 @@ Git hooks (husky):
 
 | Hook | What runs |
 |---|---|
-| `pre-commit` | `lint-staged` — ESLint on staged files plus the tests related to them |
+| `pre-commit` | `lint-staged` — ESLint and Stylelint on staged files plus the tests related to them |
+| `commit-msg` | the subject must be `{type}: {subject}`, up to 64 characters |
 | `pre-push` | the whole suite |
 
-CI (`.github/workflows/ci.yml`) repeats lint, tests and build on every branch and pull request.
+CI (`.github/workflows/ci.yml`) runs lint, Stylelint, types, tests with coverage thresholds, the build and a smoke test of the built server on every pull request and on pushes to `main`.
 
 Dependabot (`.github/dependabot.yml`) opens one grouped pull request a week for minor and patch bumps and separate ones for majors; GitHub Actions are checked monthly. CI is what decides whether a bump is safe — that is the point of having it.
 
@@ -153,7 +157,7 @@ take an `H3Event`, and with several copies of h3 in the tree — Nuxt's own and 
 pulled in by a dev tool — an undeclared `import type { H3Event } from 'h3'` resolves
 to whichever the package manager happened to hoist. Declaring it pins the answer.
 
-ESLint deliberately carries no formatting rules — values across this codebase are aligned into columns by hand, and an autoformatter would flatten them.
+ESLint deliberately carries no formatting rules — values across this codebase are aligned into columns by hand, and an autoformatter would flatten them. Stylelint follows the same line: it uses the `recommended` preset, which looks for mistakes, and not `standard`, which would rewrite the layout of every stylesheet.
 
 ## Structure
 

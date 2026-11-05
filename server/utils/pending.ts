@@ -4,6 +4,7 @@ import * as schema from '../db/schema'
 
 const LOCALES = ['ru', 'en'] as const
 
+/** Queues paths before the flush, so a failed or interrupted flush can be retried later. */
 export async function markDirty(paths: string[]) {
   if (!paths.length) return
   await db.insert(schema.pendingRevalidation)
@@ -30,6 +31,7 @@ export function withLocales(path: string): string[] {
   return LOCALES.map((l) => `/${l}${rest}`)
 }
 
+/** Pages that list posts go stale along with the post itself: home, blog and projects. */
 export function postPaths(slug?: string): string[] {
   const paths = ['/', '/blog', '/projects']
   if (slug) paths.push(`/blog/${slug}`)

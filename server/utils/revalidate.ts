@@ -25,6 +25,7 @@ export interface RevalidateResult {
   failed:      { path: string; reason: string }[]
 }
 
+/** Reports each path separately: one failed page must not hide the ones that did refresh. */
 export async function revalidatePaths(paths: string[]): Promise<RevalidateResult> {
   if (!paths.length) return { revalidated: [], failed: [] }
 

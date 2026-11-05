@@ -19,6 +19,7 @@ function jwtSecret() {
   return new TextEncoder().encode(s)
 }
 
+/** Issues the admin session token; it has no subject because the site has a single admin. */
 export async function signAdminToken(): Promise<string> {
   return new SignJWT({ admin: true })
     .setProtectedHeader({ alg: ALG })
@@ -87,6 +88,7 @@ export function assertAdminConfig(): void {
   }
 }
 
+/** The hash lives in the environment: the site has one admin and no users table. */
 export async function checkAdminPassword(plain: string): Promise<boolean> {
   return bcrypt.compare(plain, process.env.ADMIN_PASSWORD_HASH!)
 }
@@ -96,6 +98,7 @@ export async function hitLoginAttempt(ip: string): Promise<RateVerdict> {
   return hitRateLimit(`login:${ip}`, MAX_TRIES, WINDOW_MS)
 }
 
+/** A successful login forgives earlier mistypes, so they do not count against the next session. */
 export async function clearFailures(ip: string): Promise<void> {
   await clearRateLimit(`login:${ip}`)
 }

@@ -2,6 +2,7 @@ import type { Locale } from '~/types'
 
 const FADE_MS = 320
 
+/** Locale switching with a fade over the navigation, plus strings that need Russian plural rules. */
 export function useLocale() {
   const { locale: rawLocale, t } = useI18n()
   const switchLocalePath = useSwitchLocalePath()

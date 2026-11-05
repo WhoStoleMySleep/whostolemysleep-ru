@@ -20,6 +20,7 @@ const OPTIONS: sanitize.IOptions = {
   },
 }
 
+/** Stored HTML reaches the page through v-html, so it has to be cleaned before it is saved or rendered. */
 export function sanitizeHtml(html: string): string {
   return sanitize(html, OPTIONS)
 }

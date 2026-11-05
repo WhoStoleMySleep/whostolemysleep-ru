@@ -43,7 +43,7 @@ function isActive(to: string) {
 async function logout() {
   await $fetch('/api/admin/logout', { method: 'POST' })
   useState('admin:authed').value = false
-  router.push('/admin/login')
+  await router.push('/admin/login')
 }
 </script>
 

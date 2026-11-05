@@ -28,6 +28,7 @@ const CHANNEL = {
 
 export type FeedLocale = keyof typeof CHANNEL
 
+/** Narrows a route param, which is arbitrary user input, to a locale that has a feed. */
 export function isFeedLocale(value: unknown): value is FeedLocale {
   return value === 'en' || value === 'ru'
 }

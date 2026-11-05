@@ -12,7 +12,7 @@ useSeoMeta({
 })
 
 function goHome() {
-  clearError({ redirect: `/${locale.value}` })
+  void clearError({ redirect: `/${locale.value}` })
 }
 </script>
 

@@ -40,6 +40,7 @@ let extLatched  = false
 let markersSeen = false
 let listening   = false
 
+/** Dark and light theme: remembers the choice, follows the system until there is one, and animates the switch. */
 export const useTheme = () => {
   const isDark = useState('theme:isDark', () => true)
 
@@ -177,7 +178,7 @@ export const useTheme = () => {
       })
       .catch(() => { /* the snapshot failed — the theme is applied anyway */ })
 
-    transition.finished
+    void transition.finished
       .catch(() => {})
       .then(() => root.classList.remove('theme-wave'))
   }

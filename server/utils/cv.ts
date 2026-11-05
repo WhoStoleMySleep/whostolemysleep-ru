@@ -68,6 +68,7 @@ async function readDb() {
 
 type DbState = Awaited<ReturnType<typeof readDb>>
 
+/** Reads the resume from the database into the file format used for export and for the import diff. */
 export async function buildSnapshot(): Promise<CvSnapshot> {
   const state = await readDb()
   return {
@@ -219,6 +220,7 @@ function sameList(a: unknown[], b: unknown[]) {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+/** Compares an imported file with the database. Nothing is written here: the admin reviews the changes first. */
 export async function diffSnapshot(input: Partial<CvSnapshot>): Promise<Bound[]> {
   const state: DbState = await readDb()
   const out: Bound[] = []

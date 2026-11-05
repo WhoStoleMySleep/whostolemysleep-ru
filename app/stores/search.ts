@@ -26,7 +26,7 @@ export const useSearchStore = defineStore('search', () => {
     allItems.value = []
     index   = null
     loading = null
-    if (isOpen.value) loadItems()
+    if (isOpen.value) void loadItems()
   })
 
   async function open() {

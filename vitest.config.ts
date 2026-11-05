@@ -26,6 +26,13 @@ export default defineVitestConfig({
         'server/utils/**',
         'server/middleware/**',
       ],
+      // Just below the current numbers: a floor against erosion, not a target.
+      thresholds: {
+        statements: 90,
+        branches: 85,
+        functions: 85,
+        lines: 90,
+      },
     },
     onConsoleLog: (log) => !log.includes('va.vercel-scripts.com'),
 

@@ -389,7 +389,7 @@ const KIND_LABEL: Record<Change['kind'], string> = { add: 'new', update: 'change
   font-size: 11.5px;
   line-height: 1.6;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--r-s);
