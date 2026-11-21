@@ -76,6 +76,15 @@ async function reorderGroups(ids: number[]) {
 
 const draft = reactive<Record<number, string>>({})
 
+function updateGroup(groupId: number, transform: (group: Group) => Group) {
+  data.value = (data.value ?? []).map(group => (group.id === groupId ? transform(group) : group))
+}
+
+function orderSkills(skills: Skill[], ids: number[]) {
+  const skillsById = new Map(skills.map(skill => [skill.id, skill]))
+  return ids.map(id => skillsById.get(id)).filter(Boolean) as Skill[]
+}
+
 async function addSkill(g: Group) {
   const name = (draft[g.id] ?? '').trim()
   if (!name) return
@@ -88,37 +97,43 @@ async function addSkill(g: Group) {
   }
 }
 
-async function renameSkill(s: Skill, name: string) {
+async function renameSkill(skill: Skill, name: string) {
   const next = name.trim()
-  if (!next || next === s.name) return
+  if (!next || next === skill.name) return
   try {
-    await api.patch(`/api/admin/skills/items/${s.id}`, { name: next })
-    s.name = next
-  } catch (e) {
-    toast.err(adminError(e))
+    await api.patch(`/api/admin/skills/items/${skill.id}`, { name: next })
+    updateGroup(skill.group_id, group => ({
+      ...group,
+      skills: group.skills.map(item => (item.id === skill.id ? { ...item, name: next } : item)),
+    }))
+  } catch (cause) {
+    toast.err(adminError(cause))
     await refresh()
   }
 }
 
-async function removeSkill(g: Group, s: Skill) {
+async function removeSkill(group: Group, skill: Skill) {
   try {
-    await api.remove(`/api/admin/skills/items/${s.id}`)
-    g.skills = g.skills.filter((x) => x.id !== s.id)
-  } catch (e) {
-    toast.err(adminError(e))
+    await api.remove(`/api/admin/skills/items/${skill.id}`)
+    updateGroup(group.id, current => ({
+      ...current,
+      skills: current.skills.filter(item => item.id !== skill.id),
+    }))
+  } catch (cause) {
+    toast.err(adminError(cause))
     await refresh()
   }
 }
 
-async function reorderSkills(g: Group, ids: number[]) {
-  const before = [...g.skills]
-  const byId = new Map(before.map((s) => [s.id, s]))
-  g.skills = ids.map((id) => byId.get(id)).filter(Boolean) as Skill[]
+async function reorderSkills(group: Group, ids: number[]) {
+  const before = group.skills
+  const skills = orderSkills(before, ids)
+  updateGroup(group.id, current => ({ ...current, skills }))
   try {
     await api.patch('/api/admin/skills/items/reorder', { ids })
-  } catch (e) {
-    g.skills = before
-    toast.err(adminError(e))
+  } catch (cause) {
+    updateGroup(group.id, current => ({ ...current, skills: before }))
+    toast.err(adminError(cause))
   }
 }
 

@@ -109,3 +109,19 @@ describe('assertAdminConfig', () => {
     expect(() => assertAdminConfig()).toThrow(/ADMIN_JWT_SECRET, ADMIN_PASSWORD_HASH/)
   })
 })
+
+test('продлевает сессию ровно на половине срока и оставляет cookie на семь дней', async () => {
+  vi.useFakeTimers().setSystemTime(new Date('2026-09-10T00:00:00Z'))
+  const setCookie = vi.fn()
+  vi.stubGlobal('setCookie', setCookie)
+  const { slideAdminSession, readAdminToken } = await import('~~/server/utils/auth')
+  const now = Math.floor(Date.now() / 1000)
+  const week = 7 * 24 * 3600
+  await slideAdminSession(event, { exp: now + week / 2 + 1 })
+  expect(setCookie).not.toHaveBeenCalled()
+  await slideAdminSession(event, { exp: now + week / 2 })
+  expect(setCookie).toHaveBeenCalledTimes(1)
+  expect(setCookie.mock.calls[0]?.[3]).toMatchObject({ maxAge: week })
+  const payload = await readAdminToken(setCookie.mock.calls[0]?.[2] as string)
+  expect(payload?.exp).toBe(now + week)
+})

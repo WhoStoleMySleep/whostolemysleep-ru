@@ -7,6 +7,7 @@ import { SITE_URL as BASE_URL } from '~~/shared/utils/site'
 
 /** Enough for a reader to catch up on; the rest is on the site. */
 const ITEMS = 20
+const EXCERPT_LENGTH = 300
 
 /**
  * Feed metadata, one entry per locale. The site's own titles live in
@@ -38,59 +39,47 @@ function rfc822(value: string | null): string {
   return new Date(value ?? Date.now()).toUTCString()
 }
 
-/**
- * The blog as RSS 2.0.
- *
- * Only posts of type `blog`: a feed is a reading queue, and a project entry is a
- * thing to look at, not an article to read. Each item carries both the excerpt as
- * `description` and the full stored html in `content:encoded`, so a reader can show
- * the whole post without a round trip to the site.
- */
-export async function buildFeed(locale: FeedLocale): Promise<string> {
-  const rows = await db
-    .select({
-      slug:         post.slug,
-      title_ru:     post.title_ru,
-      title_en:     post.title_en,
-      text_ru:      post.text_ru,
-      text_en:      post.text_en,
-      excerpt_ru:   post.excerpt_ru,
-      excerpt_en:   post.excerpt_en,
-      published_at: post.published_at,
-      updated_at:   post.updated_at,
-    })
-    .from(post)
+const FEED_COLUMNS = {
+  slug:         post.slug,
+  title_ru:     post.title_ru,
+  title_en:     post.title_en,
+  text_ru:      post.text_ru,
+  text_en:      post.text_en,
+  excerpt_ru:   post.excerpt_ru,
+  excerpt_en:   post.excerpt_en,
+  published_at: post.published_at,
+  updated_at:   post.updated_at,
+}
+
+type FeedRow = Pick<typeof post.$inferSelect, keyof typeof FEED_COLUMNS>
+
+async function loadFeedRows() {
+  return db.select(FEED_COLUMNS).from(post)
     .where(and(eq(post.is_published, true), eq(post.type, 'blog')))
-    .orderBy(desc(post.published_at))
-    .limit(ITEMS)
+    .orderBy(desc(post.published_at)).limit(ITEMS)
+}
 
-  const channel = CHANNEL[locale]
-  const self    = `${BASE_URL}/${locale}/rss.xml`
-
-  const items = rows.map((row) => {
-    const link  = `${BASE_URL}/${locale}/blog/${row.slug}`
-    const title = pick(row.title_ru, row.title_en, locale)
-    const body  = pick(row.text_ru, row.text_en, locale)
-
-    return [
-      '    <item>',
-      `      <title>${escapeXml(title)}</title>`,
-      `      <link>${link}</link>`,
-      `      <guid isPermaLink="true">${link}</guid>`,
-      `      <pubDate>${rfc822(row.published_at)}</pubDate>`,
-      `      <description>${escapeXml(plainText(pick(row.excerpt_ru, row.excerpt_en, locale), 300))}</description>`,
-      `      <content:encoded><![CDATA[${body.replace(/]]>/g, ']]&gt;')}]]></content:encoded>`,
-      '    </item>',
-    ].join('\n')
-  })
-
-  // The newest post, not the moment of the request: a reader polling an unchanged
-  // feed should see an unchanged date.
-  const lastBuild = rfc822(rows[0]?.updated_at ?? rows[0]?.published_at ?? null)
-
+function itemXml(row: FeedRow, locale: FeedLocale) {
+  const link = `${BASE_URL}/${locale}/blog/${row.slug}`
+  const title = pick(row.title_ru, row.title_en, locale)
+  const body = pick(row.text_ru, row.text_en, locale)
+  const excerpt = plainText(pick(row.excerpt_ru, row.excerpt_en, locale), EXCERPT_LENGTH)
   return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
+    '    <item>',
+    `      <title>${escapeXml(title)}</title>`,
+    `      <link>${link}</link>`,
+    `      <guid isPermaLink="true">${link}</guid>`,
+    `      <pubDate>${rfc822(row.published_at)}</pubDate>`,
+    `      <description>${escapeXml(excerpt)}</description>`,
+    `      <content:encoded><![CDATA[${body.replace(/]]>/g, ']]&gt;')}]]></content:encoded>`,
+    '    </item>',
+  ].join('\n')
+}
+
+function channelXml(locale: FeedLocale, lastBuild: string) {
+  const channel = CHANNEL[locale]
+  const self = `${BASE_URL}/${locale}/rss.xml`
+  return [
     '  <channel>',
     `    <title>${escapeXml(channel.title)}</title>`,
     `    <link>${BASE_URL}/${locale}/blog</link>`,
@@ -98,8 +87,27 @@ export async function buildFeed(locale: FeedLocale): Promise<string> {
     `    <language>${channel.language}</language>`,
     `    <lastBuildDate>${lastBuild}</lastBuildDate>`,
     `    <atom:link href="${self}" rel="self" type="application/rss+xml" />`,
+  ]
+}
+
+function feedXml(rows: FeedRow[], locale: FeedLocale) {
+  const items = rows.map(row => itemXml(row, locale))
+  // The newest post, not the moment of the request: polling an unchanged feed keeps its date.
+  const lastBuild = rfc822(rows[0]?.updated_at ?? rows[0]?.published_at ?? null)
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
+    ...channelXml(locale, lastBuild),
     ...items,
     '  </channel>',
     '</rss>',
   ].join('\n')
+}
+
+/**
+ * RSS 2.0 contains only blog posts: projects are not a reading queue. The stored
+ * HTML travels in content:encoded so readers can show a full article without a request.
+ */
+export async function buildFeed(locale: FeedLocale): Promise<string> {
+  return feedXml(await loadFeedRows(), locale)
 }

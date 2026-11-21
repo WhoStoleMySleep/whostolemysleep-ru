@@ -5,20 +5,56 @@ import { plainText } from '~~/server/utils/text'
 import { SITE_URL as BASE_URL, yearsSince } from '~~/shared/utils/site'
 
 /**
- * llms.txt — a short digest of the site for language models (llmstxt.org).
- * Markdown with a single H1, then sections of links.
- *
- * A route rather than a static public/llms.txt: projects and posts live in the
- * database and are edited through the admin panel, so a static file would drift
- * away from the site. Same reasoning as sitemap.xml.
- *
- * English, because that is the default locale and the convention of the format
- * itself. Links point at /en; the Russian mirror gets a section of its own.
+ * A dynamic llmstxt.org digest follows admin edits, like sitemap.xml. English is
+ * the format's convention; the Russian mirror is linked separately.
  */
 
+const POST_COLUMNS = {
+  slug:         post.slug,
+  type:         post.type,
+  title:        post.title_en,
+  title_ru:     post.title_ru,
+  excerpt:      post.excerpt_en,
+  excerpt_ru:   post.excerpt_ru,
+  url:          post.url,
+  published_at: post.published_at,
+}
+
+const PAGE_LINKS = [
+  '## Pages',
+  '',
+  bullet('Home', `${BASE_URL}/en`, 'intro, main stack, latest posts and projects'),
+  bullet('Projects', `${BASE_URL}/en/projects`, 'portfolio of work'),
+  bullet('Blog', `${BASE_URL}/en/blog`, 'articles on frontend development'),
+  bullet('Resume', `${BASE_URL}/en/resume`, 'work experience, education, technical skills'),
+  bullet('Contacts', `${BASE_URL}/en/contacts`, 'contact form and direct links'),
+  '',
+]
+
+const FOCUS_LINES = [
+  '## Focus',
+  '',
+  '- **Vue / Nuxt** — architecture, SSR/ISR/SSG, Nitro, i18n',
+  '- **React / Next** — React 19, Next.js, Zustand, virtualized lists, motion',
+  '- **Rust / Tauri** — cross-platform desktop and mobile, native plugins, system APIs',
+  '- **TypeScript / Node** — REST and GraphQL APIs, published npm packages; Core Web Vitals as a budget, this site scores 100/100 on mobile',
+  '',
+]
+
+const OPTIONAL_LINKS = [
+  '## Optional',
+  '',
+  bullet('Russian version', `${BASE_URL}/ru`, 'the same site in Russian'),
+  bullet('Privacy Policy', `${BASE_URL}/en/privacy`, 'personal data processing, RF law 152-FZ'),
+  '',
+]
+
+type DigestPost = Awaited<ReturnType<typeof loadDigestData>>['posts'][number]
+type DigestSettings = typeof settings.$inferSelect | undefined
+
 /** A project with its own url links out; everything else links to the blog page. */
-function linkFor(p: { slug: string, url: string | null }) {
-  return p.url || `${BASE_URL}/en/blog/${p.slug}`
+function linkFor(row: { slug: string; url: string | null }) {
+  return row.url || `${BASE_URL}/en/blog/${row.slug}`
 }
 
 function bullet(title: string, href: string, note: string) {
@@ -36,61 +72,21 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(async (event) => {
+async function loadDigestData() {
   const [posts, [config], firstJob, groups] = await Promise.all([
-    db
-      .select({
-        slug:         post.slug,
-        type:         post.type,
-        title:        post.title_en,
-        title_ru:     post.title_ru,
-        excerpt:      post.excerpt_en,
-        excerpt_ru:   post.excerpt_ru,
-        url:          post.url,
-        published_at: post.published_at,
-      })
-      .from(post)
-      .where(eq(post.is_published, true)),
+    db.select(POST_COLUMNS).from(post).where(eq(post.is_published, true)),
     db.select().from(settings).where(eq(settings.id, 1)),
     db.select({ date_from: experience.date_from })
       .from(experience).orderBy(asc(experience.date_from)).limit(1),
-    db.select({ group: skillGroup.name_en, skill: skill.name })
-      .from(skill)
+    db.select({ group: skillGroup.name_en, skill: skill.name }).from(skill)
       .innerJoin(skillGroup, eq(skill.group_id, skillGroup.id))
       .orderBy(asc(skillGroup.order), asc(skill.order)),
   ])
+  return { posts, config, firstJob, groups }
+}
 
-  const years = yearsSince(firstJob[0]?.date_from)
-
-  const sorted = [...posts].sort((a, b) =>
-    new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()
-  )
-
-  // title_en/excerpt_en are allowed to be empty — the Russian ones stand in.
-  const entries = (type: 'blog' | 'project') => sorted
-    .filter(p => p.type === type)
-    .map(p => bullet(
-      p.title || p.title_ru,
-      linkFor(p),
-      plainText(p.excerpt || p.excerpt_ru || ''),
-    ))
-
-  const projects = entries('project')
-  const articles = entries('blog')
-
-  const skills = groups.reduce<Record<string, string[]>>((acc, row) => {
-    (acc[row.group] ??= []).push(row.skill)
-    return acc
-  }, {})
-
-  const contacts = [
-    config?.email        && `- Email: ${config.email}`,
-    config?.github_url   && `- GitHub: ${config.github_url}`,
-    config?.telegram_url && `- Telegram: ${config.telegram_url}`,
-    `- [Contact form](${BASE_URL}/en/contacts)`,
-  ].filter(Boolean)
-
-  const md = [
+function introduction(years: number, config: DigestSettings) {
+  return [
     '# whostolemysleep',
     '',
     `> Full-stack developer with ${years}+ years of experience. Production web apps in Vue/Nuxt `
@@ -105,44 +101,67 @@ export default defineCachedEventHandler(async (event) => {
       ? 'Currently open to new projects and long-term remote collaboration.'
       : 'Currently not looking for new projects.',
     '',
-    '## Pages',
-    '',
-    bullet('Home', `${BASE_URL}/en`, 'intro, main stack, latest posts and projects'),
-    bullet('Projects', `${BASE_URL}/en/projects`, 'portfolio of work'),
-    bullet('Blog', `${BASE_URL}/en/blog`, 'articles on frontend development'),
-    bullet('Resume', `${BASE_URL}/en/resume`, 'work experience, education, technical skills'),
-    bullet('Contacts', `${BASE_URL}/en/contacts`, 'contact form and direct links'),
-    '',
-    '## Focus',
-    '',
-    '- **Vue / Nuxt** — architecture, SSR/ISR/SSG, Nitro, i18n',
-    '- **React / Next** — React 19, Next.js, Zustand, virtualized lists, motion',
-    '- **Rust / Tauri** — cross-platform desktop and mobile, native plugins, system APIs',
-    '- **TypeScript / Node** — REST and GraphQL APIs, published npm packages; Core Web Vitals as a budget, this site scores 100/100 on mobile',
-    '',
-    ...(Object.keys(skills).length
-      ? [
-          '## Skills',
-          '',
-          ...Object.entries(skills).map(([group, list]) => `- **${group}**: ${list.join(', ')}`),
-          '',
-        ]
-      : []),
-    ...(projects.length ? ['## Projects', '', ...projects, ''] : []),
-    ...(articles.length ? ['## Blog posts', '', ...articles, ''] : []),
+  ]
+}
+
+function section(title: string, lines: string[]) {
+  return lines.length ? [`## ${title}`, '', ...lines, ''] : []
+}
+
+function postSections(posts: DigestPost[]) {
+  const sorted = [...posts].sort((a, b) =>
+    new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime()
+  )
+  const projects: string[] = []
+  const articles: string[] = []
+  for (const row of sorted) {
+    // English fields may be empty; Russian fields are the site's fallback.
+    const line = bullet(row.title || row.title_ru, linkFor(row), plainText(row.excerpt || row.excerpt_ru || ''))
+    if (row.type === 'project') projects.push(line)
+    if (row.type === 'blog') articles.push(line)
+  }
+  return [...section('Projects', projects), ...section('Blog posts', articles)]
+}
+
+function skillSection(groups: { group: string; skill: string }[]) {
+  const skills: Record<string, string[]> = {}
+  for (const row of groups) {
+    (skills[row.group] ??= []).push(row.skill)
+  }
+  const lines = Object.entries(skills).map(([group, list]) => `- **${group}**: ${list.join(', ')}`)
+  return section('Skills', lines)
+}
+
+function contactSection(config: DigestSettings) {
+  return [
     '## Contact',
     '',
-    ...contacts,
+    ...[
+      config?.email        && `- Email: ${config.email}`,
+      config?.github_url   && `- GitHub: ${config.github_url}`,
+      config?.telegram_url && `- Telegram: ${config.telegram_url}`,
+      `- [Contact form](${BASE_URL}/en/contacts)`,
+    ].filter(Boolean),
     '',
-    '## Optional',
-    '',
-    bullet('Russian version', `${BASE_URL}/ru`, 'the same site in Russian'),
-    bullet('Privacy Policy', `${BASE_URL}/en/privacy`, 'personal data processing, RF law 152-FZ'),
-    '',
-  ].join('\n')
+  ]
+}
 
+function digestMarkdown({ posts, config, firstJob, groups }: Awaited<ReturnType<typeof loadDigestData>>) {
+  return [
+    ...introduction(yearsSince(firstJob[0]?.date_from), config),
+    ...PAGE_LINKS,
+    ...FOCUS_LINES,
+    ...skillSection(groups),
+    ...postSections(posts),
+    ...contactSection(config),
+    ...OPTIONAL_LINKS,
+  ].join('\n')
+}
+
+export default defineCachedEventHandler(async (event) => {
+  const markdown = digestMarkdown(await loadDigestData())
   setHeader(event, 'Content-Type', 'text/markdown; charset=utf-8')
-  return md
+  return markdown
 }, {
   maxAge: 3600,
   getKey: () => 'llms-txt',

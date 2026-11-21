@@ -3,6 +3,7 @@ import { SITE_URL } from '~~/shared/utils/site'
 const BASE = process.env.NUXT_PUBLIC_SITE_URL ?? SITE_URL
 const CONCURRENCY = 6
 const REQUEST_TIMEOUT = 10_000
+const NOT_FOUND_STATUS = 404
 
 /** Статус каждой страницы нужен для повторной попытки только неудачных обновлений. */
 export interface RevalidateResult {
@@ -22,7 +23,7 @@ async function refreshPage(path: string, token: string, missing: Set<string>) {
   } catch (error) {
     const code = (error as { statusCode?: number }).statusCode
     // 404 ожидается только для страниц, отсутствие которых уже подтверждено в БД.
-    const expected = code === 404 && missing.has(path)
+    const expected = code === NOT_FOUND_STATUS && missing.has(path)
     return { path, reason: expected ? '' : code ? `HTTP ${code}` : String(error) }
   }
 }

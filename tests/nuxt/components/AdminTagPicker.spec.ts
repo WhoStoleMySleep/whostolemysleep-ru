@@ -40,6 +40,15 @@ describe('Компактный выбор тегов', () => {
     wrapper.unmount()
   })
 
+  test('закрывает список после выбора существующего тега', async () => {
+    const wrapper = await picker()
+    await wrapper.get('input').trigger('focus')
+    await wrapper.get('.tag-picker__option').trigger('click')
+
+    expect(wrapper.find('.tag-picker__options').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   test('Enter выбирает существующий тег, не создавая дубликат', async () => {
     const wrapper = await picker({ modelValue: [1] })
     await wrapper.get('input').setValue('nuxt')

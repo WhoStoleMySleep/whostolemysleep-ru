@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
-import { plan } from '~~/tests/helpers/fakeDb'
+import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
 
 const state = vi.hoisted((): FakeDbState => ({ results: {}, calls: [], cursor: {} }))
@@ -57,6 +57,53 @@ describe('Инвалидация резюме и печатного CV', () => {
     plan(state)
     const { default: handler } = await load()
     await expect((handler as (event: H3Event) => Promise<unknown>)({} as H3Event)).rejects.toMatchObject({ statusCode: 404 })
+    expect(mocks.dirty).not.toHaveBeenCalled()
+  })
+})
+
+async function saveExperience(body: Record<string, unknown>, create = false) {
+  vi.stubGlobal('readBody', async () => body)
+  const route = routes[create ? 0 : 1]!
+  const { default: handler } = await route.load()
+  return (handler as (event: H3Event) => Promise<unknown>)({} as H3Event)
+}
+
+describe('Сохранение опыта и пунктов описания', () => {
+  test('создаёт опыт с прежними значениями по умолчанию и упорядоченными пунктами', async () => {
+    const bullets = [{ text_ru: 'Первый', text_en: 'First' }, { text_ru: 'Второй', text_en: 'Second' }]
+    expect(await saveExperience({ company_ru: 'Компания', bullets }, true)).toEqual({ id: 7 })
+    expect(stepArg(state.calls, 'insert:experience', 'values')).toMatchObject({ company_ru: 'Компания', date_to: null, order: 0 })
+    expect(stepArg(state.calls, 'insert:experience_bullet', 'values')).toEqual([
+      { experience_id: 7, text_ru: 'Первый', text_en: 'First', order: 0 },
+      { experience_id: 7, text_ru: 'Второй', text_en: 'Second', order: 1 },
+    ])
+  })
+
+  test.each([undefined, []])('не вставляет пустой список пунктов при создании: %j', async bullets => {
+    await saveExperience({ company_ru: 'Компания', bullets }, true)
+    expect(state.calls.some(call => call.table === 'experience_bullet')).toBe(false)
+  })
+
+  test('сохраняет пункты при их отсутствии в PATCH и удаляет при пустом массиве', async () => {
+    await saveExperience({ position_ru: 'Разработчик' })
+    expect(state.calls.some(call => call.table === 'experience_bullet')).toBe(false)
+    await saveExperience({ bullets: [] })
+    expect(state.calls.filter(call => call.table === 'experience_bullet').map(call => call.op)).toEqual(['delete'])
+  })
+
+  test('заменяет пункты после обновления опыта, не сохраняя посторонние поля', async () => {
+    const body = { company_ru: 'Компания', bullets: [{ text_ru: 'Текст', text_en: 'Text', order: 99, experience_id: 999 }] }
+    await saveExperience(body)
+    expect(stepArg(state.calls, 'update:experience', 'set')).toEqual({ company_ru: 'Компания' })
+    expect(state.calls.map(call => `${call.op}:${call.table}`)).toEqual(['update:experience', 'delete:experience_bullet', 'insert:experience_bullet'])
+    expect(stepArg(state.calls, 'insert:experience_bullet', 'values')).toEqual([{ experience_id: 7, text_ru: 'Текст', text_en: 'Text', order: 0 }])
+    expect(body.bullets[0]?.order).toBe(99)
+  })
+
+  test('отсутствующий опыт не удаляет пункты и не ставит страницы в очередь', async () => {
+    plan(state)
+    await expect(saveExperience({ bullets: [] })).rejects.toMatchObject({ statusCode: 404 })
+    expect(state.calls.some(call => call.table === 'experience_bullet')).toBe(false)
     expect(mocks.dirty).not.toHaveBeenCalled()
   })
 })

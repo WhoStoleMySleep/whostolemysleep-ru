@@ -73,3 +73,20 @@ describe('sitemap', () => {
     expect(call?.steps.some(s => s.m === 'where')).toBe(true)
   })
 })
+
+test('без публикаций сохраняет порядок статических URL в обоих языках', async () => {
+  plan(state)
+  const xml = await sitemap()
+  const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
+  expect(urls).toEqual(['', '/blog', '/projects', '/resume', '/contacts', '/privacy'].flatMap(path =>
+    ['en', 'ru'].map(locale => `https://whostolemysleep.ru/${locale}${path}`)
+  ))
+  expect(xml).not.toContain('<lastmod>')
+})
+
+test('не добавляет lastmod при отсутствии даты, но сохраняет страницу статьи с внешним URL', async () => {
+  plan(state, { 'select:post': [[{ slug: 'undated', type: 'blog', url: 'https://external.test', updated_at: null }]] })
+  const xml = await sitemap()
+  expect(xml).toContain('<url><loc>https://whostolemysleep.ru/en/blog/undated</loc></url>')
+  expect(xml).not.toContain('<lastmod>')
+})

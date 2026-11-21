@@ -6,9 +6,11 @@ import { clearRateLimit, hitRateLimit, type RateVerdict } from './rateLimit'
 export const ADMIN_COOKIE = 'wms_admin'
 
 const ALG       = 'HS256'
-const TTL_S     = 7 * 24 * 3600
+const SESSION_DAYS = 7
+const LOGIN_WINDOW_MINUTES = 15
+const TTL_S     = SESSION_DAYS * 24 * 60 * 60
 const MAX_TRIES = 5
-const WINDOW_MS = 15 * 60 * 1000
+const WINDOW_MS = LOGIN_WINDOW_MINUTES * 60 * 1000
 
 /** Less than this left — the session is extended by another full term. */
 const REFRESH_BELOW_S = TTL_S / 2

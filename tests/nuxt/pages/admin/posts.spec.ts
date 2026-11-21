@@ -76,6 +76,23 @@ describe('Один список записей и проектов', () => {
     expect(mocks.get.mock.calls.length).toBeGreaterThan(calls)
     wrapper.unmount()
   })
+
+  test('откатывает публикацию без изменения переданной записи', async () => {
+    let reject!: (reason?: unknown) => void
+    mocks.patch.mockImplementationOnce(() => new Promise((_, failure) => { reject = failure }))
+    const wrapper = await mountList()
+    const status = wrapper.get('.status')
+
+    await status.trigger('click')
+    expect(status.classes()).not.toContain('status--on')
+    expect(rows[0]?.is_published).toBe(true)
+
+    reject(new Error('Network error'))
+    await flushPromises()
+    expect(status.classes()).toContain('status--on')
+    expect(rows[0]?.is_published).toBe(true)
+    wrapper.unmount()
+  })
 })
 
 
