@@ -13,6 +13,7 @@ interface CreateBody {
   excerpt_ru:  string
   excerpt_en:  string
   url:         string | null
+  is_pinned?: boolean
   is_published: boolean
   published_at: string | null
   tag_ids:     number[]

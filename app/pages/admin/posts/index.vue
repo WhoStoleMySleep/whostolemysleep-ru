@@ -9,6 +9,7 @@ interface Row {
   title_ru: string
   title_en: string
   type: 'blog' | 'project'
+  is_pinned: boolean
   is_published: boolean
   updated_at: string
 }
@@ -113,8 +114,9 @@ async function togglePublish(post: Row) {
       </div>
 
       <div v-for="post in filtered" :key="post.id" class="table__row">
-        <NuxtLink :to="`/admin/posts/${post.id}`" class="cell-title">
+        <NuxtLink :to="`/admin/posts/${post.id}`" class="cell-title" :class="{ 'cell-title--pinned': post.is_pinned }">
           {{ post.title_ru || post.slug }}
+          <UiPinnedIcon v-if="post.is_pinned" class="cell-title__pin" label="Pinned" />
           <code class="cell-title__slug">/{{ post.slug }}</code>
         </NuxtLink>
 
@@ -202,6 +204,7 @@ async function togglePublish(post: Row) {
 .table__row:hover { background: var(--bg-2); }
 
 .cell-title {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -212,6 +215,10 @@ async function togglePublish(post: Row) {
 }
 
 .cell-title:hover { color: var(--accent); }
+
+.cell-title--pinned { padding-right: 24px; }
+
+.cell-title__pin { position: absolute; top: 0; right: 0; }
 
 .cell-title__slug { font-size: 10px; color: var(--text-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

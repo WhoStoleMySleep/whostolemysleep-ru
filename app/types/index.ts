@@ -21,6 +21,7 @@ export interface PostSummary {
   title: string
   excerpt: string
   url: string | null
+  is_pinned: boolean
   tags: Tag[]
   images: PostImage[]
   published_at: string | null

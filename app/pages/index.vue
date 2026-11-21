@@ -31,7 +31,12 @@ const { data: siteSettings } = await useSettings()
 const { data: about }  = await useLocaleData<AboutMe>('/api/about', { lazy: true })
 const { data: latest } = await useLocaleData<PostSummary[]>('/api/posts/latest', { lazy: true })
 
-const news = computed(() => (latest.value ?? []).map(post => ({ ...post, ...linkFor(post) })))
+const INITIAL_WORK_COUNT = 4
+const MAX_WORK_COUNT = 8
+const expanded = ref(false)
+const news = computed(() => (latest.value ?? [])
+  .slice(0, expanded.value ? MAX_WORK_COUNT : INITIAL_WORK_COUNT)
+  .map(post => ({ ...post, ...linkFor(post) })))
 
 /** Years of experience live here only — the heading no longer repeats them. */
 const years = computed(() => siteSettings.value?.years_experience ?? DEFAULT_YEARS)
@@ -109,14 +114,14 @@ const brings = computed(() => [
       </div>
     </section>
 
-    <!-- Latest -->
+    <!-- Selected work -->
     <section v-if="news.length" class="section">
       <div class="section__head">
         <h2 class="section__title">{{ t('news.eyebrow') }}</h2>
-        <NuxtLink :to="localePath('/blog')" class="section__more">{{ t('news.all') }}</NuxtLink>
+        <NuxtLink :to="localePath('/projects')" class="section__more">{{ t('news.all') }}</NuxtLink>
       </div>
 
-      <div class="rows">
+      <div id="selected-work" class="rows">
         <NuxtLink
           v-for="item in news"
           :key="item.id"
@@ -133,6 +138,14 @@ const brings = computed(() => [
           <span class="row__desc">{{ item.excerpt }}</span>
         </NuxtLink>
       </div>
+      <button
+        v-if="(latest?.length ?? 0) > INITIAL_WORK_COUNT"
+        class="btn-outline work-toggle"
+        type="button"
+        :aria-expanded="expanded"
+        aria-controls="selected-work"
+        @click="expanded = !expanded"
+      >{{ expanded ? t('news.less') : t('news.more') }}</button>
     </section>
 
     <!-- What I bring to a project -->
@@ -460,7 +473,8 @@ const brings = computed(() => [
 
 .brings__cta:hover { background: var(--accent-btn); color: var(--on-accent); }
 
-/* ═══ Latest ═══ */
+.work-toggle { margin-top: 24px; }
+
 .rows { border-top: 1px dotted var(--dot); }
 
 .row {

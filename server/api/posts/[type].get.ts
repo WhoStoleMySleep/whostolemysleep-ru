@@ -1,5 +1,5 @@
 import { db } from '../../db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale } from '../../utils/locale'
 import { toPostSummary } from '../../utils/publicPost'
@@ -20,7 +20,7 @@ async function fetchPosts(event: H3Event) {
       postTags: { with: { tag: true } },
       images:   { orderBy: (img, { asc }) => [asc(img.position)] },
     },
-    orderBy: (p, { desc }) => [desc(p.published_at)],
+    orderBy: (p, { desc }) => [desc(p.is_pinned), sql`${p.published_at} desc nulls last`, desc(p.id)],
   })
 
   return rows.map((row) => toPostSummary(row, locale))
@@ -35,7 +35,7 @@ defineRouteMeta({
       { $ref: '#/components/parameters/locale' },
     ],
     responses: {
-      200: { description: 'Posts, newest first, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
+      200: { description: 'Posts, pinned first then newest, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
       400: { $ref: '#/components/responses/BadRequest' },
     },
     $global: {
@@ -67,6 +67,7 @@ defineRouteMeta({
               title:        { type: 'string' },
               excerpt:      { type: 'string' },
               url:          { type: 'string', nullable: true },
+              is_pinned:    { type: 'boolean' },
               published_at: { type: 'string', format: 'date-time', nullable: true },
               updated_at:   { type: 'string', format: 'date-time' },
               tags:         { type: 'array', items: { $ref: '#/components/schemas/Tag' } },
@@ -88,5 +89,5 @@ defineRouteMeta({
 
 export default defineCachedEventHandler(fetchPosts, {
   maxAge:  600,
-  getKey:  (event) => `posts-${getRouterParam(event, 'type')}-${getLocale(event)}`,
+  getKey:  (event) => `posts-pinned-${getRouterParam(event, 'type')}-${getLocale(event)}`,
 })

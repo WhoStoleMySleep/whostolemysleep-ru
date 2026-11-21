@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PostSummary } from '~/types'
+import { toUnicode } from 'punycode/'
 
 const props = defineProps<{ item: PostSummary }>()
 const { format } = useFormatDate()
@@ -12,7 +13,7 @@ const link = computed(() => linkFor(props.item))
 const host = computed(() => {
   if (!props.item.url) return ''
   try {
-    return new URL(props.item.url).hostname.replace(/^www\./, '')
+    return toUnicode(new URL(props.item.url).hostname.replace(/^www\./, ''))
   } catch {
     return ''
   }
@@ -25,7 +26,9 @@ const host = computed(() => {
     :target="link.isExternal ? '_blank' : undefined"
     :rel="link.isExternal ? 'noopener noreferrer' : undefined"
     class="card"
+    :class="{ 'card--pinned': item.is_pinned }"
   >
+    <UiPinnedIcon v-if="item.is_pinned" class="card__pin" :label="t('card.pinned')" />
     <div class="card__meta">
       <span class="card__tag">
         {{ item.tags[0]?.name ?? (item.type === 'blog' ? t('card.blog') : t('card.project')) }}
@@ -42,6 +45,7 @@ const host = computed(() => {
 
 <style scoped>
 .card {
+  position: relative;
   flex: 1 1 300px;
   min-height: 210px;
   display: flex;
@@ -67,6 +71,14 @@ const host = computed(() => {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-4);
+}
+
+.card--pinned .card__meta { padding-right: 24px; }
+
+.card__pin {
+  position: absolute;
+  top: clamp(20px, 2.4vw, 28px);
+  right: clamp(20px, 2.4vw, 28px);
 }
 
 .card__tag { color: var(--accent); }

@@ -5,7 +5,7 @@ const row = {
   title_ru: 'Привет', title_en: 'Hello',
   text_ru: '<p>тело</p>', text_en: '',
   excerpt_ru: 'кратко', excerpt_en: 'short',
-  url: null, is_published: true,
+  url: null, is_published: true, is_pinned: false,
   published_at: '2026-09-01 10:00:00', created_at: '2026-09-01 10:00:00', updated_at: '2026-09-02 10:00:00',
   postTags: [{ tag: { id: 1, slug: 'rust', name_ru: 'Раст', name_en: '' } }],
   images:   [{ id: 3, post_id: 7, url: 'https://x/1.png', alt_ru: 'картинка', alt_en: 'picture', position: 0 }],
@@ -43,4 +43,11 @@ describe('toPost', () => {
     expect(toPost(row, 'ru').text).toBe('<p>тело</p>')
     expect(toPost(row, 'en').text).toBe('<p>тело</p>')
   })
+})
+
+
+test.each([true, false])('публичный ответ сохраняет is_pinned=%s', async (is_pinned) => {
+  const { toPostSummary, toPost } = await import('~~/server/utils/publicPost')
+  expect(toPostSummary({ ...row, is_pinned }, 'ru').is_pinned).toBe(is_pinned)
+  expect(toPost({ ...row, is_pinned }, 'en').is_pinned).toBe(is_pinned)
 })

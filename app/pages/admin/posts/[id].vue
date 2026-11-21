@@ -25,6 +25,7 @@ interface Form {
   excerpt_ru: string; excerpt_en: string
   text_ru: string; text_en: string
   url: string
+  is_pinned: boolean
   is_published: boolean
   published_at: string
   tag_ids: number[]
@@ -35,7 +36,7 @@ const blank = (): Form => ({
   title_ru: '', title_en: '',
   excerpt_ru: '', excerpt_en: '',
   text_ru: '', text_en: '',
-  url: '', is_published: false, published_at: '',
+  url: '', is_pinned: false, is_published: false, published_at: '',
   tag_ids: [],
 })
 
@@ -124,6 +125,25 @@ function toggleTag(id: number) {
   else form.value.tag_ids.push(id)
 }
 
+const newTag = ref({ name_ru: '', name_en: '' })
+const creatingTag = ref(false)
+
+async function createTag() {
+  if (creatingTag.value || !newTag.value.name_ru.trim()) return
+  creatingTag.value = true
+  try {
+    const tag = await api.post<Tag>('/api/admin/tags', newTag.value)
+    allTags.value = [...(allTags.value ?? []), tag].sort((a, b) => a.name_ru.localeCompare(b.name_ru))
+    form.value.tag_ids = [...form.value.tag_ids, tag.id]
+    newTag.value = { name_ru: '', name_en: '' }
+    toast.ok('Tag created and selected')
+  } catch (e) {
+    toast.err(adminError(e))
+  } finally {
+    creatingTag.value = false
+  }
+}
+
 /* ── Images ── */
 
 const uploading = ref(false)
@@ -208,6 +228,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
       </div>
 
       <AdminField v-model="form.is_published" type="checkbox" label="Published — visible on the site" />
+      <AdminField v-model="form.is_pinned" type="checkbox" label="Pinned — shown first; published projects appear in Selected work" />
     </div>
 
     <div class="admin-panel block">
@@ -257,7 +278,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
     </div>
 
     <div class="admin-panel block">
-      <p class="block__title">Tags</p>
+      <p class="block__title">Tags · select multiple</p>
       <div class="tags">
         <button
           v-for="tag in allTags"
@@ -265,10 +286,22 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
           class="chip"
           :class="{ 'chip--active': form.tag_ids.includes(tag.id) }"
           type="button"
+          :aria-pressed="form.tag_ids.includes(tag.id)"
           @click="toggleTag(tag.id)"
         >{{ tag.name_ru }}</button>
         <p v-if="!allTags?.length" class="hint">No tags yet</p>
       </div>
+      <form class="admin-grid" @submit.prevent="createTag">
+        <AdminField label="New tag RU" required>
+          <input v-model="newTag.name_ru" class="admin-input" maxlength="100" required aria-label="New tag RU">
+        </AdminField>
+        <AdminField label="New tag EN (optional)">
+          <input v-model="newTag.name_en" class="admin-input" maxlength="100" aria-label="New tag EN">
+        </AdminField>
+        <button class="admin-btn admin-btn--ghost" type="submit" :disabled="creatingTag || !newTag.name_ru.trim()">
+          {{ creatingTag ? 'Creating…' : '+ Create tag' }}
+        </button>
+      </form>
     </div>
 
     <div class="admin-panel block">

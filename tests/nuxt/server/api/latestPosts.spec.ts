@@ -1,5 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
+import { PgDialect } from 'drizzle-orm/pg-core'
+import type { SQL } from 'drizzle-orm'
 
 const m = vi.hoisted(() => ({
   findMany: vi.fn(async (_query: unknown): Promise<unknown[]> => []),
@@ -25,12 +27,12 @@ afterEach(() => {
 })
 
 describe('GET /api/posts/latest', () => {
-  test('asks the database for four rows and no bodies', async () => {
+  test('запрашивает не более восьми проектов без тела записи', async () => {
     const handler = await latest()
     await handler({} as H3Event)
 
     const query = m.findMany.mock.calls[0]?.[0] as { limit: number, columns: Record<string, boolean> }
-    expect(query.limit).toBe(4)
+    expect(query.limit).toBe(8)
     expect(query.columns).toEqual({ text_ru: false, text_en: false })
   })
 
@@ -43,4 +45,22 @@ describe('GET /api/posts/latest', () => {
 
     expect(junk).toBe(handler.opts.getKey({} as H3Event))
   })
+})
+
+
+test('на главную попадают только опубликованные закреплённые проекты', async () => {
+  const handler = await latest()
+  await handler({} as H3Event)
+  const query = m.findMany.mock.calls[0]?.[0] as { where: SQL }
+  const sql = new PgDialect().sqlToQuery(query.where)
+  expect(sql.sql).toContain('"post"."is_published" =')
+  expect(sql.sql).toContain('"post"."is_pinned" =')
+  expect(sql.sql).toContain('"post"."type" =')
+  expect(sql.params).toEqual([true, true, 'project'])
+})
+
+test('отсутствие закреплённых не заменяет подборку последними записями', async () => {
+  const handler = await latest()
+  expect(await handler({} as H3Event)).toEqual([])
+  expect(m.findMany).toHaveBeenCalledTimes(1)
 })

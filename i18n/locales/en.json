@@ -11,20 +11,20 @@
     "toTop": "Back to top"
   },
   "hero": {
-    "eyebrow": "Vue · React · Rust · Tauri · R-04",
-    "line1": "Web in front,",
+    "eyebrow": "Nuxt · Vue · TypeScript · Rust · Tauri",
+    "line1": "Nuxt in front,",
     "line2": "Rust behind",
     "years": "years",
     "status": "Open to remote work worldwide",
-    "lede": "Full-stack developer with {years} of experience. Production web apps in Vue/Nuxt and React, native desktop and mobile apps in Rust with Tauri. Before that — high-load interfaces for two of Russia's largest banks.",
+    "lede": "Full-stack developer with {years} of experience. My primary stack is Nuxt, Vue and TypeScript, from interfaces to server logic with Nitro. Native desktop and mobile apps — Rust with Tauri. React is an additional tool when the project calls for it. Before that — high-load interfaces for two of Russia's largest banks.",
     "cta_cv": "Download CV",
     "cta_projects": "View projects"
   },
   "stack": {
     "f1_k": "Nuxt / Vue",
     "f1_v": "Architecture, SSR/ISR/SSG, Nitro, i18n.",
-    "f2_k": "React / Next",
-    "f2_v": "React 19, Next.js, Zustand, virtualized lists, motion. See Wave.",
+    "f2_k": "React · supporting",
+    "f2_v": "Maintaining and extending React projects, Next.js, Zustand, virtualized lists and motion. See Wave.",
     "f3_k": "Rust / Tauri",
     "f3_v": "Cross-platform desktop and mobile, native plugins, system APIs.",
     "f4_k": "TS / Node / Perf",
@@ -40,12 +40,14 @@
     "b1": "Built for distributed teams. I take a task from spec to production without hand-holding, write decisions down, and work asynchronously in English.",
     "b2": "One person across the whole product — web frontend, native desktop and mobile, and the backend behind them. Fewer handoffs, fewer things lost between teams.",
     "b3": "I ship and maintain what I build: published npm packages, a Tauri plugin, open-source apps other people actually run. Not demos.",
-    "looking": "Looking for: long-term remote work with product teams that care about craft — Vue/Nuxt or React on the web, Rust where it needs to be fast or native. Any timezone.",
+    "looking": "Looking for: long-term remote work with product teams that care about craft — Nuxt/Vue as my primary web stack, Rust for speed and native apps. React as an additional skill. Any timezone.",
     "cta": "Let's talk"
   },
   "news": {
-    "eyebrow": "Latest posts",
-    "all": "All posts →"
+    "eyebrow": "Selected work",
+    "all": "All projects →",
+    "more": "Show more",
+    "less": "Show less"
   },
   "blog": {
     "eyebrow": "Blog",
@@ -56,7 +58,8 @@
   },
   "card": {
     "blog": "Blog",
-    "project": "Project"
+    "project": "Project",
+    "pinned": "Pinned"
   },
   "post": {
     "back": "Back to blog",
