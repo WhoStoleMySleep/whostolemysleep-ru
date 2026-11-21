@@ -31,7 +31,7 @@ describe('postPaths', () => {
 
   test('with a slug the entry page itself is added', async () => {
     const { postPaths } = await import('~~/server/utils/pending')
-    expect(postPaths('hello')).toContain('/blog/hello')
+    expect(postPaths({ slug: 'hello', type: 'blog', url: null })).toContain('/blog/hello')
   })
 })
 
@@ -40,4 +40,16 @@ describe('resumePaths', () => {
     const { resumePaths } = await import('~~/server/utils/pending')
     expect(resumePaths()).toEqual(['/', '/resume', '/cv'])
   })
+})
+
+
+test.each([null, ''])('проект без внешнего URL имеет внутреннюю страницу при url=%s', async (url) => {
+  const { postPaths } = await import('~~/server/utils/pending')
+  expect(postPaths({ slug: 'internal', type: 'project', url })).toContain('/blog/internal')
+})
+
+test('внешний проект обновляет только списки, а статья с URL всё равно имеет страницу', async () => {
+  const { postPaths } = await import('~~/server/utils/pending')
+  expect(postPaths({ slug: 'wave', type: 'project', url: 'https://example.com' })).toEqual(['/', '/blog', '/projects'])
+  expect(postPaths({ slug: 'article', type: 'blog', url: 'https://example.com' })).toContain('/blog/article')
 })

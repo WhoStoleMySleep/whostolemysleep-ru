@@ -1,5 +1,4 @@
-import { db } from '~~/server/db'
-import * as schema from '~~/server/db/schema'
+import { flushPending } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -14,21 +13,4 @@ defineRouteMeta({
   },
 })
 
-export default defineEventHandler(async () => {
-  const pending = await db.select().from(schema.pendingRevalidation)
-  if (!pending.length) return { ok: true, cleared: [], failed: [] }
-
-  const queued = pending.map((p) => p.path)
-
-  // A queued path is a "page"; it has two real routes behind it (ru and en).
-  const targets = [...new Set(queued.flatMap(withLocales))]
-  const { revalidated, failed } = await revalidatePaths(targets)
-
-  // An entry leaves the queue only when both locales refreshed: otherwise the
-  // button reports success while half the pages stay stale.
-  const broken = new Set(failed.map((f) => f.path))
-  const done   = queued.filter((path) => !withLocales(path).some((p) => broken.has(p)))
-  await clearPending(done)
-
-  return { ok: !failed.length, cleared: revalidated, failed }
-})
+export default defineEventHandler(() => flushPending())

@@ -1,7 +1,7 @@
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 interface Bullet { text_ru: string; text_en: string }
 
@@ -77,6 +77,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  await markDirty(['/ru', '/en', '/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return updated
 })

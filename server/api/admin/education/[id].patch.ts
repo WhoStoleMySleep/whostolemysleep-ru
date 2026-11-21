@@ -1,7 +1,7 @@
 import { db } from '~~/server/db'
 import { education } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -30,6 +30,6 @@ export default defineEventHandler(async (event) => {
 
   if (!updated) throw createError({ statusCode: 404 })
 
-  await markDirty(['/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return updated
 })

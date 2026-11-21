@@ -45,7 +45,9 @@ export default defineEventHandler(async (event) => {
   const pinOrder = fields.is_pinned === true
     ? { pin_order: sql`case when ${schema.post.is_pinned} then ${schema.post.pin_order} else coalesce((select max(pin_order) from ${schema.post} where is_pinned), -1) + 1 end` }
     : {}
-  const [, rows] = await db.batch([lockPostOrder(), db.update(schema.post)
+  const [, previous, rows] = await db.batch([lockPostOrder(),
+    db.select().from(schema.post).where(eq(schema.post.id, id)).limit(1),
+    db.update(schema.post)
     .set({ ...fields, ...pinOrder, updated_at: new Date().toISOString() })
     .where(eq(schema.post.id, id))
     .returning()])
@@ -61,6 +63,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  await markDirty(postPaths(updated.slug))
+  await markDirty([...postPaths(previous[0]), ...postPaths(updated)])
   return updated
 })

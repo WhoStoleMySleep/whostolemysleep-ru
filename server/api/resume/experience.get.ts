@@ -54,7 +54,4 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(fetchExperience, {
-  maxAge:  7200,
-  getKey:  (event) => `experience-${getLocale(event)}`,
-})
+export default defineEventHandler(fetchExperience)

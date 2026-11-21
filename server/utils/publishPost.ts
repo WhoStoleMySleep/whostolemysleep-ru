@@ -143,7 +143,7 @@ export async function savePublishedPost(
 
   await linkTags(saved.id, payload.tags ?? [])
   await setCover(saved.id, payload.cover_url)
-  await markDirty(postPaths(saved.slug))
+  await markDirty([...postPaths(existing), ...postPaths(saved)])
 
   return { id: saved.id, slug: saved.slug, url: publicUrl(saved.slug) }
 }

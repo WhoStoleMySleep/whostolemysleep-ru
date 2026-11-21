@@ -1,6 +1,6 @@
 import { skillGroup } from '~~/server/db/schema'
 import { applyOrder, readOrderIds } from '~~/server/utils/reorder'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -20,6 +20,6 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const ids = readOrderIds(await readBody(event))
   await applyOrder(skillGroup, ids)
-  await markDirty(['/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return { ok: true }
 })

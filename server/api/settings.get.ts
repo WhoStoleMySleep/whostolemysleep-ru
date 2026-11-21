@@ -73,7 +73,4 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(fetchSettings, {
-  maxAge: 300,
-  getKey: () => 'settings',
-})
+export default defineEventHandler(fetchSettings)

@@ -48,7 +48,4 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(fetchPost, {
-  maxAge:  600,
-  getKey:  (event) => `blog-${getRouterParam(event, 'slug')}-${getLocale(event)}`,
-})
+export default defineEventHandler(fetchPost)

@@ -77,3 +77,53 @@ describe('revalidatePaths on Vercel', () => {
     await expect(revalidatePaths(['/ru'])).rejects.toThrow(/ISR_BYPASS_TOKEN/)
   })
 })
+
+describe('Ожидаемый 404 при обновлении ISR', () => {
+  beforeEach(() => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('ISR_BYPASS_TOKEN', 'secret')
+  })
+
+  test('404 подтверждённой удалённой страницы считается завершённым обновлением', async () => {
+    const request = vi.fn().mockRejectedValue(Object.assign(new Error('Gone'), { statusCode: 404 }))
+    vi.stubGlobal('$fetch', request)
+    const { revalidatePaths } = await import('~~/server/utils/revalidate')
+    expect(await revalidatePaths(['/ru/blog/deleted'], ['/ru/blog/deleted'])).toEqual({ revalidated: ['/ru/blog/deleted'], failed: [] })
+    expect(request).toHaveBeenCalledWith('https://site.test/ru/blog/deleted', expect.objectContaining({ timeout: 10_000, retry: 0 }))
+  })
+
+  test('неожиданный 404 не скрывается', async () => {
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(Object.assign(new Error('Missing'), { statusCode: 404 })))
+    const { revalidatePaths } = await import('~~/server/utils/revalidate')
+    expect(await revalidatePaths(['/ru/blog/published'])).toEqual({ revalidated: [], failed: [{ path: '/ru/blog/published', reason: 'HTTP 404' }] })
+  })
+
+  test('500 не скрывается даже для удалённой страницы', async () => {
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(Object.assign(new Error('Unavailable'), { statusCode: 500 })))
+    const { revalidatePaths } = await import('~~/server/utils/revalidate')
+    expect((await revalidatePaths(['/ru/blog/deleted'], ['/ru/blog/deleted'])).failed).toEqual([{ path: '/ru/blog/deleted', reason: 'HTTP 500' }])
+  })
+
+  test('сетевой сбой остаётся доступным для повторной попытки', async () => {
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(new Error('Timeout')))
+    const { revalidatePaths } = await import('~~/server/utils/revalidate')
+    expect((await revalidatePaths(['/ru'])).failed).toEqual([{ path: '/ru', reason: 'Error: Timeout' }])
+  })
+
+  test('ограничивает параллелизм и обрабатывает все страницы очереди', async () => {
+    let active = 0
+    let peak = 0
+    const request = vi.fn(async () => {
+      peak = Math.max(peak, ++active)
+      await Promise.resolve()
+      active--
+      return ''
+    })
+    vi.stubGlobal('$fetch', request)
+    const paths = Array.from({ length: 15 }, (_, index) => `/ru/blog/post-${index}`)
+    const { revalidatePaths } = await import('~~/server/utils/revalidate')
+    expect(await revalidatePaths(paths)).toEqual({ revalidated: paths, failed: [] })
+    expect(request).toHaveBeenCalledTimes(15)
+    expect(peak).toBe(6)
+  })
+})
