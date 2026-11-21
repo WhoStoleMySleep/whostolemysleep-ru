@@ -42,12 +42,12 @@ function move(from: number, to: number) {
   emit('reorder', ids)
 }
 
-function onDragStart(index: number, e: DragEvent) {
+function onDragStart(index: number, event: DragEvent) {
   if (!movable(index)) return
   dragIndex.value = index
   // Without dataTransfer Firefox does not start the drag at all.
-  e.dataTransfer?.setData('text/plain', String(index))
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer?.setData('text/plain', String(index))
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
 
 function onDragOver(index: number, e: DragEvent) {

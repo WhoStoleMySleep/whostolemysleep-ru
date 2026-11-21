@@ -62,22 +62,26 @@ async function remove(post: Row) {
   }
 }
 
+function updatePost(postId: number, update: Partial<Row>) {
+  data.value = (data.value ?? []).map(post => (post.id === postId ? { ...post, ...update } : post))
+}
+
 /** Publishing is toggled from the list — no reason to open the editor for one flag. */
 async function togglePublish(post: Row) {
   if (busy.value) return
-  const next = !post.is_published
-  post.is_published = next
+  const isPublished = !post.is_published
+  updatePost(post.id, { is_published: isPublished })
   busy.value = true
   try {
     await api.patch(`/api/admin/posts/${post.id}`, {
-      is_published: next,
-      published_at: next ? new Date().toISOString() : null,
+      is_published: isPublished,
+      published_at: isPublished ? new Date().toISOString() : null,
     })
     await refresh()
-    toast.ok(next ? 'Published' : 'Moved to drafts')
-  } catch (e) {
-    post.is_published = !next
-    toast.err(adminError(e))
+    toast.ok(isPublished ? 'Published' : 'Moved to drafts')
+  } catch (cause) {
+    updatePost(post.id, { is_published: post.is_published })
+    toast.err(adminError(cause))
   } finally {
     busy.value = false
   }

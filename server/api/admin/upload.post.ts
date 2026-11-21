@@ -1,14 +1,30 @@
 import { put } from '@vercel/blob'
 
+const PNG_SIGNATURE = Buffer.from('89504e470d0a1a0a', 'hex')
+const JPEG_SIGNATURE = Buffer.from('ffd8ff', 'hex')
+const GIF_SIGNATURE = 'GIF8'
+const RIFF_SIGNATURE = 'RIFF'
+const WEBP_SIGNATURE = 'WEBP'
+const WEBP_FORMAT_OFFSET = 8
+const MAX_MEGABYTES = 8
+const MAX_BYTES = MAX_MEGABYTES * 1024 * 1024
+
+function matchesSignature(bytes: Buffer, signature: Buffer, offset = 0) {
+  return bytes.subarray(offset, offset + signature.length).equals(signature)
+}
+
+function matchesAsciiSignature(bytes: Buffer, signature: string, offset = 0) {
+  return bytes.subarray(offset, offset + signature.length).toString('ascii') === signature
+}
+
 /** What is accepted: file signature to the content type it is allowed to claim. */
 const SIGNATURES: { type: string; ext: string; match: (bytes: Buffer) => boolean }[] = [
-  { type: 'image/png',  ext: 'png',  match: (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) },
-  { type: 'image/jpeg', ext: 'jpg',  match: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
-  { type: 'image/gif',  ext: 'gif',  match: (b) => b.subarray(0, 6).toString('ascii').startsWith('GIF8') },
-  { type: 'image/webp', ext: 'webp', match: (b) => b.subarray(0, 4).toString('ascii') === 'RIFF' && b.subarray(8, 12).toString('ascii') === 'WEBP' },
+  { type: 'image/png',  ext: 'png',  match: bytes => matchesSignature(bytes, PNG_SIGNATURE) },
+  { type: 'image/jpeg', ext: 'jpg',  match: bytes => matchesSignature(bytes, JPEG_SIGNATURE) },
+  { type: 'image/gif',  ext: 'gif',  match: bytes => matchesAsciiSignature(bytes, GIF_SIGNATURE) },
+  { type: 'image/webp', ext: 'webp', match: bytes => matchesAsciiSignature(bytes, RIFF_SIGNATURE)
+    && matchesAsciiSignature(bytes, WEBP_SIGNATURE, WEBP_FORMAT_OFFSET) },
 ]
-
-const MAX_BYTES = 8 * 1024 * 1024
 
 defineRouteMeta({
   openAPI: {

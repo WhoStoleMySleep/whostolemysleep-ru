@@ -9,6 +9,9 @@ const LOCALES  = ['en', 'ru']
 // listing it here would ask a crawler to index what the same site tells it to skip.
 const STATIC_PATHS = ['', '/blog', '/projects', '/resume', '/contacts', '/privacy']
 
+interface Entry { loc: string; lastmod?: string }
+type SitemapPost = Pick<typeof post.$inferSelect, 'slug' | 'type' | 'url' | 'updated_at'>
+
 defineRouteMeta({
   openAPI: {
     tags:    ['Service'],
@@ -19,43 +22,35 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(async (event) => {
-  const posts = await db
-    .select({ slug: post.slug, type: post.type, url: post.url, updated_at: post.updated_at })
-    .from(post)
-    .where(eq(post.is_published, true))
+function postEntries(row: SitemapPost): Entry[] {
+  return LOCALES.map(locale => ({
+    loc: `${BASE_URL}/${locale}/blog/${row.slug}`,
+    lastmod: row.updated_at?.slice(0, 10),
+  }))
+}
 
-  interface Entry { loc: string, lastmod?: string }
-
-  const staticUrls: Entry[] = STATIC_PATHS.flatMap(path =>
-    LOCALES.map(locale => ({ loc: `${BASE_URL}/${locale}${path}` }))
-  )
-
-  // The same rule /api/blog/[slug] serves by: everything that has a page here, which
-  // is a blog post or a project with no site of its own. A project that links out has
-  // no page to list.
-  //
-  // lastmod is only on these: a static page changes when its markup does, and this
-  // handler has no way of knowing when that was. Dating them with today would be a
-  // lie a crawler learns to ignore.
-  const postUrls: Entry[] = posts
-    .filter(p => p.type === 'blog' || !p.url)
-    .flatMap(p => LOCALES.map(locale => ({
-      loc:     `${BASE_URL}/${locale}/blog/${p.slug}`,
-      lastmod: p.updated_at?.slice(0, 10),
-    })))
-
-  const allUrls = [...staticUrls, ...postUrls]
-
-  const xml = [
+function sitemapXml(entries: Entry[]) {
+  return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...allUrls.map(({ loc, lastmod }) => lastmod
+    ...entries.map(({ loc, lastmod }) => lastmod
       ? `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`
       : `  <url><loc>${loc}</loc></url>`),
     '</urlset>',
   ].join('\n')
+}
 
+export default defineCachedEventHandler(async (event) => {
+  const posts = await db
+    .select({ slug: post.slug, type: post.type, url: post.url, updated_at: post.updated_at })
+    .from(post).where(eq(post.is_published, true))
+  const staticUrls: Entry[] = STATIC_PATHS.flatMap(path =>
+    LOCALES.map(locale => ({ loc: `${BASE_URL}/${locale}${path}` }))
+  )
+  // External projects have no local page. Static pages omit lastmod because their
+  // markup's modification time is not known here.
+  const postUrls = posts.filter(row => row.type === 'blog' || !row.url).flatMap(postEntries)
+  const xml = sitemapXml([...staticUrls, ...postUrls])
   setHeader(event, 'Content-Type', 'application/xml; charset=utf-8')
   return xml
 }, {

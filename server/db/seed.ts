@@ -5,28 +5,23 @@ import * as schema from './schema'
 const sql = neon(process.env.POSTGRES_PRISMA_URL!)
 const db = drizzle(sql, { schema })
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const QUOTE_PREFIX = '> '
+const HEADING_MARKER = '**'
 
-function toHtml(raw: string): string {
-  return raw
-    .split(/ n /)
-    .map(s => s.trim())
-    .filter(Boolean)
-    .map((s) => {
-      if (s.startsWith('> ')) {
-        const inner = s.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        return `<blockquote>${inner}</blockquote>`
-      }
-      if (s.startsWith('**') && s.endsWith('**')) {
-        return `<h3>${s.slice(2, -2)}</h3>`
-      }
-      const line = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      return `<p>${line}</p>`
-    })
-    .join('\n')
+function htmlBlock(block: string) {
+  if (block.startsWith(QUOTE_PREFIX)) {
+    const inner = block.slice(QUOTE_PREFIX.length).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    return `<blockquote>${inner}</blockquote>`
+  }
+  if (block.startsWith(HEADING_MARKER) && block.endsWith(HEADING_MARKER)) {
+    return `<h3>${block.slice(HEADING_MARKER.length, -HEADING_MARKER.length)}</h3>`
+  }
+  return `<p>${block.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`
 }
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+function toHtml(raw: string): string {
+  return raw.split(/ n /).map(block => block.trim()).filter(Boolean).map(htmlBlock).join('\n')
+}
 
 const ABOUT_TEXT = `Frontend-разработчик (Next.js, React) с 4 годами опыта в создании высоконагруженных UI для финтеха (Сбер). Специализируюсь на производительности, точности и надёжности интерфейсов, которые напрямую влияют на бизнес-метрики. Например, оптимизация CRM сократила время обработки заявок на 50%. <br/><br/> Инструментарий: <br/> • Next.js / Nuxt.js: Архитектура, SSR/ISR/SSG, оптимизация. <br/> • React / Vue & Экосистема: TypeScript, Zustand/Redux, TanStack Query. <br/> • Производительность: Оптимизация Core Web Vitals, работа с большими данными. <br/> • UI: Tailwind CSS, Shadcn/ui, работа с дизайн-системами. <br/><br/> Что делаю для проекта: <br/><br/> Полная автономность. Идеально для удалённых команд: отлаженный workflow, асинхронная коммуникация, проактивность. <br/><br/> Быстро осваиваю новые технологии и смежные области (например, базовый DevOps для настройки CI/CD), чтобы оперативно закрывать потребности проекта <br/><br/> Понимаю бэкенд (Node.js/Nest.js), что позволяет эффективно работать с API и проектировать фронтенд осознанно. <br/><br/> Я ищу: Сложные проекты на Next.js, где важны качество и результат. Рассматриваю долгосрочное удалённое сотрудничество. <br/><br/> Готов обсудить ваши задачи и показать, как мой опыт поможет их решить.`
 
@@ -65,133 +60,151 @@ const SKILLS = [
   },
 ]
 
-// ── Seed ─────────────────────────────────────────────────────────────────────
+const POSTS: (typeof schema.post.$inferInsert)[] = [
+  {
+    slug:         'ai-i-my',
+    type:         'blog',
+    title_ru:     'ИИ и мы: стоим ли мы над пропастью эффективности',
+    excerpt_ru:   'Размышления о парадоксах использования ИИ в разработке, ловушках для новичков и том, как превратить инструмент из цифрового дофамина в настоящий усилитель возможностей.',
+    text_ru:      toHtml(POST1_TEXT),
+    is_published: true,
+    published_at: '2026-01-27 07:46:53',
+  },
+  {
+    slug:         'pervaya-rabota',
+    type:         'blog',
+    title_ru:     'Первая реальная работа',
+    excerpt_ru:   'Первое собеседование вживую, первые трудности и новая интересная работа.',
+    text_ru:      toHtml(POST2_TEXT),
+    is_published: true,
+    published_at: '2026-01-27 07:42:58',
+  },
+  {
+    slug:         'sberspasibo',
+    type:         'project',
+    title_ru:     'СберСпасибо',
+    excerpt_ru:   'Сайт СберСпасибо — важный для меня проект, участие в разработке которого дало большой толчок в развитии.',
+    text_ru:      '<p>Сайт СберСпасибо — участие в разработке которого я принимал, дал мне большой толчок в развитии.</p>',
+    url:          'https://spasibosberbank.ru/',
+    is_published: true,
+    published_at: '2022-02-01 07:05:16',
+  },
+  {
+    slug:         'pochtabank',
+    type:         'project',
+    title_ru:     'ПочтаБанк',
+    excerpt_ru:   'Сайт ПочтаБанк — мои первые шаги в коммерческой разработке.',
+    text_ru:      '<p>Сайт ПочтаБанк — мои первые шаги в коммерческой разработке.</p>',
+    url:          'https://www.pochtabank.ru/',
+    is_published: true,
+    published_at: '2023-04-05 07:07:43',
+  },
+]
 
-async function seed() {
-  console.log('Seeding...')
+const IMAGES = [
+  {
+    url:      'https://umihgl7z2ekcut1l.public.blob.vercel-storage.com/photo-1542831371-29b0f74f9713%20(1)-QDBLCPz51bfQKTs8g30aXpzJgAmnXS.webp',
+    alt_ru:   '',
+    position: 0,
+  },
+  {
+    url:      'https://umihgl7z2ekcut1l.public.blob.vercel-storage.com/Modern-Office-Interior-with-Open-Floor-Plan-scaled%20(1)-gnrRp7QHvUtJBtNjnAbix0H2TlqEVm.webp',
+    alt_ru:   '',
+    position: 0,
+  },
+  {
+    url:      'https://avatars.mds.yandex.net/i?id=72561821419cf30a1d0c6f50c464176d_l-12372285-images-thumbs&n=13',
+    alt_ru:   'СберСпасибо',
+    position: 0,
+  },
+  {
+    url:      'https://arhzavod.ru/upload/iblock/418/418de20e9e3f83727bb480d9abe06ac3.jpeg',
+    alt_ru:   'ПочтаБанк',
+    position: 0,
+  },
+]
 
-  await db.insert(schema.aboutMe).values({ text_ru: ABOUT_TEXT })
-  console.log('✓ about_me')
+const POCHTA_EXPERIENCE = {
+  company_ru:  'Почта России',
+  company_en:  'Russian Post',
+  position_ru: 'Frontend-разработчик',
+  position_en: 'Frontend Developer',
+  date_from:   '2022-02-01',
+  date_to:     '2023-03-01',
+  order:       1,
+}
 
+const SBER_EXPERIENCE = {
+  company_ru:  'СберСпасибо',
+  company_en:  'SberSpasibo',
+  position_ru: 'Frontend-разработчик',
+  position_en: 'Frontend Developer',
+  date_from:   '2023-04-01',
+  date_to:     null,
+  order:       0,
+}
+
+const POCHTA_BULLETS = [
+  'Адаптивные формы с валидацией (Next.js). Результат: пользовательские ошибки при заполнении снижены на 25%.',
+  'Оптимизация производительности. Внедрение lazy-loading и кеширования. Результат: скорость загрузки страниц увеличена на 40%, нагрузка на сервер снижена.',
+  'Real-time интерфейсы (WebSocket). Разработка UI для отображения данных в реальном времени. Результат: устранены задержки в обновлении данных, внедрён мониторинг ошибок (Sentry).',
+]
+
+const SBER_BULLETS = [
+  'Система динамических форм (Next.js). Реализация с продвинутой валидацией и управлением состоянием. Результат: время заполнения форм сокращено на 35%, ошибки валидации снижены на 40%.',
+  'Модуль персонализированных миссий с прогресс-баром (Next.js). Создание интерактивного UI для вовлечения пользователей. Результат: рост повторных визитов на 28%, конверсия в выполненные задачи выросла на 45%.',
+  'Интерактивный дашборд аналитики (React). Разработка компонентов для визуализации больших данных. Результат: скорость формирования отчётов увеличена в 3 раза.',
+  'CRM-интерфейс с шаблонными сценариями (Next.js). Проектирование и реализация интерфейса для операторов. Результат: время обработки заявок сокращено на 50%, ошибки операторов снижены на 30%.',
+]
+
+type SeedPost = typeof schema.post.$inferSelect
+type SeedTag = typeof schema.tag.$inferSelect
+
+async function seedTags() {
   const tags = await db.insert(schema.tag).values([
     { slug: 'personal', name_ru: 'Личное', name_en: 'Personal' },
-    { slug: 'work',     name_ru: 'Работа', name_en: 'Work'     },
+    { slug: 'work',     name_ru: 'Работа', name_en: 'Work' },
   ]).returning()
-  const personal = tags[0]!
-  const work     = tags[1]!
   console.log('✓ tags')
+  return tags
+}
 
-  const posts = await db.insert(schema.post).values([
-    {
-      slug:         'ai-i-my',
-      type:         'blog',
-      title_ru:     'ИИ и мы: стоим ли мы над пропастью эффективности',
-      excerpt_ru:   'Размышления о парадоксах использования ИИ в разработке, ловушках для новичков и том, как превратить инструмент из цифрового дофамина в настоящий усилитель возможностей.',
-      text_ru:      toHtml(POST1_TEXT),
-      is_published: true,
-      published_at: '2026-01-27 07:46:53',
-    },
-    {
-      slug:         'pervaya-rabota',
-      type:         'blog',
-      title_ru:     'Первая реальная работа',
-      excerpt_ru:   'Первое собеседование вживую, первые трудности и новая интересная работа.',
-      text_ru:      toHtml(POST2_TEXT),
-      is_published: true,
-      published_at: '2026-01-27 07:42:58',
-    },
-    {
-      slug:         'sberspasibo',
-      type:         'project',
-      title_ru:     'СберСпасибо',
-      excerpt_ru:   'Сайт СберСпасибо — важный для меня проект, участие в разработке которого дало большой толчок в развитии.',
-      text_ru:      '<p>Сайт СберСпасибо — участие в разработке которого я принимал, дал мне большой толчок в развитии.</p>',
-      url:          'https://spasibosberbank.ru/',
-      is_published: true,
-      published_at: '2022-02-01 07:05:16',
-    },
-    {
-      slug:         'pochtabank',
-      type:         'project',
-      title_ru:     'ПочтаБанк',
-      excerpt_ru:   'Сайт ПочтаБанк — мои первые шаги в коммерческой разработке.',
-      text_ru:      '<p>Сайт ПочтаБанк — мои первые шаги в коммерческой разработке.</p>',
-      url:          'https://www.pochtabank.ru/',
-      is_published: true,
-      published_at: '2023-04-05 07:07:43',
-    },
-  ]).returning()
-
-  const [post1, post2, post3, post4] = posts
+async function seedPosts() {
+  const posts = await db.insert(schema.post).values(POSTS).returning()
   console.log('✓ posts')
+  return posts
+}
 
+async function seedPostTags(posts: SeedPost[], tags: SeedTag[]) {
+  const [post1, post2, post3, post4] = posts
+  const [personal, work] = tags
   await db.insert(schema.postTag).values([
-    { post_id: post1!.id, tag_id: personal.id },
-    { post_id: post2!.id, tag_id: personal.id },
-    { post_id: post3!.id, tag_id: work.id },
-    { post_id: post4!.id, tag_id: work.id },
+    { post_id: post1!.id, tag_id: personal!.id },
+    { post_id: post2!.id, tag_id: personal!.id },
+    { post_id: post3!.id, tag_id: work!.id },
+    { post_id: post4!.id, tag_id: work!.id },
   ])
   console.log('✓ post_tags')
+}
 
-  await db.insert(schema.image).values([
-    {
-      post_id:  post1!.id,
-      url:      'https://umihgl7z2ekcut1l.public.blob.vercel-storage.com/photo-1542831371-29b0f74f9713%20(1)-QDBLCPz51bfQKTs8g30aXpzJgAmnXS.webp',
-      alt_ru:   '',
-      position: 0,
-    },
-    {
-      post_id:  post2!.id,
-      url:      'https://umihgl7z2ekcut1l.public.blob.vercel-storage.com/Modern-Office-Interior-with-Open-Floor-Plan-scaled%20(1)-gnrRp7QHvUtJBtNjnAbix0H2TlqEVm.webp',
-      alt_ru:   '',
-      position: 0,
-    },
-    {
-      post_id:  post3!.id,
-      url:      'https://avatars.mds.yandex.net/i?id=72561821419cf30a1d0c6f50c464176d_l-12372285-images-thumbs&n=13',
-      alt_ru:   'СберСпасибо',
-      position: 0,
-    },
-    {
-      post_id:  post4!.id,
-      url:      'https://arhzavod.ru/upload/iblock/418/418de20e9e3f83727bb480d9abe06ac3.jpeg',
-      alt_ru:   'ПочтаБанк',
-      position: 0,
-    },
-  ])
+async function seedImages(posts: SeedPost[]) {
+  await db.insert(schema.image).values(IMAGES.map((image, index) => ({
+    post_id: posts[index]!.id, ...image,
+  })))
   console.log('✓ images')
+}
 
-  const [expPochtaRu] = await db.insert(schema.experience).values({
-    company_ru:  'Почта России',
-    company_en:  'Russian Post',
-    position_ru: 'Frontend-разработчик',
-    position_en: 'Frontend Developer',
-    date_from:   '2022-02-01',
-    date_to:     '2023-03-01',
-    order:       1,
-  }).returning()
-
-  const [expSber] = await db.insert(schema.experience).values({
-    company_ru:  'СберСпасибо',
-    company_en:  'SberSpasibo',
-    position_ru: 'Frontend-разработчик',
-    position_en: 'Frontend Developer',
-    date_from:   '2023-04-01',
-    date_to:     null,
-    order:       0,
-  }).returning()
-
+async function seedExperience() {
+  const [pochta] = await db.insert(schema.experience).values(POCHTA_EXPERIENCE).returning()
+  const [sber] = await db.insert(schema.experience).values(SBER_EXPERIENCE).returning()
   await db.insert(schema.experienceBullet).values([
-    { experience_id: expPochtaRu!.id, order: 0, text_ru: 'Адаптивные формы с валидацией (Next.js). Результат: пользовательские ошибки при заполнении снижены на 25%.' },
-    { experience_id: expPochtaRu!.id, order: 1, text_ru: 'Оптимизация производительности. Внедрение lazy-loading и кеширования. Результат: скорость загрузки страниц увеличена на 40%, нагрузка на сервер снижена.' },
-    { experience_id: expPochtaRu!.id, order: 2, text_ru: 'Real-time интерфейсы (WebSocket). Разработка UI для отображения данных в реальном времени. Результат: устранены задержки в обновлении данных, внедрён мониторинг ошибок (Sentry).' },
-    { experience_id: expSber!.id,     order: 0, text_ru: 'Система динамических форм (Next.js). Реализация с продвинутой валидацией и управлением состоянием. Результат: время заполнения форм сокращено на 35%, ошибки валидации снижены на 40%.' },
-    { experience_id: expSber!.id,     order: 1, text_ru: 'Модуль персонализированных миссий с прогресс-баром (Next.js). Создание интерактивного UI для вовлечения пользователей. Результат: рост повторных визитов на 28%, конверсия в выполненные задачи выросла на 45%.' },
-    { experience_id: expSber!.id,     order: 2, text_ru: 'Интерактивный дашборд аналитики (React). Разработка компонентов для визуализации больших данных. Результат: скорость формирования отчётов увеличена в 3 раза.' },
-    { experience_id: expSber!.id,     order: 3, text_ru: 'CRM-интерфейс с шаблонными сценариями (Next.js). Проектирование и реализация интерфейса для операторов. Результат: время обработки заявок сокращено на 50%, ошибки операторов снижены на 30%.' },
+    ...POCHTA_BULLETS.map((text_ru, order) => ({ experience_id: pochta!.id, order, text_ru })),
+    ...SBER_BULLETS.map((text_ru, order) => ({ experience_id: sber!.id, order, text_ru })),
   ])
   console.log('✓ experience + bullets')
+}
 
+async function seedEducation() {
   await db.insert(schema.education).values({
     institution:       'Национальный исследовательский Томский политехнический университет',
     specialization_ru: 'Неоконченное высшее',
@@ -201,22 +214,32 @@ async function seed() {
     order:             0,
   })
   console.log('✓ education')
+}
 
+async function seedSkills() {
   for (const group of SKILLS) {
     const [inserted] = await db.insert(schema.skillGroup).values({
-      slug:    group.slug,
-      name_ru: group.name_ru,
-      name_en: group.name_en,
-      order:   group.order,
+      slug: group.slug, name_ru: group.name_ru, name_en: group.name_en, order: group.order,
     }).returning()
-
     await db.insert(schema.skill).values(
-      group.skills.map((name, i) => ({ group_id: inserted!.id, name, order: i }))
+      group.skills.map((name, order) => ({ group_id: inserted!.id, name, order }))
     )
   }
   console.log('✓ skill_groups + skills')
+}
 
+async function seed() {
+  console.log('Seeding...')
+  await db.insert(schema.aboutMe).values({ text_ru: ABOUT_TEXT })
+  console.log('✓ about_me')
+  const tags = await seedTags()
+  const posts = await seedPosts()
+  await seedPostTags(posts, tags)
+  await seedImages(posts)
+  await seedExperience()
+  await seedEducation()
+  await seedSkills()
   console.log('Done.')
 }
 
-seed().catch((e) => { console.error(e); process.exit(1) })
+seed().catch((error) => { console.error(error); process.exit(1) })

@@ -98,3 +98,17 @@ test('удаление внутренней статьи обновляет её
   await (handler as (event: H3Event) => Promise<unknown>)({} as H3Event)
   expect(mocks.dirty).toHaveBeenCalledWith(['/', '/blog', '/projects', '/blog/deleted'])
 })
+
+test('санитизация PATCH не меняет входное тело и сохраняет пустую строку', async () => {
+  const body = Object.freeze({ text_ru: '<p>Текст</p><script>alert(1)</script>', text_en: '' })
+  await save(body)
+  expect(stepArg(state.calls, 'update:post', 'set')).toMatchObject({ text_ru: '<p>Текст</p>', text_en: '' })
+  expect(body.text_ru).toContain('<script>')
+})
+
+test('отсутствующая запись не заменяет теги и не запускает обновление кеша', async () => {
+  plan(state)
+  await expect(save({ tag_ids: [2] })).rejects.toMatchObject({ statusCode: 404, message: 'Not found' })
+  expect(state.calls.some(call => call.table === 'post_tag')).toBe(false)
+  expect(mocks.dirty).not.toHaveBeenCalled()
+})

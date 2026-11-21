@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const TO_TOP_VISIBILITY_THRESHOLD = 0.02
+
 const route = useRoute()
 const { locale } = useLocale()
 const localePath = useLocalePath()
@@ -6,7 +8,7 @@ const nav = useNav()
 const { progress, toTop } = useScrollProgress()
 
 const progressPct = computed(() => `${Math.round(progress.value * 100)}%`)
-const showToTop = computed(() => progress.value > 0.02)
+const showToTop = computed(() => progress.value > TO_TOP_VISIBILITY_THRESHOLD)
 
 /**
  * The display font differs per locale (Archivo for latin, Onest for cyrillic), so

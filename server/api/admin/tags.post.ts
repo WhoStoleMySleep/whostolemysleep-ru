@@ -5,6 +5,8 @@ import { tag } from '~~/server/db/schema'
 import { slugify } from '~~/server/utils/slug'
 
 const MAX_NAME_LENGTH = 100
+const COLLISION_SUFFIX_LENGTH = 10
+const COLLISION_PREFIX_LENGTH = MAX_NAME_LENGTH - COLLISION_SUFFIX_LENGTH - '-'.length
 
 function tagFields(body: unknown) {
   const fields = body as { name_ru?: unknown; name_en?: unknown; slug?: unknown } | null
@@ -66,8 +68,8 @@ export default defineEventHandler(async (event) => {
   if (typeof body?.slug === 'string' && body.slug.trim()) {
     throw createError({ statusCode: 409, message: 'This slug already exists' })
   }
-  const suffix = createHash('sha256').update(fields.name_ru.toLocaleLowerCase('ru')).digest('hex').slice(0, 10)
-  const unique = await insertTag({ ...fields, slug: `${fields.slug.slice(0, 89)}-${suffix}` })
+  const suffix = createHash('sha256').update(fields.name_ru.toLocaleLowerCase('ru')).digest('hex').slice(0, COLLISION_SUFFIX_LENGTH)
+  const unique = await insertTag({ ...fields, slug: `${fields.slug.slice(0, COLLISION_PREFIX_LENGTH)}-${suffix}` })
   if (!unique) throw createError({ statusCode: 409, message: 'Could not create a unique tag — retry' })
   return unique
 })

@@ -59,13 +59,12 @@ async function removeGroup(g: Group) {
 }
 
 async function reorderGroups(ids: number[]) {
-  const before = [...groups.value]
-  const byId = new Map(before.map((g) => [g.id, g]))
-  data.value = ids.map((id) => byId.get(id)).filter(Boolean) as Group[]
+  const before = groups.value.map(group => group.id)
+  data.value = orderItems(groups.value, ids)
   try {
     await api.patch('/api/admin/skills/groups/reorder', { ids })
   } catch (e) {
-    data.value = before
+    data.value = restoreOrder(groups.value, before)
     toast.err(adminError(e))
   }
 }
@@ -75,6 +74,21 @@ async function reorderGroups(ids: number[]) {
    form for it would be an extra step on every rename. */
 
 const draft = reactive<Record<number, string>>({})
+
+function updateGroup(groupId: number, transform: (group: Group) => Group) {
+  data.value = (data.value ?? []).map(group => (group.id === groupId ? transform(group) : group))
+}
+
+function orderItems<Item extends { id: number }>(items: Item[], ids: number[]): Item[] {
+  const byId = new Map(items.map(item => [item.id, item]))
+  return ids.map(id => byId.get(id)).filter((item): item is Item => item !== undefined)
+}
+
+function restoreOrder<Item extends { id: number }>(items: Item[], ids: number[]): Item[] {
+  // Roll back order, not concurrent edits; new items stay and deleted ones stay absent.
+  const previousIds = new Set(ids)
+  return [...orderItems(items, ids), ...items.filter(item => !previousIds.has(item.id))]
+}
 
 async function addSkill(g: Group) {
   const name = (draft[g.id] ?? '').trim()
@@ -88,37 +102,43 @@ async function addSkill(g: Group) {
   }
 }
 
-async function renameSkill(s: Skill, name: string) {
+async function renameSkill(skill: Skill, name: string) {
   const next = name.trim()
-  if (!next || next === s.name) return
+  if (!next || next === skill.name) return
   try {
-    await api.patch(`/api/admin/skills/items/${s.id}`, { name: next })
-    s.name = next
-  } catch (e) {
-    toast.err(adminError(e))
+    await api.patch(`/api/admin/skills/items/${skill.id}`, { name: next })
+    updateGroup(skill.group_id, group => ({
+      ...group,
+      skills: group.skills.map(item => (item.id === skill.id ? { ...item, name: next } : item)),
+    }))
+  } catch (cause) {
+    toast.err(adminError(cause))
     await refresh()
   }
 }
 
-async function removeSkill(g: Group, s: Skill) {
+async function removeSkill(group: Group, skill: Skill) {
   try {
-    await api.remove(`/api/admin/skills/items/${s.id}`)
-    g.skills = g.skills.filter((x) => x.id !== s.id)
-  } catch (e) {
-    toast.err(adminError(e))
+    await api.remove(`/api/admin/skills/items/${skill.id}`)
+    updateGroup(group.id, current => ({
+      ...current,
+      skills: current.skills.filter(item => item.id !== skill.id),
+    }))
+  } catch (cause) {
+    toast.err(adminError(cause))
     await refresh()
   }
 }
 
-async function reorderSkills(g: Group, ids: number[]) {
-  const before = [...g.skills]
-  const byId = new Map(before.map((s) => [s.id, s]))
-  g.skills = ids.map((id) => byId.get(id)).filter(Boolean) as Skill[]
+async function reorderSkills(group: Group, ids: number[]) {
+  const before = group.skills.map(skill => skill.id)
+  const skills = orderItems(group.skills, ids)
+  updateGroup(group.id, current => ({ ...current, skills }))
   try {
     await api.patch('/api/admin/skills/items/reorder', { ids })
-  } catch (e) {
-    g.skills = before
-    toast.err(adminError(e))
+  } catch (cause) {
+    updateGroup(group.id, current => ({ ...current, skills: restoreOrder(current.skills, before) }))
+    toast.err(adminError(cause))
   }
 }
 

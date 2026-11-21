@@ -48,10 +48,8 @@ defineRouteMeta({
   },
 })
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody<Body>(event)
-
-  const [exp] = await db.insert(schema.experience).values({
+async function createExperience(body: Body) {
+  const [experience] = await db.insert(schema.experience).values({
     company_ru:  body.company_ru,
     company_en:  body.company_en,
     position_ru: body.position_ru,
@@ -60,18 +58,21 @@ export default defineEventHandler(async (event) => {
     date_to:     body.date_to ?? null,
     order:       body.order ?? 0,
   }).returning()
+  return experience
+}
 
-  if (body.bullets?.length) {
-    await db.insert(schema.experienceBullet).values(
-      body.bullets.map((b, i) => ({
-        experience_id: exp!.id,
-        text_ru:       b.text_ru,
-        text_en:       b.text_en,
-        order:         i,
-      }))
-    )
-  }
+async function insertBullets(experienceId: number, bullets: Bullet[]) {
+  await db.insert(schema.experienceBullet).values(
+    bullets.map((bullet, order) => ({
+      experience_id: experienceId, text_ru: bullet.text_ru, text_en: bullet.text_en, order,
+    }))
+  )
+}
 
+export default defineEventHandler(async (event) => {
+  const body = await readBody<Body>(event)
+  const experience = await createExperience(body)
+  if (body.bullets?.length) await insertBullets(experience!.id, body.bullets)
   await markDirty(resumePaths())
-  return exp
+  return experience
 })

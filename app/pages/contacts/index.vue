@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const RATE_LIMIT_STATUS = 429
+
 const { t } = useLocale()
 const localePath = useLocalePath()
 const { data: siteSettings } = await useSettings()
@@ -64,7 +66,7 @@ async function submit() {
   } catch (e: unknown) {
     status.value    = 'error'
     const code = (e as { statusCode?: number })?.statusCode
-    sendError.value = code === 429 ? t('contacts.rateLimit') : t('contacts.sendError')
+    sendError.value = code === RATE_LIMIT_STATUS ? t('contacts.rateLimit') : t('contacts.sendError')
   }
 }
 

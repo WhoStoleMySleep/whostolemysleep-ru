@@ -6,15 +6,18 @@
  * and reacting to an expired session.
  */
 
+const UNAUTHORIZED_STATUS = 401
+
 /** The error text out of an H3 response. `e?.data?.message ?? 'Error'` used to be smeared across every page. */
-export function adminError(e: unknown): string {
-  const err = e as { data?: { message?: string }, statusMessage?: string, message?: string }
-  return err?.data?.message || err?.statusMessage || err?.message || 'Unknown error'
+export function adminError(error: unknown): string {
+  const responseError = error as { data?: { message?: string }, statusMessage?: string, message?: string }
+  return responseError?.data?.message || responseError?.statusMessage || responseError?.message || 'Unknown error'
 }
 
-function isUnauthorized(e: unknown): boolean {
-  return (e as { statusCode?: number, status?: number })?.statusCode === 401
-    || (e as { response?: { status?: number } })?.response?.status === 401
+function isUnauthorized(error: unknown): boolean {
+  const responseError = error as { statusCode?: number, status?: number, response?: { status?: number } }
+  return responseError?.statusCode === UNAUTHORIZED_STATUS
+    || responseError?.response?.status === UNAUTHORIZED_STATUS
 }
 
 /** Requests of the admin panel: they keep the session cookie during SSR and send an expired session back to the login page. */

@@ -31,6 +31,8 @@ interface Form {
   tag_ids: number[]
 }
 
+const DATETIME_LOCAL_LENGTH = 16
+
 const blank = (): Form => ({
   slug: '', type: 'blog',
   title_ru: '', title_en: '',
@@ -68,7 +70,7 @@ if (loaded.value) {
     ...blank(),
     ...post,
     url:          post.url ?? '',
-    published_at: post.published_at?.slice(0, 16) ?? '',
+    published_at: post.published_at?.slice(0, DATETIME_LOCAL_LENGTH) ?? '',
     tag_ids:      (post.postTags ?? []).map((pt) => pt.tag.id),
   }
   images.value = post.images ?? []

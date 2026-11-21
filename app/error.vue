@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
+const NOT_FOUND_STATUS = 404
+const DEFAULT_ERROR_DIGITS = ['5', '0', '0']
+const NOT_FOUND_DIGITS = ['4', '0', '4']
+const DIGIT_ANIMATION_DELAY = 0.08
+const DIGIT_ANIMATION_STEP = 0.07
+
 const props = defineProps<{ error: NuxtError }>()
 const { t, locale } = useI18n()
 
-const is404 = computed(() => props.error.statusCode === 404)
-const digits = computed(() => (is404.value ? ['4', '0', '4'] : ['5', '0', '0']))
+const is404 = computed(() => props.error.statusCode === NOT_FOUND_STATUS)
+const digits = computed(() => (is404.value ? NOT_FOUND_DIGITS : DEFAULT_ERROR_DIGITS))
+const digitAnimationDelay = (index: number) => `${DIGIT_ANIMATION_DELAY + index * DIGIT_ANIMATION_STEP}s`
 
 useSeoMeta({
   title: () => `${props.error.statusCode} — whostolemysleep`,
@@ -34,7 +41,7 @@ function goHome() {
           :key="i"
           class="err__digit"
           :class="{ 'err__digit--accent': i === 1 }"
-          :style="{ animationDelay: `${0.08 + i * 0.07}s` }"
+          :style="{ animationDelay: digitAnimationDelay(i) }"
         >{{ d }}</span>
       </p>
 

@@ -2,6 +2,8 @@ import { requirePublishToken } from '~~/server/utils/publishAuth'
 import { clientIp, hitRateLimit } from '~~/server/utils/rateLimit'
 import { savePublishedPost, type PublishPayload } from '~~/server/utils/publishPost'
 
+const CREATED_STATUS = 201
+
 /** The token cannot realistically be guessed, but a flood of requests is billed function calls. */
 const RATE_LIMIT  = 60
 const RATE_WINDOW = 60 * 60 * 1000
@@ -68,6 +70,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const result = await savePublishedPost(body)
-  setResponseStatus(event, 201)
+  setResponseStatus(event, CREATED_STATUS)
   return result
 })

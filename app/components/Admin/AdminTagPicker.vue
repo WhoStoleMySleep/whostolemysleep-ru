@@ -1,6 +1,8 @@
 <script setup lang="ts">
 interface Tag { id: number; slug: string; name_ru: string; name_en: string }
 
+const CONFLICT_STATUS = 409
+
 const props = defineProps<{ disabled?: boolean }>()
 const model = defineModel<number[]>({ default: () => [] })
 const busy = defineModel<boolean>('busy', { default: false })
@@ -26,14 +28,23 @@ const exact = computed(() => (tags.value ?? []).find(tag =>
   [tag.name_ru, tag.name_en].some(name => name.toLocaleLowerCase('ru') === normalized.value),
 ))
 
-function choose(tag: Tag) {
-  if (props.disabled || busy.value) return
+function select(tag: Tag) {
   model.value = [...new Set([...model.value, tag.id])]
   query.value = ''
-  open.value = false
   error.value = ''
-  input.value?.focus()
+}
+
+function closeAndFocusInput() {
   open.value = false
+  input.value?.focus()
+  // The focus handler opens the list again, even after a tag has been selected.
+  open.value = false
+}
+
+function choose(tag: Tag) {
+  if (props.disabled || busy.value) return
+  select(tag)
+  closeAndFocusInput()
 }
 
 function remove(id: number) {
@@ -41,29 +52,51 @@ function remove(id: number) {
   model.value = model.value.filter(value => value !== id)
 }
 
+function appendTag(tag: Tag) {
+  const tagsById = new Map((tags.value ?? []).map(item => [item.id, item]))
+  tagsById.set(tag.id, tag)
+  tags.value = [...tagsById.values()]
+}
+
+function statusCode(error: unknown) {
+  const responseError = error as { statusCode?: number, status?: number } | null
+  return responseError?.statusCode ?? responseError?.status
+}
+
+async function createTag() {
+  const tag = await api.post<Tag>('/api/admin/tags', { name_ru: query.value.trim() })
+  appendTag(tag)
+  select(tag)
+  open.value = false
+}
+
+async function handleCreateError(cause: unknown) {
+  error.value = adminError(cause)
+  if (statusCode(cause) === CONFLICT_STATUS) await refresh()
+}
+
+async function focusInputAfterSubmit() {
+  busy.value = false
+  await nextTick()
+  if (props.disabled) return
+  closeAndFocusInput()
+}
+
 async function submit() {
   if (props.disabled || busy.value || !normalized.value) return
-  if (exact.value) { choose(exact.value); return }
-  const name = query.value.trim()
+  if (exact.value) {
+    choose(exact.value)
+    return
+  }
+
   busy.value = true
   error.value = ''
   try {
-    const tag = await api.post<Tag>('/api/admin/tags', { name_ru: name })
-    tags.value = [...new Map([...(tags.value ?? []), tag].map(item => [item.id, item])).values()]
-    model.value = [...new Set([...model.value, tag.id])]
-    query.value = ''
-    open.value = false
-  } catch (e) {
-    error.value = adminError(e)
-    const status = (e as { statusCode?: number; status?: number } | null)?.statusCode ?? (e as { status?: number } | null)?.status
-    if (status === 409) await refresh()
+    await createTag()
+  } catch (cause) {
+    await handleCreateError(cause)
   } finally {
-    busy.value = false
-    await nextTick()
-    if (!props.disabled) {
-      input.value?.focus()
-      open.value = false
-    }
+    await focusInputAfterSubmit()
   }
 }
 
@@ -72,17 +105,22 @@ function onBlur(event: FocusEvent) {
 }
 
 function onKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') { open.value = false; input.value?.focus(); open.value = false; return }
+  if (event.key === 'Escape') {
+    closeAndFocusInput()
+    return
+  }
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
   event.preventDefault()
   open.value = true
-  void nextTick(() => {
-    const buttons = Array.from(options.value?.querySelectorAll<HTMLButtonElement>('button') ?? [])
-    const index = buttons.indexOf(event.target as HTMLButtonElement)
-    const next = index + (event.key === 'ArrowDown' ? 1 : -1)
-    if (next < 0) input.value?.focus()
-    else buttons[Math.min(next, buttons.length - 1)]?.focus()
-  })
+  void nextTick(() => focusOption(event))
+}
+
+function focusOption(event: KeyboardEvent) {
+  const buttons = Array.from(options.value?.querySelectorAll<HTMLButtonElement>('button') ?? [])
+  const index = buttons.indexOf(event.target as HTMLButtonElement)
+  const nextIndex = index + (event.key === 'ArrowDown' ? 1 : -1)
+  if (nextIndex < 0) input.value?.focus()
+  else buttons[Math.min(nextIndex, buttons.length - 1)]?.focus()
 }
 </script>
 

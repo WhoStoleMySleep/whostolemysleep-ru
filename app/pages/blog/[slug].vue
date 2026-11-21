@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Post } from '~/types'
 
+const NOT_FOUND_STATUS = 404
+
 const route  = useRoute()
 const slug   = route.params.slug as string
 const { t } = useLocale()
@@ -10,8 +12,8 @@ const { data: post, error } = await useLocaleData<Post>(`/api/blog/${slug}`)
 
 // Only a missing post is a 404: a database outage answered as "not found" would
 // hide the failure and tell crawlers to drop the page.
-if (error.value && error.value.statusCode !== 404) throw createError(error.value)
-if (!post.value) throw createError({ statusCode: 404, message: 'Post not found' })
+if (error.value && error.value.statusCode !== NOT_FOUND_STATUS) throw createError(error.value)
+if (!post.value) throw createError({ statusCode: NOT_FOUND_STATUS, message: 'Post not found' })
 
 /**
  * A shared link is a card, and the card is built from these tags alone. The

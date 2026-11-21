@@ -51,3 +51,12 @@ test.each([true, false])('публичный ответ сохраняет is_pi
   expect(toPostSummary({ ...row, is_pinned }, 'ru').is_pinned).toBe(is_pinned)
   expect(toPost({ ...row, is_pinned }, 'en').is_pinned).toBe(is_pinned)
 })
+
+test('пустые связи остаются массивами, а преобразование не меняет исходные поля', async () => {
+  const { toPostSummary } = await import('~~/server/utils/publicPost')
+  const source = structuredClone(row)
+  const before = structuredClone(source)
+  toPostSummary(source, 'en')
+  expect(source).toEqual(before)
+  expect(toPostSummary({ ...source, postTags: [], images: [] }, 'ru')).toMatchObject({ tags: [], images: [] })
+})

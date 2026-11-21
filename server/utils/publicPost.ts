@@ -10,6 +10,19 @@ type SummaryRow = Omit<InferSelectModel<typeof post>, 'text_ru' | 'text_en'> & {
 
 type PostRow = SummaryRow & Pick<InferSelectModel<typeof post>, 'text_ru' | 'text_en'>
 
+function toPostTag({ tag }: SummaryRow['postTags'][number], locale: Locale) {
+  return { id: tag.id, slug: tag.slug, name: pick(tag.name_ru, tag.name_en, locale) }
+}
+
+function toPostImage(image: SummaryRow['images'][number], locale: Locale) {
+  return {
+    id: image.id,
+    url: image.url,
+    alt: pick(image.alt_ru, image.alt_en, locale),
+    position: image.position,
+  }
+}
+
 /**
  * A post as lists show it — without the body. Lists used to carry the full html of
  * every post, and through the Nuxt payload it was inlined into every page that
@@ -26,17 +39,8 @@ export function toPostSummary(row: SummaryRow, locale: Locale): PostSummary {
     is_pinned:    row.is_pinned,
     published_at: row.published_at,
     updated_at:   row.updated_at,
-    tags: row.postTags.map((pt) => ({
-      id:   pt.tag.id,
-      slug: pt.tag.slug,
-      name: pick(pt.tag.name_ru, pt.tag.name_en, locale),
-    })),
-    images: row.images.map((img) => ({
-      id:       img.id,
-      url:      img.url,
-      alt:      pick(img.alt_ru, img.alt_en, locale),
-      position: img.position,
-    })),
+    tags:         row.postTags.map(tag => toPostTag(tag, locale)),
+    images:       row.images.map(image => toPostImage(image, locale)),
   }
 }
 

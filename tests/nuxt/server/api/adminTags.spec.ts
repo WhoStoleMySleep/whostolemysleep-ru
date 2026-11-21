@@ -110,3 +110,9 @@ test('существующий тег с ручным slug находится п
   expect(await create({ name_ru: ' C++ ' })).toEqual(existing)
   expect(state.calls).toHaveLength(0)
 })
+
+test('не скрывает повторную коллизию автоматически сгенерированного slug', async () => {
+  plan(state, { 'insert:tag': [[], []] })
+  await expect(create({ name_ru: 'Nuxt' })).rejects.toMatchObject({ statusCode: 409, message: 'Could not create a unique tag — retry' })
+  expect(state.calls.filter(call => call.op === 'insert')).toHaveLength(2)
+})

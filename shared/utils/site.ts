@@ -20,7 +20,9 @@ export const CONTACTS = {
 /** Shown while no job has been entered yet, so the hero never says "0+ years". */
 export const DEFAULT_YEARS = 5
 
-const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000
+const DAYS_PER_YEAR = 365.25
+const SECONDS_PER_HOUR = 60 * 60
+const MS_PER_YEAR = DAYS_PER_YEAR * 24 * SECONDS_PER_HOUR * 1000
 
 /** Full years since the first job; DEFAULT_YEARS when there is no such date. */
 export function yearsSince(start: string | null | undefined, now = Date.now()): number {

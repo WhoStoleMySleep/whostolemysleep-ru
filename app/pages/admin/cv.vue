@@ -110,34 +110,42 @@ function setAll(list: Change[], value: boolean) {
 
 const applying = ref(false)
 
-async function apply() {
-  const ids = acceptedIds.value
-  if (!ids.length) return
+function removalsCount() {
+  return (changes.value ?? []).filter(change => accepted.value[change.id] && change.kind === 'remove').length
+}
 
-  const removals = (changes.value ?? []).filter((c) => accepted.value[c.id] && c.kind === 'remove').length
-  const ok = await confirm.ask({
-    title:  `Apply ${ids.length} change(s)?`,
-    text:   removals
+async function confirmApply(ids: string[]) {
+  const removals = removalsCount()
+  return confirm.ask({
+    title: `Apply ${ids.length} change(s)?`,
+    text: removals
       ? `${removals} record(s) will be deleted permanently. The rest will be updated or added.`
       : 'Selected changes will be written to the resume.',
     action: 'Apply',
     danger: removals > 0,
   })
-  if (!ok) return
+}
+
+async function applyChanges(ids: string[]) {
+  const snapshot = JSON.parse(raw.value)
+  const res = await api.post<{ applied: number }>('/api/admin/cv/apply', {
+    snapshot,
+    accept: ids,
+    overrides: { ...overrides.value },
+  })
+  toast.ok(`Applied ${res.applied} change(s) — added to cache queue`)
+  await compare()
+}
+
+async function apply() {
+  const ids = acceptedIds.value
+  if (!ids.length || !(await confirmApply(ids))) return
 
   applying.value = true
   try {
-    const snapshot = JSON.parse(raw.value)
-    const res = await api.post<{ applied: number }>('/api/admin/cv/apply', {
-      snapshot,
-      accept: ids,
-      overrides: { ...overrides.value },
-    })
-    toast.ok(`Applied ${res.applied} change(s) — added to cache queue`)
-    // Diff again: what is left shows what has not been applied yet.
-    await compare()
-  } catch (e) {
-    toast.err(adminError(e))
+    await applyChanges(ids)
+  } catch (cause) {
+    toast.err(adminError(cause))
   } finally {
     applying.value = false
   }

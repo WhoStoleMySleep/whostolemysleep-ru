@@ -7,6 +7,7 @@ export default withNuxt(
       '.nuxt/**',
       '.output/**',
       '.vercel/**',
+      '.claude/worktrees/**',
       'coverage/**',
       'dist/**',
       'node_modules/**',
@@ -52,9 +53,30 @@ export default withNuxt(
     files: ['app/**/*.{ts,vue}', 'server/**/*.ts', 'shared/**/*.ts'],
     plugins: { jsdoc },
     rules: {
+      'max-lines-per-function': ['error', {
+        max: 21,
+        skipBlankLines: true,
+        skipComments: true,
+        IIFEs: true,
+      }],
       'max-params': ['error', 3],
-      // cv.ts nests three levels in six places, so 3 is what holds today.
-      'max-depth': ['error', 3],
+      'max-depth': ['error', 2],
+      // API contexts and DOM events are mutable by contract, unlike application data.
+      'no-param-reassign': ['error', {
+        props: true,
+        ignorePropertyModificationsFor: ['event', 'context', 'target'],
+      }],
+      'no-magic-numbers': 'off',
+      '@typescript-eslint/no-magic-numbers': ['error', {
+        ignore: [-1, 0, 1, 2, 5, 10, 24, 60, 100, 1000, 1024],
+        ignoreArrayIndexes: true,
+        ignoreDefaultValues: true,
+        ignoreClassFieldInitialValues: true,
+        ignoreEnums: true,
+        ignoreNumericLiteralTypes: true,
+        ignoreReadonlyClassProperties: true,
+        ignoreTypeIndexes: true,
+      }],
       'no-negated-condition': 'error',
       'no-else-return': ['error', { allowElseIf: false }],
       'no-lonely-if': 'error',
@@ -74,6 +96,18 @@ export default withNuxt(
         contexts: ['ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression'],
       }],
     },
+  },
+
+  // Schemas declare field limits; naming every numeric constraint obscures the model.
+  {
+    files: ['shared/schemas/**', 'server/db/schema.ts'],
+    rules: { '@typescript-eslint/no-magic-numbers': 'off' },
+  },
+
+  // These factories assemble state and methods rather than one sequential operation.
+  {
+    files: ['app/composables/**', 'app/stores/**', 'app/plugins/**', 'server/plugins/**'],
+    rules: { 'max-lines-per-function': 'off' },
   },
 
   // Sits apart from the rules above because it needs the type information: a missed
