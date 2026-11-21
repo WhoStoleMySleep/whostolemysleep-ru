@@ -20,6 +20,7 @@ const post = (fields: Partial<Post> = {}): Post => ({
   text: '',
   excerpt: 'Summary',
   url: null,
+  is_pinned: false,
   tags: [],
   images: [],
   published_at: '2024-02-09',
@@ -79,5 +80,29 @@ describe('UiCard', () => {
   test('the date is shown in the locale format', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post() } })
     expect(wrapper.get('.card__date').text()).toBe('09.02.2024')
+  })
+})
+
+
+describe('Домены и закрепление в карточке', () => {
+  test.each([
+    ['https://xn--e1afmkfd.xn--p1ai/path', 'пример.рф'],
+    ['https://www.xn--e1afmkfd.xn--p1ai', 'пример.рф'],
+    ['https://блог.пример.рф', 'блог.пример.рф'],
+    ['https://example.com', 'example.com'],
+  ])('показывает читаемый домен для %s, сохраняя адрес', async (url, host) => {
+    const { default: Card } = await import('~/components/Ui/UiCard.vue')
+    const wrapper = await mountSuspended(Card, { props: { item: post({ url }) } })
+    expect(wrapper.get('.card__link').text()).toBe(`${host} ↗`)
+    expect(wrapper.get('a').attributes('href')).toBe(url)
+  })
+
+  test.each([true, false])('показывает отметку только при is_pinned=%s', async (is_pinned) => {
+    const { default: Card } = await import('~/components/Ui/UiCard.vue')
+    const wrapper = await mountSuspended(Card, { props: { item: post({ is_pinned }) } })
+    expect(wrapper.find('.card__pin').exists()).toBe(is_pinned)
+    expect(wrapper.classes().includes('card--pinned')).toBe(is_pinned)
+    expect(wrapper.get('.card__meta').text()).not.toContain('card.pinned')
+    if (is_pinned) expect(wrapper.get('.card__pin').attributes('aria-label')).toBe('card.pinned')
   })
 })

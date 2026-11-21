@@ -1,47 +1,41 @@
 import { db } from '../../db'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale } from '../../utils/locale'
 import { toPostSummary } from '../../utils/publicPost'
 import type { H3Event } from 'h3'
 
-/** As many rows as the "Latest" block on the home page shows. */
-const LIMIT = 4
+const LIMIT = 8
 
 /**
- * The newest entries of both types. The home page used to download both full lists
- * and keep four of them, so every published post weighed on its payload.
+ * Only explicitly selected projects belong on the home page; drafts stay private.
  */
-async function fetchLatest(event: H3Event) {
+async function fetchSelected(event: H3Event) {
   const locale = getLocale(event)
 
   const rows = await db.query.post.findMany({
-    where:   eq(post.is_published, true),
+    where:   and(eq(post.is_published, true), eq(post.is_pinned, true), eq(post.type, 'project')),
     columns: { text_ru: false, text_en: false },
-    with: {
-      postTags: { with: { tag: true } },
-      images:   { orderBy: (img, { asc }) => [asc(img.position)] },
-    },
-    // Postgres puts nulls first in a descending sort; an undated entry is not news.
-    orderBy: (p) => [sql`${p.published_at} desc nulls last`],
+    // PostgreSQL otherwise puts undated projects ahead of dated ones.
+    orderBy: (p) => [sql`${p.published_at} desc nulls last`, sql`${p.id} desc`],
     limit:   LIMIT,
   })
 
-  return rows.map((row) => toPostSummary(row, locale))
+  return rows.map((row) => toPostSummary({ ...row, postTags: [], images: [] }, locale))
 }
 
 defineRouteMeta({
   openAPI: {
     tags:       ['Public'],
-    summary:    'The newest published entries, blog and projects together',
+    summary:    'Selected work: pinned published projects',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Up to four entries, newest first, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
+      200: { description: 'Up to eight pinned projects, newest first, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
     },
   },
 })
 
-export default defineCachedEventHandler(fetchLatest, {
+export default defineCachedEventHandler(fetchSelected, {
   maxAge: 600,
-  getKey: (event) => `posts-latest-${getLocale(event)}`,
+  getKey: (event) => `posts-selected-${getLocale(event)}`,
 })

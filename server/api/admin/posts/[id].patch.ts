@@ -9,6 +9,7 @@ interface PatchBody {
   text_ru?:     string;  text_en?:    string
   excerpt_ru?:  string;  excerpt_en?: string
   slug?:        string;  url?:        string | null
+  is_pinned?: boolean
   is_published?: boolean; published_at?: string | null
   tag_ids?:     number[]
 }

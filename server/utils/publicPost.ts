@@ -23,6 +23,7 @@ export function toPostSummary(row: SummaryRow, locale: Locale): PostSummary {
     title:        pick(row.title_ru, row.title_en, locale),
     excerpt:      pick(row.excerpt_ru, row.excerpt_en, locale),
     url:          row.url,
+    is_pinned:    row.is_pinned,
     published_at: row.published_at,
     updated_at:   row.updated_at,
     tags: row.postTags.map((pt) => ({

@@ -69,7 +69,9 @@ const filtered = computed(() => {
         :target="post.isExternal ? '_blank' : undefined"
         :rel="post.isExternal ? 'noopener noreferrer' : undefined"
         class="row"
+        :class="{ 'row--pinned': post.is_pinned }"
       >
+        <UiPinnedIcon v-if="post.is_pinned" class="row__pin" :label="t('card.pinned')" />
         <div class="row__head">
           <span class="row__meta">
             <template v-if="post.tags[0]">{{ post.tags[0].name }} · </template>
@@ -121,6 +123,7 @@ const filtered = computed(() => {
 .rows { border-top: 1px dotted var(--dot); }
 
 .row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 16px 32px;
@@ -133,6 +136,14 @@ const filtered = computed(() => {
 }
 
 .row:hover { background: var(--accent-dim); }
+
+.row--pinned { padding-right: calc(clamp(4px, 1.2vw, 14px) + 24px); }
+
+.row__pin {
+  position: absolute;
+  top: clamp(20px, 2.6vw, 34px);
+  right: clamp(4px, 1.2vw, 14px);
+}
 
 .row__head {
   flex: 1 1 min(100%, 300px);

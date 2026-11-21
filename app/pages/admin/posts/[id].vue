@@ -25,6 +25,7 @@ interface Form {
   excerpt_ru: string; excerpt_en: string
   text_ru: string; text_en: string
   url: string
+  is_pinned: boolean
   is_published: boolean
   published_at: string
   tag_ids: number[]
@@ -35,11 +36,11 @@ const blank = (): Form => ({
   title_ru: '', title_en: '',
   excerpt_ru: '', excerpt_en: '',
   text_ru: '', text_en: '',
-  url: '', is_published: false, published_at: '',
+  url: '', is_pinned: false, is_published: false, published_at: '',
   tag_ids: [],
 })
 
-const { data: allTags } = await useAsyncData<Tag[]>(
+const { data: allTags, refresh: refreshTags } = await useAsyncData<Tag[]>(
   'admin-tags', () => api.get<Tag[]>('/api/admin/tags'), { default: () => [] },
 )
 
@@ -94,18 +95,20 @@ const body = computed(() => ({
 }))
 
 async function save() {
-  if (saving.value) return
+  if (saving.value || creatingTag.value) return
+  const submittedSnapshot = JSON.stringify(form.value)
+  const submittedBody = JSON.parse(JSON.stringify(body.value))
   saving.value = true
   try {
     if (isNew.value) {
-      const created = await api.post<{ id: number }>('/api/admin/posts', body.value)
+      const created = await api.post<{ id: number }>('/api/admin/posts', submittedBody)
       postId.value = String(created.id)
       // replace, not push: going back should not land on an empty form.
       await router.replace(`/admin/posts/${created.id}`)
     } else {
-      await api.patch(`/api/admin/posts/${postId.value}`, body.value)
+      await api.patch(`/api/admin/posts/${postId.value}`, submittedBody)
     }
-    snapshot.value = JSON.stringify(form.value)
+    snapshot.value = submittedSnapshot
     toast.ok('Saved — added to cache queue')
   } catch (e) {
     toast.err(adminError(e))
@@ -122,6 +125,26 @@ function toggleTag(id: number) {
   const idx = form.value.tag_ids.indexOf(id)
   if (idx >= 0) form.value.tag_ids.splice(idx, 1)
   else form.value.tag_ids.push(id)
+}
+
+const newTag = ref({ name_ru: '', name_en: '', slug: '' })
+const creatingTag = ref(false)
+
+async function createTag() {
+  if (creatingTag.value || saving.value || !newTag.value.name_ru.trim()) return
+  creatingTag.value = true
+  try {
+    const tag = await api.post<Tag>('/api/admin/tags', newTag.value)
+    allTags.value = [...(allTags.value ?? []), tag].sort((a, b) => a.name_ru.localeCompare(b.name_ru))
+    form.value.tag_ids = [...form.value.tag_ids, tag.id]
+    newTag.value = { name_ru: '', name_en: '', slug: '' }
+    toast.ok('Tag created and selected')
+  } catch (e) {
+    if ((e as { statusCode?: number; status?: number }).statusCode === 409 || (e as { status?: number }).status === 409) await refreshTags()
+    toast.err(adminError(e))
+  } finally {
+    creatingTag.value = false
+  }
 }
 
 /* ── Images ── */
@@ -184,7 +207,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
         :href="`/ru/${form.type === 'project' ? 'projects' : 'blog'}/${form.slug}`"
         target="_blank"
       >View</a>
-      <button class="admin-btn admin-btn--primary" type="button" :disabled="saving" @click="save">
+      <button class="admin-btn admin-btn--primary" type="button" :disabled="saving || creatingTag" @click="save">
         {{ saving ? 'Saving…' : 'Save' }}
       </button>
     </template>
@@ -208,6 +231,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
       </div>
 
       <AdminField v-model="form.is_published" type="checkbox" label="Published — visible on the site" />
+      <AdminField v-model="form.is_pinned" type="checkbox" label="Pinned — shown first; published projects appear in Selected work" />
     </div>
 
     <div class="admin-panel block">
@@ -257,7 +281,7 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
     </div>
 
     <div class="admin-panel block">
-      <p class="block__title">Tags</p>
+      <p class="block__title">Tags · select multiple</p>
       <div class="tags">
         <button
           v-for="tag in allTags"
@@ -265,10 +289,25 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
           class="chip"
           :class="{ 'chip--active': form.tag_ids.includes(tag.id) }"
           type="button"
+          :aria-pressed="form.tag_ids.includes(tag.id)"
           @click="toggleTag(tag.id)"
         >{{ tag.name_ru }}</button>
         <p v-if="!allTags?.length" class="hint">No tags yet</p>
       </div>
+      <form class="admin-grid" @submit.prevent="createTag">
+        <AdminField label="New tag RU" required>
+          <input v-model="newTag.name_ru" class="admin-input" maxlength="100" required :disabled="creatingTag" aria-label="New tag RU">
+        </AdminField>
+        <AdminField label="New tag EN (optional)">
+          <input v-model="newTag.name_en" class="admin-input" maxlength="100" :disabled="creatingTag" aria-label="New tag EN">
+        </AdminField>
+        <AdminField label="Tag slug (optional)" hint="Use a unique slug when names share a transliteration, e.g. c-plus-plus and c-sharp">
+          <input v-model="newTag.slug" class="admin-input" maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" :disabled="creatingTag" aria-label="New tag slug">
+        </AdminField>
+        <button class="admin-btn admin-btn--ghost" type="submit" :disabled="creatingTag || saving || !newTag.name_ru.trim()">
+          {{ creatingTag ? 'Creating…' : '+ Create tag' }}
+        </button>
+      </form>
     </div>
 
     <div class="admin-panel block">

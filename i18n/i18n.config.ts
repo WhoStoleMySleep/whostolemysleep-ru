@@ -4,15 +4,15 @@ export default () => ({
     ru: {
       nav: { blog: 'Блог', projects: 'Проекты', resume: 'Резюме', contacts: 'Контакты' },
       hero: {
-        eyebrow: 'Frontend Разработка',
-        line1: 'Основное занятие —',
-        line2: 'создание сайтов',
+        eyebrow: 'Nuxt · Vue · TypeScript · Rust · Tauri',
+        line1: 'Nuxt снаружи,',
+        line2: 'Rust внутри',
         line3: 'с опытом более',
         years: 'лет',
         status: 'Открыт к предложениям',
       },
       about:    { eyebrow: 'Обо мне', resume: 'Посмотреть резюме', contact: 'Написать мне' },
-      news:     { eyebrow: 'Последние записи', all: 'Все записи →' },
+      news:     { eyebrow: 'Selected work', all: 'Все проекты →', more: 'Показать ещё', less: 'Свернуть' },
       blog: {
         eyebrow: 'Блог',
         title:   'Записи & Мысли',
@@ -20,7 +20,7 @@ export default () => ({
         filter:  'Фильтр по теме...',
         empty:   'Записей не найдено',
       },
-      card:     { blog: 'Блог', project: 'Проект' },
+      card:     { blog: 'Блог', project: 'Проект', pinned: 'Закреплено' },
       post:     { back: 'Назад к блогу', source: 'Открыть источник' },
       projects: {
         eyebrow: 'Проекты',
@@ -54,7 +54,7 @@ export default () => ({
       footer: { dev: 'Frontend-разработчик' },
       seo: {
         home_title:     'Frontend-разработчик',
-        home_desc:      'Frontend-разработчик с опытом более 4 лет. React, Vue, Next.js, Nuxt, TypeScript.',
+        home_desc:      'Frontend-разработчик с опытом более 4 лет. Nuxt, Vue, TypeScript, Rust, Tauri.',
         blog_title:     'Блог',
         blog_desc:      'Статьи о фронтенд-разработке, технологиях и опыте работы.',
         projects_title: 'Проекты',
@@ -68,15 +68,15 @@ export default () => ({
     en: {
       nav: { blog: 'Blog', projects: 'Projects', resume: 'Resume', contacts: 'Contacts' },
       hero: {
-        eyebrow: 'Frontend Development',
-        line1: 'Main focus —',
-        line2: 'building websites',
+        eyebrow: 'Nuxt · Vue · TypeScript · Rust · Tauri',
+        line1: 'Nuxt in front,',
+        line2: 'Rust behind',
         line3: 'with over',
         years: 'years',
         status: 'Open to opportunities',
       },
       about:    { eyebrow: 'About me', resume: 'View resume', contact: 'Contact me' },
-      news:     { eyebrow: 'Latest posts', all: 'All posts →' },
+      news:     { eyebrow: 'Selected work', all: 'All projects →', more: 'Show more', less: 'Show less' },
       blog: {
         eyebrow: 'Blog',
         title:   'Posts & Thoughts',
@@ -84,7 +84,7 @@ export default () => ({
         filter:  'Filter by topic...',
         empty:   'No posts found',
       },
-      card:     { blog: 'Blog', project: 'Project' },
+      card:     { blog: 'Blog', project: 'Project', pinned: 'Pinned' },
       post:     { back: 'Back to blog', source: 'Open source' },
       projects: {
         eyebrow: 'Projects',
@@ -118,7 +118,7 @@ export default () => ({
       footer: { dev: 'Frontend Developer' },
       seo: {
         home_title:     'Frontend Developer',
-        home_desc:      'Frontend developer with 4+ years of experience. React, Vue, Next.js, Nuxt, TypeScript.',
+        home_desc:      'Frontend developer with 4+ years of experience. Nuxt, Vue, TypeScript, Rust, Tauri.',
         blog_title:     'Blog',
         blog_desc:      'Articles about frontend development, technologies and work experience.',
         projects_title: 'Projects',

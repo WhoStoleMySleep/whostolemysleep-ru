@@ -43,6 +43,13 @@
       "when": 1790140471153,
       "tag": "0005_bilingual_company",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795231778729,
+      "tag": "0006_post_pinned",
+      "breakpoints": true
     }
   ]
 }
