@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals())
 async function query(type: string) {
   mocks.type = type
   vi.stubGlobal('defineRouteMeta', () => {})
-  vi.stubGlobal('defineCachedEventHandler', (fn: unknown) => fn)
+  vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
   vi.stubGlobal('getRouterParam', () => mocks.type)
   vi.stubGlobal('getQuery', () => ({ locale: 'ru' }))
   const { default: handler } = await import('~~/server/api/posts/[type].get')

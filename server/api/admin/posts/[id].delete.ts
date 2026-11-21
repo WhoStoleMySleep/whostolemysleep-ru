@@ -28,6 +28,6 @@ export default defineEventHandler(async (event) => {
 
   if (!deleted) throw createError({ statusCode: 404, message: 'Not found' })
 
-  await markDirty(postPaths(deleted.slug))
+  await markDirty(postPaths(deleted))
   return { ok: true }
 })

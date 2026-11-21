@@ -20,7 +20,4 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(fetchAbout, {
-  maxAge:  3600,
-  getKey:  (event) => `about-${getLocale(event)}`,
-})
+export default defineEventHandler(fetchAbout)

@@ -1,7 +1,7 @@
 import { db } from '~~/server/db'
 import { education } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -19,6 +19,6 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   await db.delete(education).where(eq(education.id, id))
-  await markDirty(['/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return { ok: true }
 })

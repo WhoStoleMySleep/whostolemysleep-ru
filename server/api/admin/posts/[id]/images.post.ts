@@ -1,5 +1,6 @@
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
+import { markPostDirty } from '~~/server/utils/pending'
 import { eq, count } from 'drizzle-orm'
 
 defineRouteMeta({
@@ -41,5 +42,6 @@ export default defineEventHandler(async (event) => {
     position: total,
   }).returning()
 
+  if (created) await markPostDirty(created.post_id)
   return created
 })

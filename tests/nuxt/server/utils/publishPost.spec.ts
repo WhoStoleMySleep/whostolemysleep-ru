@@ -160,3 +160,14 @@ describe('cache invalidation queue', () => {
     ])
   })
 })
+
+test('переименование через publisher обновляет прежний адрес статьи', async () => {
+  plan(state, {
+    'select:post': [[{ ...saved, slug: 'old-slug' }], []],
+    'update:post': [[saved]],
+  })
+  await save(payload(), 7)
+  expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([
+    { path: '/' }, { path: '/blog' }, { path: '/projects' }, { path: '/blog/old-slug' }, { path: '/blog/post' },
+  ])
+})

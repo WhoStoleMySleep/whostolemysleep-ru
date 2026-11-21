@@ -1,6 +1,6 @@
 import { db } from '~~/server/db'
 import { skill } from '~~/server/db/schema'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -33,6 +33,6 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ group_id: number; name: string; order: number }>(event)
   const [row] = await db.insert(skill).values(body).returning()
-  await markDirty(['/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return row
 })

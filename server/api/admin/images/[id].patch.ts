@@ -1,5 +1,6 @@
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
+import { markPostDirty } from '~~/server/utils/pending'
 import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
@@ -29,5 +30,6 @@ export default defineEventHandler(async (event) => {
     .where(eq(schema.image.id, id))
     .returning()
 
+  if (updated) await markPostDirty(updated.post_id)
   return updated
 })

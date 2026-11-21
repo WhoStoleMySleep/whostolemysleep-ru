@@ -83,10 +83,11 @@ export default defineNuxtConfig({
     '/en/cv':        { ...isr(7200), headers: { 'X-Robots-Tag': 'noindex' } },
     // The page is a form plus the contacts from settings — no reason to hit the
     // database for them on every request. The window is long on purpose:
-    // settings.patch.ts queues both paths for revalidation, so an edit in the admin
-    // panel propagates on the Flush button rather than when a timer runs out.
+    // settings.patch.ts refreshes all affected pages after saving; the queue keeps
+    // failed refreshes available for a manual retry rather than waiting for the TTL.
     '/ru/contacts':  isr(7200),
     '/en/contacts':  isr(7200),
+    '/api/**':       { headers: { 'Cache-Control': 'no-store' } },
     '/admin/**':     { ssr: true, headers: { 'X-Robots-Tag': 'noindex' } },
     '/ru/privacy':   isr(86400),
     '/en/privacy':   isr(86400),

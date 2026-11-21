@@ -1,7 +1,7 @@
 import { db } from '~~/server/db'
 import { settings } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, sitePaths } from '~~/server/utils/pending'
 
 const ALLOWED = ['open_to_work', 'show_search', 'github_url', 'telegram_url', 'email'] as const
 
@@ -49,6 +49,6 @@ export default defineEventHandler(async (event) => {
     .where(eq(settings.id, 1))
     .returning()
 
-  await markDirty(['/ru', '/en', '/ru/contacts', '/en/contacts'])
+  await markDirty(await sitePaths())
   return updated
 })

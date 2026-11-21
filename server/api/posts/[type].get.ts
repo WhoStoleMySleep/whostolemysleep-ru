@@ -88,7 +88,4 @@ defineRouteMeta({
   },
 })
 
-export default defineCachedEventHandler(fetchPosts, {
-  maxAge:  600,
-  getKey:  (event) => `posts-ordered-${getRouterParam(event, 'type')}-${getLocale(event)}`,
-})
+export default defineEventHandler(fetchPosts)

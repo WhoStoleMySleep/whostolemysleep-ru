@@ -53,6 +53,6 @@ export default defineEventHandler(async (event) => {
       .values(tag_ids.map((tag_id) => ({ post_id: created.id, tag_id })))
   }
 
-  await markDirty(postPaths(created.slug))
+  await markDirty(postPaths(created))
   return created
 })

@@ -1,6 +1,6 @@
 import { db } from '~~/server/db'
 import { education } from '~~/server/db/schema'
-import { markDirty } from '~~/server/utils/pending'
+import { markDirty, resumePaths } from '~~/server/utils/pending'
 
 defineRouteMeta({
   openAPI: {
@@ -52,6 +52,6 @@ export default defineEventHandler(async (event) => {
     order:             body.order ?? 0,
   }).returning()
 
-  await markDirty(['/ru/resume', '/en/resume'])
+  await markDirty(resumePaths())
   return row
 })

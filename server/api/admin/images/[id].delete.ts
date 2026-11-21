@@ -1,6 +1,7 @@
 import { del } from '@vercel/blob'
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
+import { markPostDirty } from '~~/server/utils/pending'
 import { eq } from 'drizzle-orm'
 
 defineRouteMeta({
@@ -30,5 +31,6 @@ export default defineEventHandler(async (event) => {
   if (isBlob) await del(img.url, { token: process.env.BLOB_READ_WRITE_TOKEN })
   await db.delete(schema.image).where(eq(schema.image.id, id))
 
+  await markPostDirty(img.post_id)
   return { ok: true }
 })

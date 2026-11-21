@@ -12,10 +12,10 @@ vi.mock('~~/server/db', () => ({ db: { query: { post: { findMany: m.findMany } }
 
 async function latest() {
   vi.stubGlobal('defineRouteMeta', () => {})
-  vi.stubGlobal('defineCachedEventHandler', (fn: unknown, opts: unknown) => Object.assign(fn as object, { opts }))
+  vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
   vi.stubGlobal('getQuery', () => ({ locale: m.locale }))
   const mod = await import('~~/server/api/posts/latest.get')
-  return mod.default as unknown as ((e: H3Event) => Promise<unknown[]>) & { opts: { getKey: (e: H3Event) => string } }
+  return mod.default as unknown as ((e: H3Event) => Promise<unknown[]>)
 }
 
 beforeEach(() => {
@@ -37,14 +37,16 @@ describe('GET /api/posts/latest', () => {
     expect(query).not.toHaveProperty('with')
   })
 
-  test('an unknown locale lands in the same cache entry as ru instead of a new one', async () => {
+  test('неизвестная локаль использует русский перевод', async () => {
     const handler = await latest()
-
+    m.findMany.mockResolvedValueOnce([{
+      id: 1, slug: 'recent', type: 'project', title_ru: 'Русский', title_en: 'English',
+      excerpt_ru: '', excerpt_en: '', url: null, is_pinned: false,
+      published_at: '2026-11-01', updated_at: '2026-11-01',
+    }])
     m.locale = 'xyz123'
-    const junk = handler.opts.getKey({} as H3Event)
+    expect(await handler({} as H3Event)).toEqual([expect.objectContaining({ title: 'Русский' })])
     m.locale = 'ru'
-
-    expect(junk).toBe(handler.opts.getKey({} as H3Event))
   })
 })
 
