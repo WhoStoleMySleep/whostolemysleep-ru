@@ -81,12 +81,17 @@ describe('Свежие данные для пересборки ISR', () => {
     expect(connect).toEqual([
       'connect-src', "'self'", 'https://va.vercel-scripts.com',
       'https://vitals.vercel-insights.com', 'https://o4512129513226240.ingest.us.sentry.io',
+      'https://mc.yandex.ru', 'https://mc.yandex.com',
+    ])
+    expect(directives.find(([name]) => name === 'img-src')).toEqual([
+      'img-src', "'self'", 'data:', 'blob:', 'https://*.public.blob.vercel-storage.com',
+      'https://mc.yandex.ru', 'https://mc.yandex.com',
     ])
     expect(directives).toContainEqual(['default-src', "'self'"])
     expect(directives).toContainEqual(['object-src', "'none'"])
     expect(directives).toContainEqual(['frame-ancestors', "'none'"])
     expect(directives.find(([name]) => name === 'script-src')).toEqual([
-      'script-src', "'self'", "'unsafe-inline'", 'https://va.vercel-scripts.com',
+      'script-src', "'self'", "'unsafe-inline'", 'https://va.vercel-scripts.com', 'https://mc.yandex.ru',
     ])
   })
 

@@ -126,6 +126,7 @@ const brings = computed(() => [
           v-for="item in news"
           :key="item.id"
           :to="item.href"
+          :data-metrika-goal="item.type === 'project' && item.isExternal ? 'project_open' : undefined"
           :target="item.isExternal ? '_blank' : undefined"
           :rel="item.isExternal ? 'noopener noreferrer' : undefined"
           class="row"

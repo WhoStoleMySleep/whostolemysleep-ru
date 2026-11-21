@@ -106,3 +106,16 @@ describe('Домены и закрепление в карточке', () => {
     if (is_pinned) expect(wrapper.get('.card__pin').attributes('aria-label')).toBe('card.pinned')
   })
 })
+
+describe('Цели Метрики в карточках', () => {
+  test.each([
+    { type: 'project' as const, url: 'https://example.com', expected: 'project_open' },
+    { type: 'project' as const, url: null, expected: undefined },
+    { type: 'blog' as const, url: 'https://example.com', expected: undefined },
+  ])('метка события для $type со ссылкой $url', async ({ type, url, expected }) => {
+    const { default: Card } = await import('~/components/Ui/UiCard.vue')
+    const wrapper = await mountSuspended(Card, { props: { item: post({ type, url }) } })
+    expect(wrapper.get('a').attributes('data-metrika-goal')).toBe(expected)
+    wrapper.unmount()
+  })
+})

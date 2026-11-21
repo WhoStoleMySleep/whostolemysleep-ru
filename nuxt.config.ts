@@ -44,7 +44,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Headers on everything that is served: the CSP allows exactly the origins the site
-    // uses — its own domain, Vercel Blob, Vercel telemetry and the Sentry ingest endpoint. Inline styles and
+    // uses — its own domain, Vercel Blob, Vercel telemetry, the Sentry ingest endpoint and Yandex Metrika. Inline styles and
     // scripts are what Nuxt needs to hydrate, so they are allowed deliberately, not by oversight.
     '/**': {
       headers: {
@@ -54,11 +54,11 @@ export default defineNuxtConfig({
           "object-src 'none'",
           "frame-ancestors 'none'",
           "form-action 'self'",
-          "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+          "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://mc.yandex.ru",
           "style-src 'self' 'unsafe-inline'",
-          "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
+          "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://mc.yandex.ru https://mc.yandex.com",
           "font-src 'self' data:",
-          "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://o4512129513226240.ingest.us.sentry.io",
+          "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://o4512129513226240.ingest.us.sentry.io https://mc.yandex.ru https://mc.yandex.com",
           'upgrade-insecure-requests',
         ].join('; '),
         // The admin password travels to the server in clear text inside TLS — as
@@ -154,6 +154,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      metrikaId: process.env.NUXT_PUBLIC_METRIKA_ID ?? '',
+      metrikaEnabled: process.env.VERCEL_ENV === 'production',
       contactForm: process.env.NUXT_PUBLIC_CONTACT_FORM !== 'false',
       sentry: {
         dsn: process.env.NUXT_PUBLIC_SENTRY_DSN ?? '',
