@@ -52,3 +52,13 @@ describe('Закрепление и теги в админке', () => {
     expect(state.calls.some(c => c.table === 'post_tag')).toBe(false)
   })
 })
+
+
+test.each([true, false])('запись и создание используют ту же блокировку при create=%s', async (create) => {
+  await save({ is_pinned: true, text_ru: '', text_en: '' }, create)
+  expect(state.calls[0]?.op).toBe('execute')
+  const { PgDialect } = await import('drizzle-orm/pg-core')
+  const query = new PgDialect().sqlToQuery(state.calls[0]!.steps[0]!.args[0] as import('drizzle-orm').SQL)
+  expect(query.sql).toContain('pg_advisory_xact_lock')
+  expect(query.params).toEqual([7230461])
+})

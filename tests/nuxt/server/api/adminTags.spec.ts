@@ -1,12 +1,21 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
+import type { SQL } from 'drizzle-orm'
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
 
 const state = vi.hoisted((): FakeDbState => ({ results: {}, calls: [], cursor: {} }))
 vi.mock('~~/server/db', async () => {
   const { makeFakeDb } = await import('~~/tests/helpers/fakeDb')
-  return { db: makeFakeDb(state) }
+  const db = makeFakeDb(state) as object
+  return { db: { ...db, query: { tag: { findFirst: async ({ where }: { where: SQL }) => {
+    const query = new PgDialect().sqlToQuery(where)
+    const wanted = String(query.params[0]).toLocaleLowerCase('ru')
+    const rows = (state.rows?.tag ?? []) as { name_ru: string; slug: string }[]
+    return rows.find(row => (query.sql.includes('lower(trim(') ? row.name_ru.toLocaleLowerCase('ru') : row.slug) === wanted)
+  } } }, insert: (...args: unknown[]) => (db as { insert: (...args: unknown[]) => unknown }).insert(...args) } }
+
 })
 
 async function create(body: unknown) {
@@ -47,7 +56,7 @@ describe('Создание тегов', () => {
 
   test('одинаковый slug не создаёт дубликат и возвращает понятный конфликт', async () => {
     plan(state)
-    await expect(create({ name_ru: 'Nuxt' })).rejects.toMatchObject({ statusCode: 409 })
+    await expect(create({ name_ru: 'Nuxt', slug: 'nuxt' })).rejects.toMatchObject({ statusCode: 409 })
     expect(state.calls[0]?.steps.some(s => s.m === 'onConflictDoNothing')).toBe(true)
   })
 })
@@ -60,4 +69,44 @@ test.each([['C++', 'c-plus-plus'], ['C#', 'c-sharp'], ['C', 'c']])('позвол
 
 test.each(['C#', 'UPPER', 'a b', '-start', 'end-', 'a'.repeat(101)])('отклоняет некорректный явный slug %s', async (slug) => {
   await expect(create({ name_ru: 'Nuxt', slug })).rejects.toMatchObject({ statusCode: 400 })
+})
+
+
+test('C++ и C# получают разные slug без ручного ввода', async () => {
+  const existing = { id: 1, slug: 'c', name_ru: 'C++', name_en: '' }
+  const created = { id: 2, slug: 'unique', name_ru: 'C#', name_en: '' }
+  plan(state, { 'insert:tag': [[], [created]] }, { tag: [existing] })
+  expect(await create({ name_ru: 'C#' })).toEqual(created)
+  const second = stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values', 1)
+  expect(second?.slug).toMatch(/^c-[a-f0-9]{10}$/)
+})
+
+test('повторное создание того же названия возвращает существующий тег', async () => {
+  const existing = { id: 1, slug: 'nuxt', name_ru: 'Nuxt', name_en: '' }
+  plan(state, { 'insert:tag': [[]] }, { tag: [existing] })
+  expect(await create({ name_ru: 'nuxt' })).toEqual(existing)
+  expect(state.calls).toHaveLength(0)
+})
+
+test('суффикс коллизии стабилен и не превышает лимит slug', async () => {
+  const name_ru = 'a'.repeat(100)
+  const existing = { id: 1, slug: name_ru, name_ru: `${name_ru}++`, name_en: '' }
+  const created = { id: 2, slug: 'unique', name_ru, name_en: '' }
+  plan(state, { 'insert:tag': [[], [created]] }, { tag: [existing] })
+  await create({ name_ru })
+  const slug = stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values', 1)?.slug
+  expect(slug).toHaveLength(100)
+})
+
+
+test('длинная транслитерация обрезается автоматически в пределах лимита slug', async () => {
+  await create({ name_ru: 'ж'.repeat(51) })
+  expect(stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values')?.slug).toHaveLength(100)
+})
+
+test('существующий тег с ручным slug находится по названию до вставки', async () => {
+  const existing = { id: 3, slug: 'c-plus-plus', name_ru: 'C++', name_en: '' }
+  plan(state, {}, { tag: [existing] })
+  expect(await create({ name_ru: ' C++ ' })).toEqual(existing)
+  expect(state.calls).toHaveLength(0)
 })

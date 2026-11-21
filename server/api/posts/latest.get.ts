@@ -1,23 +1,23 @@
 import { db } from '../../db'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale } from '../../utils/locale'
 import { toPostSummary } from '../../utils/publicPost'
+import { postListOrder } from '../../utils/postOrder'
 import type { H3Event } from 'h3'
 
 const LIMIT = 8
 
 /**
- * Only explicitly selected projects belong on the home page; drafts stay private.
+ * Закреплённые проекты задают начало подборки; свободные места заполняются свежими.
  */
 async function fetchSelected(event: H3Event) {
   const locale = getLocale(event)
 
   const rows = await db.query.post.findMany({
-    where:   and(eq(post.is_published, true), eq(post.is_pinned, true), eq(post.type, 'project')),
+    where:   and(eq(post.is_published, true), eq(post.type, 'project')),
     columns: { text_ru: false, text_en: false },
-    // PostgreSQL otherwise puts undated projects ahead of dated ones.
-    orderBy: (p) => [sql`${p.published_at} desc nulls last`, sql`${p.id} desc`],
+    orderBy: postListOrder,
     limit:   LIMIT,
   })
 
@@ -27,15 +27,15 @@ async function fetchSelected(event: H3Event) {
 defineRouteMeta({
   openAPI: {
     tags:       ['Public'],
-    summary:    'Selected work: pinned published projects',
+    summary:    'Selected work: pinned projects followed by recent projects',
     parameters: [{ $ref: '#/components/parameters/locale' }],
     responses: {
-      200: { description: 'Up to eight pinned projects, newest first, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
+      200: { description: 'Up to eight published projects, pinned in manual order then newest, without the body', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/PostSummary' } } } } },
     },
   },
 })
 
 export default defineCachedEventHandler(fetchSelected, {
   maxAge: 600,
-  getKey: (event) => `posts-selected-${getLocale(event)}`,
+  getKey: (event) => `posts-selected-ordered-${getLocale(event)}`,
 })

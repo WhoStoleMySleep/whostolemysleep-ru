@@ -40,10 +40,6 @@ const blank = (): Form => ({
   tag_ids: [],
 })
 
-const { data: allTags, refresh: refreshTags } = await useAsyncData<Tag[]>(
-  'admin-tags', () => api.get<Tag[]>('/api/admin/tags'), { default: () => [] },
-)
-
 /** What GET /api/admin/posts/:id returns: the form fields plus the relations. */
 type LoadedPost = Partial<Form> & {
   url?:          string | null
@@ -87,6 +83,7 @@ const dirty    = computed(() => JSON.stringify(form.value) !== snapshot.value)
 const lang    = ref<'ru' | 'en'>('ru')
 const preview = ref(false)
 const saving  = ref(false)
+const creatingTag = ref(false)
 
 const body = computed(() => ({
   ...form.value,
@@ -118,34 +115,6 @@ async function save() {
 }
 
 useUnsavedGuard({ dirty, save })
-
-/* ── Tags ── */
-
-function toggleTag(id: number) {
-  const idx = form.value.tag_ids.indexOf(id)
-  if (idx >= 0) form.value.tag_ids.splice(idx, 1)
-  else form.value.tag_ids.push(id)
-}
-
-const newTag = ref({ name_ru: '', name_en: '', slug: '' })
-const creatingTag = ref(false)
-
-async function createTag() {
-  if (creatingTag.value || saving.value || !newTag.value.name_ru.trim()) return
-  creatingTag.value = true
-  try {
-    const tag = await api.post<Tag>('/api/admin/tags', newTag.value)
-    allTags.value = [...(allTags.value ?? []), tag].sort((a, b) => a.name_ru.localeCompare(b.name_ru))
-    form.value.tag_ids = [...form.value.tag_ids, tag.id]
-    newTag.value = { name_ru: '', name_en: '', slug: '' }
-    toast.ok('Tag created and selected')
-  } catch (e) {
-    if ((e as { statusCode?: number; status?: number }).statusCode === 409 || (e as { status?: number }).status === 409) await refreshTags()
-    toast.err(adminError(e))
-  } finally {
-    creatingTag.value = false
-  }
-}
 
 /* ── Images ── */
 
@@ -281,33 +250,8 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
     </div>
 
     <div class="admin-panel block">
-      <p class="block__title">Tags · select multiple</p>
-      <div class="tags">
-        <button
-          v-for="tag in allTags"
-          :key="tag.id"
-          class="chip"
-          :class="{ 'chip--active': form.tag_ids.includes(tag.id) }"
-          type="button"
-          :aria-pressed="form.tag_ids.includes(tag.id)"
-          @click="toggleTag(tag.id)"
-        >{{ tag.name_ru }}</button>
-        <p v-if="!allTags?.length" class="hint">No tags yet</p>
-      </div>
-      <form class="admin-grid" @submit.prevent="createTag">
-        <AdminField label="New tag RU" required>
-          <input v-model="newTag.name_ru" class="admin-input" maxlength="100" required :disabled="creatingTag" aria-label="New tag RU">
-        </AdminField>
-        <AdminField label="New tag EN (optional)">
-          <input v-model="newTag.name_en" class="admin-input" maxlength="100" :disabled="creatingTag" aria-label="New tag EN">
-        </AdminField>
-        <AdminField label="Tag slug (optional)" hint="Use a unique slug when names share a transliteration, e.g. c-plus-plus and c-sharp">
-          <input v-model="newTag.slug" class="admin-input" maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" :disabled="creatingTag" aria-label="New tag slug">
-        </AdminField>
-        <button class="admin-btn admin-btn--ghost" type="submit" :disabled="creatingTag || saving || !newTag.name_ru.trim()">
-          {{ creatingTag ? 'Creating…' : '+ Create tag' }}
-        </button>
-      </form>
+      <p class="block__title">Tags</p>
+      <AdminTagPicker v-model="form.tag_ids" v-model:busy="creatingTag" :disabled="saving" />
     </div>
 
     <div class="admin-panel block">
@@ -415,23 +359,6 @@ const previewHtml = computed(() => (lang.value === 'ru' ? form.value.text_ru : f
 @media (max-width: 860px) {
   .pane { flex-direction: column; }
 }
-
-.tags { display: flex; flex-wrap: wrap; gap: 6px; }
-
-.chip {
-  font-family: inherit;
-  font-size: 11px;
-  color: var(--text-4);
-  padding: 5px 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: transparent;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.chip:hover { color: var(--text-2); }
-.chip--active { color: var(--accent); border-color: var(--accent-line); background: var(--accent-dim); }
 
 .hint { font-size: 10.5px; color: var(--text-4); }
 

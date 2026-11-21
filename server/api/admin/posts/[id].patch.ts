@@ -1,8 +1,9 @@
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { markDirty, postPaths } from '~~/server/utils/pending'
 import { sanitizeHtml } from '~~/server/utils/sanitize'
+import { lockPostOrder } from '~~/server/utils/postOrder'
 
 interface PatchBody {
   title_ru?:    string;  title_en?:   string
@@ -41,10 +42,14 @@ export default defineEventHandler(async (event) => {
   if (fields.text_ru) fields.text_ru = sanitizeHtml(fields.text_ru)
   if (fields.text_en) fields.text_en = sanitizeHtml(fields.text_en)
 
-  const [updated] = await db.update(schema.post)
-    .set({ ...fields, updated_at: new Date().toISOString() })
+  const pinOrder = fields.is_pinned === true
+    ? { pin_order: sql`case when ${schema.post.is_pinned} then ${schema.post.pin_order} else coalesce((select max(pin_order) from ${schema.post} where is_pinned), -1) + 1 end` }
+    : {}
+  const [, rows] = await db.batch([lockPostOrder(), db.update(schema.post)
+    .set({ ...fields, ...pinOrder, updated_at: new Date().toISOString() })
     .where(eq(schema.post.id, id))
-    .returning()
+    .returning()])
+  const [updated] = rows
 
   if (!updated) throw createError({ statusCode: 404, message: 'Not found' })
 

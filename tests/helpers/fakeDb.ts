@@ -29,6 +29,7 @@ export function makeFakeDb(state: FakeDbState): unknown {
   return new Proxy({} as Record<string, unknown>, {
     get(_, op) {
       if (op === 'query') return queryApi(state)
+      if (op === 'batch') return (queries: PromiseLike<unknown>[]) => Promise.all(queries)
       return (...args: unknown[]) => chain(state, String(op), args)
     },
   })

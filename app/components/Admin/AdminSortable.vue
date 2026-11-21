@@ -7,14 +7,35 @@
  * No library: HTML5 drag-and-drop covers what is needed, and pulling in a package
  * for one seven-row list is not worth it.
  */
-const props = defineProps<{ items: T[], disabled?: boolean }>()
+const props = defineProps<{ items: T[], disabled?: boolean; canReorder?: (item: T) => boolean; reserveHandle?: boolean }>()
 const emit  = defineEmits<{ reorder: [ids: number[]] }>()
 
 const dragIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
+const root = ref<HTMLElement | null>(null)
+const focusAfterMove = ref<number | null>(null)
+
+watch([() => props.disabled, () => props.items], async () => {
+  if (focusAfterMove.value === null) return
+  const index = props.items.findIndex(item => item.id === focusAfterMove.value)
+  if (!reorderable(index)) { focusAfterMove.value = null; return }
+  if (props.disabled) return
+  await nextTick()
+  root.value?.querySelector<HTMLButtonElement>(`[data-sortable-id="${focusAfterMove.value}"]`)?.focus()
+  focusAfterMove.value = null
+})
+
+function reorderable(index: number) {
+  const item = props.items[index]
+  return !!item && (props.canReorder?.(item) ?? true)
+}
+
+function movable(index: number) {
+  return !props.disabled && reorderable(index)
+}
 
 function move(from: number, to: number) {
-  if (to < 0 || to >= props.items.length || from === to) return
+  if (from === to || !movable(from) || !movable(to)) return
   const ids = props.items.map((i) => i.id)
   const [moved] = ids.splice(from, 1)
   ids.splice(to, 0, moved as number)
@@ -22,6 +43,7 @@ function move(from: number, to: number) {
 }
 
 function onDragStart(index: number, e: DragEvent) {
+  if (!movable(index)) return
   dragIndex.value = index
   // Without dataTransfer Firefox does not start the drag at all.
   e.dataTransfer?.setData('text/plain', String(index))
@@ -29,7 +51,7 @@ function onDragStart(index: number, e: DragEvent) {
 }
 
 function onDragOver(index: number, e: DragEvent) {
-  if (dragIndex.value === null) return
+  if (dragIndex.value === null || !movable(index)) return
   e.preventDefault()
   overIndex.value = index
 }
@@ -47,14 +69,17 @@ function onDragEnd() {
 
 /** For anyone not using a mouse, the order is reachable with Alt and the arrow keys. */
 function onKey(index: number, e: KeyboardEvent) {
-  if (!e.altKey) return
-  if (e.key === 'ArrowUp')   { e.preventDefault(); move(index, index - 1) }
-  if (e.key === 'ArrowDown') { e.preventDefault(); move(index, index + 1) }
+  const direction = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+  if (!e.altKey || !direction) return
+  e.preventDefault()
+  if (!movable(index) || !movable(index + direction)) return
+  focusAfterMove.value = props.items[index]!.id
+  move(index, index + direction)
 }
 </script>
 
 <template>
-  <div class="sortable">
+  <div ref="root" class="sortable">
     <div
       v-for="(item, index) in items"
       :key="item.id"
@@ -67,10 +92,12 @@ function onKey(index: number, e: KeyboardEvent) {
       @drop.prevent="onDrop(index)"
     >
       <button
-        v-if="!disabled"
+        v-if="reorderable(index)"
         class="sortable__grip"
+        :data-sortable-id="item.id"
         type="button"
-        draggable="true"
+        :draggable="!disabled"
+        :aria-disabled="disabled"
         :aria-label="`Reorder, position ${index + 1} of ${items.length}. Alt with arrow keys to move.`"
         @dragstart="onDragStart(index, $event)"
         @dragend="onDragEnd"
@@ -82,6 +109,7 @@ function onKey(index: number, e: KeyboardEvent) {
         </svg>
       </button>
 
+      <span v-else-if="reserveHandle" class="sortable__spacer" aria-hidden="true" />
       <div class="sortable__body">
         <slot :item="item" :index="index" />
       </div>
@@ -106,6 +134,8 @@ function onKey(index: number, e: KeyboardEvent) {
 .sortable__row--dragging { opacity: 0.4; }
 .sortable__row--over     { border-color: var(--accent); }
 
+.sortable__spacer { width: 28px; flex-shrink: 0; }
+
 .sortable__grip {
   flex-shrink: 0;
   display: grid;
@@ -120,6 +150,7 @@ function onKey(index: number, e: KeyboardEvent) {
 
 .sortable__grip:hover { color: var(--text-2); }
 .sortable__grip:active { cursor: grabbing; }
+.sortable__grip[aria-disabled="true"] { opacity: 0.4; cursor: wait; }
 
 .sortable__body { flex: 1; min-width: 0; }
 </style>
