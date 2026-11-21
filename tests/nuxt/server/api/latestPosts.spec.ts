@@ -49,19 +49,43 @@ describe('GET /api/posts/latest', () => {
 })
 
 
-test('на главную попадают только опубликованные закреплённые проекты', async () => {
+test('на главную попадают опубликованные проекты независимо от закрепления', async () => {
   const handler = await latest()
   await handler({} as H3Event)
   const query = m.findMany.mock.calls[0]?.[0] as { where: SQL }
   const sql = new PgDialect().sqlToQuery(query.where)
   expect(sql.sql).toContain('"post"."is_published" =')
-  expect(sql.sql).toContain('"post"."is_pinned" =')
+  expect(sql.sql).not.toContain('"post"."is_pinned" =')
   expect(sql.sql).toContain('"post"."type" =')
-  expect(sql.params).toEqual([true, true, 'project'])
+  expect(sql.params).toEqual([true, 'project'])
 })
 
-test('отсутствие закреплённых не заменяет подборку последними записями', async () => {
+test('без опубликованных проектов возвращает пустой список', async () => {
   const handler = await latest()
   expect(await handler({} as H3Event)).toEqual([])
   expect(m.findMany).toHaveBeenCalledTimes(1)
+})
+
+
+test('порядок главной совпадает с ручным приоритетом и добором по дате', async () => {
+  const handler = await latest()
+  await handler({} as H3Event)
+  const { post } = await import('~~/server/db/schema')
+  const query = m.findMany.mock.calls[0]?.[0] as { orderBy: (p: typeof post) => SQL[] }
+  expect(query.orderBy(post).map(part => new PgDialect().sqlToQuery(part).sql)).toEqual([
+    '"post"."is_pinned" desc',
+    'case when "post"."is_pinned" then "post"."pin_order" end asc',
+    '"post"."published_at" desc nulls last',
+    '"post"."id" desc',
+  ])
+})
+
+test('без закреплений возвращает опубликованный незакреплённый проект', async () => {
+  const handler = await latest()
+  m.findMany.mockResolvedValueOnce([{
+    id: 1, slug: 'recent', type: 'project', title_ru: 'Свежий', title_en: '',
+    excerpt_ru: '', excerpt_en: '', url: null, is_pinned: false,
+    published_at: '2026-11-01', updated_at: '2026-11-01',
+  }])
+  expect(await handler({} as H3Event)).toEqual([expect.objectContaining({ id: 1, is_pinned: false, title: 'Свежий' })])
 })

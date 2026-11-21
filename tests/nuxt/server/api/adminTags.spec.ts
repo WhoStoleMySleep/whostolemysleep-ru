@@ -47,7 +47,7 @@ describe('Создание тегов', () => {
 
   test('одинаковый slug не создаёт дубликат и возвращает понятный конфликт', async () => {
     plan(state)
-    await expect(create({ name_ru: 'Nuxt' })).rejects.toMatchObject({ statusCode: 409 })
+    await expect(create({ name_ru: 'Nuxt', slug: 'nuxt' })).rejects.toMatchObject({ statusCode: 409 })
     expect(state.calls[0]?.steps.some(s => s.m === 'onConflictDoNothing')).toBe(true)
   })
 })
@@ -60,4 +60,31 @@ test.each([['C++', 'c-plus-plus'], ['C#', 'c-sharp'], ['C', 'c']])('позвол
 
 test.each(['C#', 'UPPER', 'a b', '-start', 'end-', 'a'.repeat(101)])('отклоняет некорректный явный slug %s', async (slug) => {
   await expect(create({ name_ru: 'Nuxt', slug })).rejects.toMatchObject({ statusCode: 400 })
+})
+
+
+test('C++ и C# получают разные slug без ручного ввода', async () => {
+  const existing = { id: 1, slug: 'c', name_ru: 'C++', name_en: '' }
+  const created = { id: 2, slug: 'unique', name_ru: 'C#', name_en: '' }
+  plan(state, { 'insert:tag': [[], [created]] }, { tag: [existing] })
+  expect(await create({ name_ru: 'C#' })).toEqual(created)
+  const second = stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values', 1)
+  expect(second?.slug).toMatch(/^c-[a-f0-9]{10}$/)
+})
+
+test('повторное создание того же названия возвращает существующий тег', async () => {
+  const existing = { id: 1, slug: 'nuxt', name_ru: 'Nuxt', name_en: '' }
+  plan(state, { 'insert:tag': [[]] }, { tag: [existing] })
+  expect(await create({ name_ru: 'nuxt' })).toEqual(existing)
+  expect(state.calls).toHaveLength(1)
+})
+
+test('суффикс коллизии стабилен и не превышает лимит slug', async () => {
+  const name_ru = 'a'.repeat(100)
+  const existing = { id: 1, slug: name_ru, name_ru: `${name_ru}++`, name_en: '' }
+  const created = { id: 2, slug: 'unique', name_ru, name_en: '' }
+  plan(state, { 'insert:tag': [[], [created]] }, { tag: [existing] })
+  await create({ name_ru })
+  const slug = stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values', 1)?.slug
+  expect(slug).toHaveLength(100)
 })

@@ -1,4 +1,6 @@
 import { db } from '~~/server/db'
+import { createHash } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { tag } from '~~/server/db/schema'
 import { slugify } from '~~/server/utils/slug'
 
@@ -28,7 +30,7 @@ defineRouteMeta({
         properties: {
           name_ru: { type: 'string', description: 'Required, 1–100 characters after trimming' },
           name_en: { type: 'string', description: 'Optional, at most 100 characters' },
-          slug: { type: 'string', description: 'Optional unique URL slug, lowercase Latin letters, digits and hyphens, at most 100 characters; otherwise generated from name_ru' },
+          slug: { type: 'string', description: 'Optional unique URL slug; generated automatically with collision handling when omitted' },
         },
       } } },
     },
@@ -41,9 +43,27 @@ defineRouteMeta({
   },
 })
 
-export default defineEventHandler(async (event) => {
-  const fields = tagFields(await readBody<unknown>(event))
+function sameName(a: string, b: string) {
+  return a.trim().toLocaleLowerCase('ru') === b.trim().toLocaleLowerCase('ru')
+}
+
+async function insertTag(fields: typeof tag.$inferInsert) {
   const [created] = await db.insert(tag).values(fields).onConflictDoNothing().returning()
-  if (!created) throw createError({ statusCode: 409, message: 'This slug already exists — select the existing tag or enter a different slug' })
-  return created
+  if (created) return created
+  const existing = await db.query.tag.findFirst({ where: eq(tag.slug, fields.slug) })
+  return existing && sameName(existing.name_ru, fields.name_ru) ? existing : null
+}
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody<{ name_ru?: unknown; name_en?: unknown; slug?: unknown }>(event)
+  const fields = tagFields(body)
+  const created = await insertTag(fields)
+  if (created) return created
+  if (typeof body?.slug === 'string' && body.slug.trim()) {
+    throw createError({ statusCode: 409, message: 'This slug already exists' })
+  }
+  const suffix = createHash('sha256').update(fields.name_ru.toLocaleLowerCase('ru')).digest('hex').slice(0, 10)
+  const unique = await insertTag({ ...fields, slug: `${fields.slug.slice(0, 89)}-${suffix}` })
+  if (!unique) throw createError({ statusCode: 409, message: 'Could not create a unique tag — retry' })
+  return unique
 })

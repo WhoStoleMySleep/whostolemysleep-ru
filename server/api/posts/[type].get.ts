@@ -1,8 +1,9 @@
 import { db } from '../../db'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { post } from '../../db/schema'
 import { getLocale } from '../../utils/locale'
 import { toPostSummary } from '../../utils/publicPost'
+import { postListOrder } from '../../utils/postOrder'
 import type { H3Event } from 'h3'
 
 async function fetchPosts(event: H3Event) {
@@ -20,7 +21,7 @@ async function fetchPosts(event: H3Event) {
       postTags: { with: { tag: true } },
       images:   { orderBy: (img, { asc }) => [asc(img.position)] },
     },
-    orderBy: (p, { desc }) => [desc(p.is_pinned), sql`${p.published_at} desc nulls last`, desc(p.id)],
+    orderBy: postListOrder,
   })
 
   return rows.map((row) => toPostSummary(row, locale))
@@ -89,5 +90,5 @@ defineRouteMeta({
 
 export default defineCachedEventHandler(fetchPosts, {
   maxAge:  600,
-  getKey:  (event) => `posts-pinned-${getRouterParam(event, 'type')}-${getLocale(event)}`,
+  getKey:  (event) => `posts-ordered-${getRouterParam(event, 'type')}-${getLocale(event)}`,
 })

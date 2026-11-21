@@ -1,4 +1,5 @@
 import { db } from '~~/server/db'
+import { postListOrder } from '~~/server/utils/postOrder'
 
 defineRouteMeta({
   openAPI: {
@@ -7,7 +8,7 @@ defineRouteMeta({
     description: 'Table columns only: texts and relations are not loaded here, the whole post comes from GET /api/admin/posts/{id}.',
     security:    [{ adminCookie: [] }],
     responses: {
-      200: { description: 'Posts, most recently changed first', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AdminPostRow' } } } } },
+      200: { description: 'Posts, pinned in manual order then newest', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AdminPostRow' } } } } },
       401: { $ref: '#/components/responses/Unauthorized' },
     },
     $global: {
@@ -23,6 +24,7 @@ defineRouteMeta({
               type:         { type: 'string', enum: ['blog', 'project'] },
               is_published: { type: 'boolean' },
               is_pinned:    { type: 'boolean' },
+              pin_order:    { type: 'integer', description: 'Order among pinned entries, smaller values first' },
               updated_at:   { type: 'string', format: 'date-time' },
             },
           },
@@ -42,6 +44,7 @@ defineRouteMeta({
               url:          { type: 'string', nullable: true },
               is_published: { type: 'boolean' },
               is_pinned:    { type: 'boolean' },
+              pin_order:    { type: 'integer', description: 'Order among pinned entries, smaller values first' },
               published_at: { type: 'string', format: 'date-time', nullable: true },
               created_at:   { type: 'string', format: 'date-time' },
               updated_at:   { type: 'string', format: 'date-time' },
@@ -74,6 +77,7 @@ defineRouteMeta({
               url:          { type: 'string', nullable: true },
               is_published: { type: 'boolean' },
               is_pinned:    { type: 'boolean' },
+              pin_order:    { type: 'integer', description: 'Order among pinned entries, smaller values first' },
               published_at: { type: 'string', format: 'date-time', nullable: true },
               tag_ids:      { type: 'array', items: { type: 'integer' }, description: 'Replaces the whole set of tags' },
             },
@@ -100,8 +104,10 @@ export default defineEventHandler(async () => {
       type:         true,
       is_published: true,
       is_pinned:    true,
+      pin_order:    true,
+      published_at: true,
       updated_at:   true,
     },
-    orderBy: (p, { desc }) => [desc(p.updated_at)],
+    orderBy: postListOrder,
   })
 })

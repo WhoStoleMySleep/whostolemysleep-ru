@@ -40,6 +40,7 @@ export const post = pgTable('post', {
   url:          varchar('url', { length: 1000 }),
   is_published: boolean('is_published').notNull().default(false),
   is_pinned:    boolean('is_pinned').notNull().default(false),
+  pin_order:    integer('pin_order').notNull().default(0),
   published_at: timestamp('published_at', { mode: 'string' }),
   created_at:   timestamp('created_at', { mode: 'string' }).notNull().defaultNow(),
   updated_at:   timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),

@@ -1,6 +1,6 @@
 import { db } from '~~/server/db'
 import * as schema from '~~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { markDirty, postPaths } from '~~/server/utils/pending'
 import { sanitizeHtml } from '~~/server/utils/sanitize'
 
@@ -41,8 +41,11 @@ export default defineEventHandler(async (event) => {
   if (fields.text_ru) fields.text_ru = sanitizeHtml(fields.text_ru)
   if (fields.text_en) fields.text_en = sanitizeHtml(fields.text_en)
 
+  const pinOrder = fields.is_pinned === true
+    ? { pin_order: sql`case when ${schema.post.is_pinned} then ${schema.post.pin_order} else coalesce((select max(pin_order) from ${schema.post} where is_pinned), -1) + 1 end` }
+    : {}
   const [updated] = await db.update(schema.post)
-    .set({ ...fields, updated_at: new Date().toISOString() })
+    .set({ ...fields, ...pinOrder, updated_at: new Date().toISOString() })
     .where(eq(schema.post.id, id))
     .returning()
 

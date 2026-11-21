@@ -7,14 +7,19 @@
  * No library: HTML5 drag-and-drop covers what is needed, and pulling in a package
  * for one seven-row list is not worth it.
  */
-const props = defineProps<{ items: T[], disabled?: boolean }>()
+const props = defineProps<{ items: T[], disabled?: boolean; canReorder?: (item: T) => boolean; reserveHandle?: boolean }>()
 const emit  = defineEmits<{ reorder: [ids: number[]] }>()
 
 const dragIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
 
+function movable(index: number) {
+  const item = props.items[index]
+  return !props.disabled && !!item && (props.canReorder?.(item) ?? true)
+}
+
 function move(from: number, to: number) {
-  if (to < 0 || to >= props.items.length || from === to) return
+  if (from === to || !movable(from) || !movable(to)) return
   const ids = props.items.map((i) => i.id)
   const [moved] = ids.splice(from, 1)
   ids.splice(to, 0, moved as number)
@@ -22,6 +27,7 @@ function move(from: number, to: number) {
 }
 
 function onDragStart(index: number, e: DragEvent) {
+  if (!movable(index)) return
   dragIndex.value = index
   // Without dataTransfer Firefox does not start the drag at all.
   e.dataTransfer?.setData('text/plain', String(index))
@@ -29,7 +35,7 @@ function onDragStart(index: number, e: DragEvent) {
 }
 
 function onDragOver(index: number, e: DragEvent) {
-  if (dragIndex.value === null) return
+  if (dragIndex.value === null || !movable(index)) return
   e.preventDefault()
   overIndex.value = index
 }
@@ -67,7 +73,7 @@ function onKey(index: number, e: KeyboardEvent) {
       @drop.prevent="onDrop(index)"
     >
       <button
-        v-if="!disabled"
+        v-if="movable(index)"
         class="sortable__grip"
         type="button"
         draggable="true"
@@ -82,6 +88,7 @@ function onKey(index: number, e: KeyboardEvent) {
         </svg>
       </button>
 
+      <span v-else-if="reserveHandle" class="sortable__spacer" aria-hidden="true" />
       <div class="sortable__body">
         <slot :item="item" :index="index" />
       </div>
@@ -105,6 +112,8 @@ function onKey(index: number, e: KeyboardEvent) {
 
 .sortable__row--dragging { opacity: 0.4; }
 .sortable__row--over     { border-color: var(--accent); }
+
+.sortable__spacer { width: 28px; flex-shrink: 0; }
 
 .sortable__grip {
   flex-shrink: 0;

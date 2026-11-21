@@ -28,6 +28,7 @@ describe('Порядок проектов и статей', () => {
     const orders = options.orderBy(post, { desc }).map(sql => new PgDialect().sqlToQuery(sql).sql)
     expect(orders).toEqual([
       '"post"."is_pinned" desc',
+      'case when "post"."is_pinned" then "post"."pin_order" end asc',
       '"post"."published_at" desc nulls last',
       '"post"."id" desc',
     ])
