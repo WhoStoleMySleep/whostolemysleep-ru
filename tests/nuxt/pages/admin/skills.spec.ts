@@ -61,3 +61,95 @@ describe('Управление навыками', () => {
     wrapper.unmount()
   })
 })
+
+function groupsForReorder() {
+  const groups = structuredClone(initialGroups)
+  groups[0]!.skills.push({ id: 20, group_id: 1, name: 'Rust', order: 1 })
+  groups.push({
+    id: 2, slug: 'backend', name_ru: 'Бэкенд', name_en: 'Backend', order: 1,
+    skills: [{ id: 30, group_id: 2, name: 'Node', order: 0 }],
+  })
+  return groups
+}
+
+function pendingReorder(path: string) {
+  let reject!: (reason: Error) => void
+  mocks.patch.mockImplementation((url: string) => url === path
+    ? new Promise((_, fail) => { reject = fail })
+    : Promise.resolve({ ok: true }))
+  return () => reject(new Error('Reorder failed'))
+}
+
+describe('Откат порядка при параллельном редактировании', () => {
+  test.each(['rename', 'remove'] as const)('откат навыков сохраняет успешное действие %s', async (action) => {
+    const groups = groupsForReorder()
+    mocks.get.mockResolvedValueOnce(groups)
+    const fail = pendingReorder('/api/admin/skills/items/reorder')
+    const wrapper = await mountSkills()
+    const frontend = wrapper.findAll('.group')[0]!
+    await frontend.get('.sortable__grip').trigger('keydown', { key: 'ArrowDown', altKey: true })
+    expect(frontend.findAll('.skill__input').map(input => (input.element as HTMLInputElement).value)).toEqual(['Rust', 'TypeScript'])
+
+    const skill = frontend.findAll('.skill').find(row => (row.get('input').element as HTMLInputElement).value === 'TypeScript')!
+    if (action === 'rename') {
+      const input = skill.get('input')
+      ;(input.element as HTMLInputElement).value = 'JavaScript'
+      await input.trigger('change')
+    } else {
+      await skill.get('.skill__del').trigger('click')
+    }
+    await flushPromises()
+    fail()
+    await flushPromises()
+
+    expect(frontend.findAll('.skill__input').map(input => (input.element as HTMLInputElement).value)).toEqual(action === 'rename' ? ['JavaScript', 'Rust'] : ['Rust'])
+    expect(groups[0]!.skills.map(item => item.name)).toEqual(['TypeScript', 'Rust'])
+    expect(mocks.err).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test.each(['rename', 'remove'] as const)('откат групп сохраняет успешное действие %s над навыком', async (action) => {
+    const groups = groupsForReorder()
+    mocks.get.mockResolvedValueOnce(groups)
+    const fail = pendingReorder('/api/admin/skills/groups/reorder')
+    const wrapper = await mountSkills()
+    await wrapper.get('.sortable__grip').trigger('keydown', { key: 'ArrowDown', altKey: true })
+    expect(wrapper.findAll('.group__slug').map(group => group.text())).toEqual(['backend', 'frontend'])
+
+    const frontend = wrapper.findAll('.group')[1]!
+    if (action === 'rename') {
+      const input = frontend.get('.skill__input')
+      ;(input.element as HTMLInputElement).value = 'JavaScript'
+      await input.trigger('change')
+    } else {
+      await frontend.get('.skill__del').trigger('click')
+    }
+    await flushPromises()
+    fail()
+    await flushPromises()
+
+    expect(wrapper.findAll('.group__slug').map(group => group.text())).toEqual(['frontend', 'backend'])
+    expect(wrapper.findAll('.group')[0]!.findAll('.skill__input').map(input => (input.element as HTMLInputElement).value)).toEqual(action === 'rename' ? ['JavaScript', 'Rust'] : ['Rust'])
+    expect(groups[0]!.skills.map(item => item.name)).toEqual(['TypeScript', 'Rust'])
+    wrapper.unmount()
+  })
+
+  test('откат навыков не теряет новый навык после обновления списка', async () => {
+    mocks.get.mockResolvedValueOnce(groupsForReorder())
+    const fail = pendingReorder('/api/admin/skills/items/reorder')
+    const wrapper = await mountSkills()
+    const frontend = wrapper.findAll('.group')[0]!
+    await frontend.get('.sortable__grip').trigger('keydown', { key: 'ArrowDown', altKey: true })
+    const updated = groupsForReorder()
+    updated[0]!.skills = [updated[0]!.skills[1]!, updated[0]!.skills[0]!, { id: 40, group_id: 1, name: 'Vue', order: 2 }]
+    mocks.get.mockResolvedValueOnce(updated)
+    await frontend.get('.add__input').setValue('Vue')
+    await frontend.get('form.add').trigger('submit')
+    await flushPromises()
+    fail()
+    await flushPromises()
+
+    expect(wrapper.findAll('.group')[0]!.findAll('.skill__input').map(input => (input.element as HTMLInputElement).value)).toEqual(['TypeScript', 'Rust', 'Vue'])
+    wrapper.unmount()
+  })
+})

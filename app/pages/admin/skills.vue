@@ -59,13 +59,12 @@ async function removeGroup(g: Group) {
 }
 
 async function reorderGroups(ids: number[]) {
-  const before = [...groups.value]
-  const byId = new Map(before.map((g) => [g.id, g]))
-  data.value = ids.map((id) => byId.get(id)).filter(Boolean) as Group[]
+  const before = groups.value.map(group => group.id)
+  data.value = orderItems(groups.value, ids)
   try {
     await api.patch('/api/admin/skills/groups/reorder', { ids })
   } catch (e) {
-    data.value = before
+    data.value = restoreOrder(groups.value, before)
     toast.err(adminError(e))
   }
 }
@@ -80,9 +79,15 @@ function updateGroup(groupId: number, transform: (group: Group) => Group) {
   data.value = (data.value ?? []).map(group => (group.id === groupId ? transform(group) : group))
 }
 
-function orderSkills(skills: Skill[], ids: number[]) {
-  const skillsById = new Map(skills.map(skill => [skill.id, skill]))
-  return ids.map(id => skillsById.get(id)).filter(Boolean) as Skill[]
+function orderItems<Item extends { id: number }>(items: Item[], ids: number[]): Item[] {
+  const byId = new Map(items.map(item => [item.id, item]))
+  return ids.map(id => byId.get(id)).filter((item): item is Item => item !== undefined)
+}
+
+function restoreOrder<Item extends { id: number }>(items: Item[], ids: number[]): Item[] {
+  // Roll back order, not concurrent edits; new items stay and deleted ones stay absent.
+  const previousIds = new Set(ids)
+  return [...orderItems(items, ids), ...items.filter(item => !previousIds.has(item.id))]
 }
 
 async function addSkill(g: Group) {
@@ -126,13 +131,13 @@ async function removeSkill(group: Group, skill: Skill) {
 }
 
 async function reorderSkills(group: Group, ids: number[]) {
-  const before = group.skills
-  const skills = orderSkills(before, ids)
+  const before = group.skills.map(skill => skill.id)
+  const skills = orderItems(group.skills, ids)
   updateGroup(group.id, current => ({ ...current, skills }))
   try {
     await api.patch('/api/admin/skills/items/reorder', { ids })
   } catch (cause) {
-    updateGroup(group.id, current => ({ ...current, skills: before }))
+    updateGroup(group.id, current => ({ ...current, skills: restoreOrder(current.skills, before) }))
     toast.err(adminError(cause))
   }
 }
