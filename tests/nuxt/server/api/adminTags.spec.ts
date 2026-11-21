@@ -51,3 +51,13 @@ describe('Создание тегов', () => {
     expect(state.calls[0]?.steps.some(s => s.m === 'onConflictDoNothing')).toBe(true)
   })
 })
+
+
+test.each([['C++', 'c-plus-plus'], ['C#', 'c-sharp'], ['C', 'c']])('позволяет создать %s с отдельным slug %s', async (name_ru, slug) => {
+  await create({ name_ru, slug })
+  expect(stepArg(state.calls, 'insert:tag', 'values')).toEqual({ name_ru, name_en: '', slug })
+})
+
+test.each(['C#', 'UPPER', 'a b', '-start', 'end-', 'a'.repeat(101)])('отклоняет некорректный явный slug %s', async (slug) => {
+  await expect(create({ name_ru: 'Nuxt', slug })).rejects.toMatchObject({ statusCode: 400 })
+})

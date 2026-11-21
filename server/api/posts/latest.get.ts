@@ -16,16 +16,12 @@ async function fetchSelected(event: H3Event) {
   const rows = await db.query.post.findMany({
     where:   and(eq(post.is_published, true), eq(post.is_pinned, true), eq(post.type, 'project')),
     columns: { text_ru: false, text_en: false },
-    with: {
-      postTags: { with: { tag: true } },
-      images:   { orderBy: (img, { asc }) => [asc(img.position)] },
-    },
     // PostgreSQL otherwise puts undated projects ahead of dated ones.
     orderBy: (p) => [sql`${p.published_at} desc nulls last`, sql`${p.id} desc`],
     limit:   LIMIT,
   })
 
-  return rows.map((row) => toPostSummary(row, locale))
+  return rows.map((row) => toPostSummary({ ...row, postTags: [], images: [] }, locale))
 }
 
 defineRouteMeta({

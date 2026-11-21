@@ -34,6 +34,7 @@ describe('GET /api/posts/latest', () => {
     const query = m.findMany.mock.calls[0]?.[0] as { limit: number, columns: Record<string, boolean> }
     expect(query.limit).toBe(8)
     expect(query.columns).toEqual({ text_ru: false, text_en: false })
+    expect(query).not.toHaveProperty('with')
   })
 
   test('an unknown locale lands in the same cache entry as ru instead of a new one', async () => {
