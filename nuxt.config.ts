@@ -17,6 +17,11 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  experimental: {
+    // HTML and hydration data must share one ISR copy, not independently cached versions.
+    payloadExtraction: false,
+  },
+
   modules: ['@sentry/nuxt/module', '@pinia/nuxt', '@nuxtjs/i18n', '@vercel/speed-insights/nuxt', '@nuxt/eslint'],
 
   eslint: {

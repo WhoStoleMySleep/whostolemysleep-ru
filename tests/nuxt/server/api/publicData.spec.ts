@@ -55,6 +55,22 @@ describe('Свежие данные для пересборки ISR', () => {
     expect(await request({} as H3Event)).toEqual({ id: 1, text: 'Новый' })
   })
 
+  test('данные гидрации встроены в HTML, а ISR публичных страниц сохранён', async () => {
+    vi.stubGlobal('defineNuxtConfig', (config: unknown) => config)
+    const { default: config } = await import('~~/nuxt.config')
+    expect(config.experimental?.payloadExtraction).toBe(false)
+    const pages = [
+      '/ru', '/en',
+      '/ru/blog', '/en/blog', '/ru/blog/**', '/en/blog/**',
+      '/ru/projects', '/en/projects',
+      '/ru/resume', '/en/resume', '/ru/cv', '/en/cv',
+      '/ru/contacts', '/en/contacts', '/ru/privacy', '/en/privacy',
+    ] as const
+    for (const route of pages) {
+      expect(config.routeRules?.[route]?.isr).toBeTruthy()
+    }
+  })
+
   test('HTTP-кеш API выключен, кеш готовых страниц сохранён', async () => {
     vi.stubGlobal('defineNuxtConfig', (config: unknown) => config)
     const { default: config } = await import('~~/nuxt.config')

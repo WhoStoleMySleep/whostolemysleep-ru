@@ -9,8 +9,8 @@
  * again, and sanitize-html 2.17.6 proved it: unloadable there, perfectly fine here on
  * the same Node version. .github/workflows/deployed.yml covers that side.
  *
- * No database: `db` connects lazily, so these three routes never reach it. The point
- * is not to test them, it is to have the process survive serving them.
+ * No database is configured: content requests may fail, but page rendering and
+ * the shape of the hydration payload must still work in the shipped bundle.
  *
  * Run with: node scripts/smoke.mjs
  */
@@ -23,7 +23,8 @@ const BASE = `http://127.0.0.1:${PORT}`
 const CHECKS = [
   { path: '/admin', expect: 302 },
   { path: '/en/this-page-does-not-exist', expect: 404 },
-  { path: '/ru', expect: 200 },
+  { path: '/ru', expect: 200, inlinePayload: true },
+  { path: '/en', expect: 200, inlinePayload: true },
 ]
 
 const server = spawn('node', ['.output/server/index.mjs'], {
@@ -59,6 +60,21 @@ function stop() {
   if (exited === null) server.kill('SIGKILL')
 }
 
+// A 200 page can still hydrate with an older, separately cached payload.
+function inlinePayloadError(html) {
+  const script = html.match(/<script\b([^>]*\bid="__NUXT_DATA__"[^>]*)>([\s\S]*?)<\/script>/)
+  if (!script) return 'Nuxt hydration payload is missing'
+  if (/\bdata-src\s*=/.test(script[1])) return 'hydration uses a separately cached payload'
+  try {
+    const payload = JSON.parse(script[2])
+    const root = Array.isArray(payload[0]) ? payload[payload[0][1]] : payload[0]
+    if (!Object.hasOwn(root ?? {}, 'data')) return 'SSR data is missing from the inline payload'
+  } catch {
+    return 'inline payload is not valid JSON'
+  }
+  return ''
+}
+
 if (!await waitForListen()) {
   console.error(exited === null
     ? `smoke: the server did not answer on ${BASE} within 30s`
@@ -70,10 +86,16 @@ if (!await waitForListen()) {
 
 let failed = false
 
-for (const { path, expect } of CHECKS) {
+for (const { path, expect, inlinePayload } of CHECKS) {
   let status
   try {
-    status = (await fetch(`${BASE}${path}`, { redirect: 'manual' })).status
+    const response = await fetch(`${BASE}${path}`, { redirect: 'manual' })
+    status = response.status
+    if (inlinePayload && status === expect) {
+      const error = inlinePayloadError(await response.text())
+      console.log(`smoke: ${error ? 'FAIL' : 'ok  '} ${path} — ${error || 'hydration data is inline'}`)
+      if (error) failed = true
+    }
   }
   catch (error) {
     console.error(`smoke: ${path} — request failed: ${error.message}`)
