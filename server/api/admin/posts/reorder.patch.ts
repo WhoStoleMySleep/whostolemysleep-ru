@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { post } from '~~/server/db/schema'
 import { markDirty, postPaths } from '~~/server/utils/pending'
+import { lockPostOrder } from '~~/server/utils/postOrder'
 
 const MAX_PINNED = 1000
 
@@ -16,7 +17,7 @@ function pinnedIds(body: unknown): number[] {
 async function savePinnedOrder(ids: number[]) {
   const values = sql.join(ids.map((id, index) => sql`(${id}::int, ${index}::int)`), sql`, `)
   // Блокировки берутся до проверки набора: конкурентное открепление не оставит частичный UPDATE.
-  const updated = await db.execute(sql`
+  const [, updated] = await db.batch([lockPostOrder(), db.execute(sql`
     with locked_pins as materialized (
       select id from ${post} where is_pinned order by id for update
     ), desired(id, position) as (values ${values})
@@ -28,7 +29,7 @@ async function savePinnedOrder(ids: number[]) {
          select 1 from locked_pins where id not in (select id from desired)
        )
     returning ${post.id}
-  `)
+  `)])
   if (updated.rows.length !== ids.length) throw createError({ statusCode: 409, message: 'Pinned entries changed — refresh the list and try again' })
 }
 

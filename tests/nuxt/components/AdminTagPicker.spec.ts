@@ -81,3 +81,17 @@ describe('Компактный выбор тегов', () => {
     wrapper.unmount()
   })
 })
+
+
+test.each([true, false])('после создания с успехом=%s возвращает фокус и не перечитывает теги при обычной ошибке', async (success) => {
+  if (success) api.post.mockResolvedValueOnce({ id: 3, slug: 'rust', name_ru: 'Rust', name_en: '' })
+  else api.post.mockRejectedValueOnce(new Error('Network error'))
+  const wrapper = await picker()
+  const calls = api.get.mock.calls.length
+  await wrapper.get('input').setValue('Rust')
+  await wrapper.get('input').trigger('keydown', { key: 'Enter' })
+  await flushPromises()
+  expect(document.activeElement).toBe(wrapper.get('input').element)
+  expect(api.get.mock.calls).toHaveLength(calls)
+  wrapper.unmount()
+})

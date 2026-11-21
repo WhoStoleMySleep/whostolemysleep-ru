@@ -158,7 +158,7 @@ async function reorder(ids: number[]) {
         <span />
       </div>
 
-      <AdminSortable :items="filtered" :disabled="busy || hasFilters" :can-reorder="post => post.is_pinned" reserve-handle @reorder="reorder">
+      <AdminSortable :items="filtered" :disabled="busy || hasFilters" :can-reorder="post => post.is_pinned && !hasFilters" reserve-handle @reorder="reorder">
         <template #default="{ item: post }">
           <div class="table__row">
             <NuxtLink :to="`/admin/posts/${post.id}`" class="cell-title">

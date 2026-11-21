@@ -12,10 +12,26 @@ const emit  = defineEmits<{ reorder: [ids: number[]] }>()
 
 const dragIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
+const root = ref<HTMLElement | null>(null)
+const focusAfterMove = ref<number | null>(null)
+
+watch([() => props.disabled, () => props.items], async () => {
+  if (focusAfterMove.value === null) return
+  const index = props.items.findIndex(item => item.id === focusAfterMove.value)
+  if (!reorderable(index)) { focusAfterMove.value = null; return }
+  if (props.disabled) return
+  await nextTick()
+  root.value?.querySelector<HTMLButtonElement>(`[data-sortable-id="${focusAfterMove.value}"]`)?.focus()
+  focusAfterMove.value = null
+})
+
+function reorderable(index: number) {
+  const item = props.items[index]
+  return !!item && (props.canReorder?.(item) ?? true)
+}
 
 function movable(index: number) {
-  const item = props.items[index]
-  return !props.disabled && !!item && (props.canReorder?.(item) ?? true)
+  return !props.disabled && reorderable(index)
 }
 
 function move(from: number, to: number) {
@@ -53,14 +69,17 @@ function onDragEnd() {
 
 /** For anyone not using a mouse, the order is reachable with Alt and the arrow keys. */
 function onKey(index: number, e: KeyboardEvent) {
-  if (!e.altKey) return
-  if (e.key === 'ArrowUp')   { e.preventDefault(); move(index, index - 1) }
-  if (e.key === 'ArrowDown') { e.preventDefault(); move(index, index + 1) }
+  const direction = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+  if (!e.altKey || !direction) return
+  e.preventDefault()
+  if (!movable(index) || !movable(index + direction)) return
+  focusAfterMove.value = props.items[index]!.id
+  move(index, index + direction)
 }
 </script>
 
 <template>
-  <div class="sortable">
+  <div ref="root" class="sortable">
     <div
       v-for="(item, index) in items"
       :key="item.id"
@@ -73,10 +92,12 @@ function onKey(index: number, e: KeyboardEvent) {
       @drop.prevent="onDrop(index)"
     >
       <button
-        v-if="movable(index)"
+        v-if="reorderable(index)"
         class="sortable__grip"
+        :data-sortable-id="item.id"
         type="button"
-        draggable="true"
+        :draggable="!disabled"
+        :aria-disabled="disabled"
         :aria-label="`Reorder, position ${index + 1} of ${items.length}. Alt with arrow keys to move.`"
         @dragstart="onDragStart(index, $event)"
         @dragend="onDragEnd"
@@ -129,6 +150,7 @@ function onKey(index: number, e: KeyboardEvent) {
 
 .sortable__grip:hover { color: var(--text-2); }
 .sortable__grip:active { cursor: grabbing; }
+.sortable__grip[aria-disabled="true"] { opacity: 0.4; cursor: wait; }
 
 .sortable__body { flex: 1; min-width: 0; }
 </style>

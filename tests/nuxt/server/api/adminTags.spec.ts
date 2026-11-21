@@ -1,12 +1,21 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
+import type { SQL } from 'drizzle-orm'
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
 
 const state = vi.hoisted((): FakeDbState => ({ results: {}, calls: [], cursor: {} }))
 vi.mock('~~/server/db', async () => {
   const { makeFakeDb } = await import('~~/tests/helpers/fakeDb')
-  return { db: makeFakeDb(state) }
+  const db = makeFakeDb(state) as object
+  return { db: { ...db, query: { tag: { findFirst: async ({ where }: { where: SQL }) => {
+    const query = new PgDialect().sqlToQuery(where)
+    const wanted = String(query.params[0]).toLocaleLowerCase('ru')
+    const rows = (state.rows?.tag ?? []) as { name_ru: string; slug: string }[]
+    return rows.find(row => (query.sql.includes('lower(trim(') ? row.name_ru.toLocaleLowerCase('ru') : row.slug) === wanted)
+  } } }, insert: (...args: unknown[]) => (db as { insert: (...args: unknown[]) => unknown }).insert(...args) } }
+
 })
 
 async function create(body: unknown) {
@@ -76,7 +85,7 @@ test('повторное создание того же названия воз�
   const existing = { id: 1, slug: 'nuxt', name_ru: 'Nuxt', name_en: '' }
   plan(state, { 'insert:tag': [[]] }, { tag: [existing] })
   expect(await create({ name_ru: 'nuxt' })).toEqual(existing)
-  expect(state.calls).toHaveLength(1)
+  expect(state.calls).toHaveLength(0)
 })
 
 test('суффикс коллизии стабилен и не превышает лимит slug', async () => {
@@ -87,4 +96,17 @@ test('суффикс коллизии стабилен и не превышае�
   await create({ name_ru })
   const slug = stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values', 1)?.slug
   expect(slug).toHaveLength(100)
+})
+
+
+test('длинная транслитерация обрезается автоматически в пределах лимита slug', async () => {
+  await create({ name_ru: 'ж'.repeat(51) })
+  expect(stepArg<Record<string, string>>(state.calls, 'insert:tag', 'values')?.slug).toHaveLength(100)
+})
+
+test('существующий тег с ручным slug находится по названию до вставки', async () => {
+  const existing = { id: 3, slug: 'c-plus-plus', name_ru: 'C++', name_en: '' }
+  plan(state, {}, { tag: [existing] })
+  expect(await create({ name_ru: ' C++ ' })).toEqual(existing)
+  expect(state.calls).toHaveLength(0)
 })

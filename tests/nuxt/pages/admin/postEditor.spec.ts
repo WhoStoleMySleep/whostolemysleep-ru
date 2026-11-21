@@ -113,6 +113,7 @@ describe('Параллельные действия в редакторе', () =
     mocks.post.mockRejectedValueOnce({ statusCode: 409, message: 'Already exists' })
     await wrapper.get('.tag-picker__input').trigger('keydown', { key: 'Enter' })
     await flushPromises()
+    await wrapper.get('.tag-picker__input').trigger('focus')
     expect(wrapper.findAll('.tag-picker__option').map(chip => chip.text())).toContain('Rust')
     expect(wrapper.get('.chip').text()).toBe('Nuxt ×')
     expect(wrapper.get('.tag-picker__input').element).toHaveProperty('value', 'Rust')

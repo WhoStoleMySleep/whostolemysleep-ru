@@ -16,7 +16,7 @@ const rows = [
 
 async function mountList() {
   const { default: List } = await import('~/pages/admin/posts/index.vue')
-  return mountSuspended(List)
+  return mountSuspended(List, { attachTo: document.body })
 }
 
 beforeEach(() => {
@@ -76,4 +76,19 @@ describe('Один список записей и проектов', () => {
     expect(mocks.get.mock.calls.length).toBeGreaterThan(calls)
     wrapper.unmount()
   })
+})
+
+
+test('клавиатурная перестановка сохраняет фокус на той же записи после ответа', async () => {
+  const wrapper = await mountList()
+  const handle = wrapper.get('.sortable__grip')
+  ;(handle.element as HTMLButtonElement).focus()
+  mocks.get.mockResolvedValueOnce([rows[1], rows[0], rows[2]])
+  await handle.trigger('keydown', { key: 'ArrowDown', altKey: true })
+  await flushPromises()
+  expect(document.activeElement).toBe(handle.element)
+  await handle.trigger('keydown', { key: 'ArrowUp', altKey: true })
+  await flushPromises()
+  expect(mocks.patch).toHaveBeenLastCalledWith('/api/admin/posts/reorder', { ids: [1, 2] })
+  wrapper.unmount()
 })

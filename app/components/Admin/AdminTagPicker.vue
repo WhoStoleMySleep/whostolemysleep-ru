@@ -55,9 +55,15 @@ async function submit() {
     open.value = false
   } catch (e) {
     error.value = adminError(e)
-    await refresh()
+    const status = (e as { statusCode?: number; status?: number } | null)?.statusCode ?? (e as { status?: number } | null)?.status
+    if (status === 409) await refresh()
   } finally {
     busy.value = false
+    await nextTick()
+    if (!props.disabled) {
+      input.value?.focus()
+      open.value = false
+    }
   }
 }
 

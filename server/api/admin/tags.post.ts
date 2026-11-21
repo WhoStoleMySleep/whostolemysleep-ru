@@ -1,6 +1,6 @@
 import { db } from '~~/server/db'
 import { createHash } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { tag } from '~~/server/db/schema'
 import { slugify } from '~~/server/utils/slug'
 
@@ -10,7 +10,9 @@ function tagFields(body: unknown) {
   const fields = body as { name_ru?: unknown; name_en?: unknown; slug?: unknown } | null
   const name_ru = typeof fields?.name_ru === 'string' ? fields.name_ru.trim() : ''
   const name_en = typeof fields?.name_en === 'string' ? fields.name_en.trim() : ''
-  const slug = typeof fields?.slug === 'string' && fields.slug.trim() ? fields.slug.trim() : slugify(name_ru)
+  const slug = typeof fields?.slug === 'string' && fields.slug.trim()
+    ? fields.slug.trim()
+    : slugify(name_ru).slice(0, MAX_NAME_LENGTH).replace(/-+$/, '')
 
   if (!name_ru || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || name_ru.length > MAX_NAME_LENGTH || name_en.length > MAX_NAME_LENGTH || slug.length > MAX_NAME_LENGTH) {
     throw createError({ statusCode: 400, message: 'Tag names must be at most 100 characters; a Russian name producing a non-empty slug is required' })
@@ -57,6 +59,8 @@ async function insertTag(fields: typeof tag.$inferInsert) {
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ name_ru?: unknown; name_en?: unknown; slug?: unknown }>(event)
   const fields = tagFields(body)
+  const existing = await db.query.tag.findFirst({ where: sql`lower(trim(${tag.name_ru})) = lower(trim(${fields.name_ru}))` })
+  if (existing) return existing
   const created = await insertTag(fields)
   if (created) return created
   if (typeof body?.slug === 'string' && body.slug.trim()) {
