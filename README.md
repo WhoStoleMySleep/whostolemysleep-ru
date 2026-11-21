@@ -88,6 +88,7 @@ NUXT_PUBLIC_SITE_URL=       # https://whostolemysleep.ru
 PUBLISH_TOKEN=              # bearer token for the external publisher — leave unset to disable
 CV_TOKEN=                   # read-only bearer token for the job-search hub — leave unset to disable
 NEON_LOCAL_SQL_ENDPOINT=    # local dev only: HTTP proxy in front of a plain Postgres
+NUXT_PUBLIC_METRIKA_ID=      # 114450485; public counter ID, Vercel production only
 NUXT_PUBLIC_SENTRY_DSN=     # Sentry DSN — public by design, read by both client and server
 SENTRY_ORG=                 # build-time only: source map upload
 SENTRY_PROJECT=             # build-time only: source map upload
@@ -357,3 +358,25 @@ Two things a dump does not carry:
 ## License
 
 MIT
+
+## Yandex Metrika
+
+Set `NUXT_PUBLIC_METRIKA_ID=114450485` in Vercel's **Production** environment and redeploy.
+The client plugin is enabled only when `VERCEL_ENV=production` at build time and
+the browser origin is `https://whostolemysleep.ru`. An empty or invalid ID disables it.
+Localhost, preview hosts, admin pages and internal documentation are not tracked.
+
+The plugin sends the first pageview after mounting and subsequent Nuxt pageviews
+without counting hash/query-only changes. Query strings and fragments are omitted
+from page URLs and referrers; this also means UTM parameters are not reported.
+A blocked script does not prevent navigation. Webvisor, clickmaps, automatic link
+and hash tracking, bounce timers and ecommerce are disabled.
+
+Create three **JavaScript event** goals in the counter's Goals tab:
+
+- `contact_telegram` — clicks on HTTPS `t.me` links;
+- `contact_email` — clicks on email links;
+- `project_open` — clicks on external project cards.
+
+Goals send only the event name, not the destination, email address or link text.
+They measure clicks, not messages sent. The contact form is not tracked.

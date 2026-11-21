@@ -23,6 +23,7 @@ const host = computed(() => {
 <template>
   <NuxtLink
     :to="link.href"
+    :data-metrika-goal="item.type === 'project' && link.isExternal ? 'project_open' : undefined"
     :target="link.isExternal ? '_blank' : undefined"
     :rel="link.isExternal ? 'noopener noreferrer' : undefined"
     class="card"
