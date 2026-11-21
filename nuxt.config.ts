@@ -44,7 +44,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Headers on everything that is served: the CSP allows exactly the origins the site
-    // uses — its own domain, images from Vercel Blob and Vercel telemetry. Inline styles and
+    // uses — its own domain, Vercel Blob, Vercel telemetry and the Sentry ingest endpoint. Inline styles and
     // scripts are what Nuxt needs to hydrate, so they are allowed deliberately, not by oversight.
     '/**': {
       headers: {
@@ -58,7 +58,7 @@ export default defineNuxtConfig({
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
           "font-src 'self' data:",
-          "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+          "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://o4512129513226240.ingest.us.sentry.io",
           'upgrade-insecure-requests',
         ].join('; '),
         // The admin password travels to the server in clear text inside TLS — as

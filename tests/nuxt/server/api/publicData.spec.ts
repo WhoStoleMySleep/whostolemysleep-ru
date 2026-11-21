@@ -71,6 +71,25 @@ describe('Свежие данные для пересборки ISR', () => {
     }
   })
 
+  test('CSP разрешает отправку ошибок только в конкретный Sentry ingest', async () => {
+    vi.stubGlobal('defineNuxtConfig', (config: unknown) => config)
+    const { default: config } = await import('~~/nuxt.config')
+    const policy = config.routeRules?.['/**']?.headers?.['Content-Security-Policy'] ?? ''
+    const directives = policy.split('; ').map(directive => directive.split(' '))
+    const connect = directives.find(([name]) => name === 'connect-src')
+
+    expect(connect).toEqual([
+      'connect-src', "'self'", 'https://va.vercel-scripts.com',
+      'https://vitals.vercel-insights.com', 'https://o4512129513226240.ingest.us.sentry.io',
+    ])
+    expect(directives).toContainEqual(['default-src', "'self'"])
+    expect(directives).toContainEqual(['object-src', "'none'"])
+    expect(directives).toContainEqual(['frame-ancestors', "'none'"])
+    expect(directives.find(([name]) => name === 'script-src')).toEqual([
+      'script-src', "'self'", "'unsafe-inline'", 'https://va.vercel-scripts.com',
+    ])
+  })
+
   test('HTTP-кеш API выключен, кеш готовых страниц сохранён', async () => {
     vi.stubGlobal('defineNuxtConfig', (config: unknown) => config)
     const { default: config } = await import('~~/nuxt.config')
