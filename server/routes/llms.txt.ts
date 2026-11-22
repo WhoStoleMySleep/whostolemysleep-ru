@@ -2,7 +2,8 @@ import { asc, eq } from 'drizzle-orm'
 import { db } from '~~/server/db'
 import { post, settings, experience, skillGroup, skill } from '~~/server/db/schema'
 import { plainText } from '~~/server/utils/text'
-import { SITE_URL as BASE_URL, yearsSince } from '~~/shared/utils/site'
+import { SITE_URL as BASE_URL } from '~~/shared/utils/site'
+import { experienceYears } from '~~/shared/utils/experience'
 
 /**
  * A dynamic llmstxt.org digest follows admin edits, like sitemap.xml. English is
@@ -73,16 +74,15 @@ defineRouteMeta({
 })
 
 async function loadDigestData() {
-  const [posts, [config], firstJob, groups] = await Promise.all([
+  const [posts, [config], periods, groups] = await Promise.all([
     db.select(POST_COLUMNS).from(post).where(eq(post.is_published, true)),
     db.select().from(settings).where(eq(settings.id, 1)),
-    db.select({ date_from: experience.date_from })
-      .from(experience).orderBy(asc(experience.date_from)).limit(1),
+    db.select({ date_from: experience.date_from, date_to: experience.date_to }).from(experience),
     db.select({ group: skillGroup.name_en, skill: skill.name }).from(skill)
       .innerJoin(skillGroup, eq(skill.group_id, skillGroup.id))
       .orderBy(asc(skillGroup.order), asc(skill.order)),
   ])
-  return { posts, config, firstJob, groups }
+  return { posts, config, periods, groups }
 }
 
 function introduction(years: number, config: DigestSettings) {
@@ -146,9 +146,9 @@ function contactSection(config: DigestSettings) {
   ]
 }
 
-function digestMarkdown({ posts, config, firstJob, groups }: Awaited<ReturnType<typeof loadDigestData>>) {
+function digestMarkdown({ posts, config, periods, groups }: Awaited<ReturnType<typeof loadDigestData>>) {
   return [
-    ...introduction(yearsSince(firstJob[0]?.date_from), config),
+    ...introduction(experienceYears(periods), config),
     ...PAGE_LINKS,
     ...FOCUS_LINES,
     ...skillSection(groups),

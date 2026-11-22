@@ -47,6 +47,7 @@ const contacts = computed(() =>
   [settings.value?.email, short(settings.value?.github_url ?? ''), short(settings.value?.telegram_url ?? '')]
     .filter(Boolean),
 )
+const { total, duration } = useExperience(experience)
 </script>
 
 <template>
@@ -70,10 +71,10 @@ const contacts = computed(() =>
       </section>
 
       <section v-if="experience?.length" class="sect">
-        <h2 class="sect__title">{{ t('cv.experience') }}</h2>
+        <h2 class="sect__title">{{ t('cv.experience') }} · {{ total }}</h2>
         <div v-for="item in experience" :key="item.id" class="entry">
           <h3 class="entry__title">{{ item.position }} — {{ item.company }}</h3>
-          <p class="entry__period">{{ formatPeriod(item.date_from, item.date_to) }}</p>
+          <p class="entry__period">{{ formatPeriod(item.date_from, item.date_to) }} · {{ duration(item) }}</p>
           <ul v-if="item.bullets.length" class="entry__list">
             <li v-for="bullet in item.bullets" :key="bullet.id">{{ bullet.text }}</li>
           </ul>

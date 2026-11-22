@@ -39,7 +39,7 @@ const news = computed(() => (latest.value ?? [])
   .map(post => ({ ...post, ...linkFor(post) })))
 
 /** Years of experience live here only — the heading no longer repeats them. */
-const years = computed(() => siteSettings.value?.years_experience ?? DEFAULT_YEARS)
+const years = computed(() => siteSettings.value?.years_experience ?? 0)
 
 const stack = computed(() => [
   { k: t('stack.f1_k'), v: t('stack.f1_v') },
