@@ -1,15 +1,13 @@
 import { db } from '../db'
 import * as schema from '../db/schema'
-import { eq, asc } from 'drizzle-orm'
-import { yearsSince } from '~~/shared/utils/site'
+import { eq } from 'drizzle-orm'
+import { experienceYears } from '~~/shared/utils/experience'
 
 async function fetchSettings() {
-  const [[row], earliest] = await Promise.all([
+  const [[row], periods] = await Promise.all([
     db.select().from(schema.settings).where(eq(schema.settings.id, 1)),
-    db.select({ date_from: schema.experience.date_from })
-      .from(schema.experience)
-      .orderBy(asc(schema.experience.date_from))
-      .limit(1),
+    db.select({ date_from: schema.experience.date_from, date_to: schema.experience.date_to })
+      .from(schema.experience),
   ])
 
   return {
@@ -18,7 +16,7 @@ async function fetchSettings() {
     github_url:       row?.github_url       ?? '',
     telegram_url:     row?.telegram_url     ?? '',
     email:            row?.email            ?? '',
-    years_experience: yearsSince(earliest[0]?.date_from),
+    years_experience: experienceYears(periods),
   }
 }
 
@@ -28,7 +26,7 @@ defineRouteMeta({
     tags:    ['Public'],
     summary: 'Site settings',
     responses: {
-      200: { description: 'Flags, links, and years of experience counted from the earliest job', content: { 'application/json': { schema: { $ref: '#/components/schemas/SiteSettings' } } } },
+      200: { description: 'Flags, links, and years of experience counted from non-overlapping employment periods', content: { 'application/json': { schema: { $ref: '#/components/schemas/SiteSettings' } } } },
     },
     $global: {
       components: {

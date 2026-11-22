@@ -22,6 +22,7 @@ const [
 ])
 
 const { formatPeriod } = useFormatDate()
+const { total, duration } = useExperience(experience)
 </script>
 
 <template>
@@ -45,12 +46,12 @@ const { formatPeriod } = useFormatDate()
     </section>
 
     <section v-if="experience?.length" class="block">
-      <p class="block__label">{{ t('resume.experience') }}</p>
+      <p class="block__label">{{ t('resume.experience') }} · {{ total }}</p>
       <div class="block__body block__body--gap">
         <article v-for="item in experience" :key="item.id">
           <div class="item__head">
             <h2 class="item__title">{{ item.position }}</h2>
-            <span class="item__period">{{ formatPeriod(item.date_from, item.date_to) }}</span>
+            <span class="item__period">{{ formatPeriod(item.date_from, item.date_to) }} · {{ duration(item) }}</span>
           </div>
           <p class="item__place">{{ item.company }}</p>
 

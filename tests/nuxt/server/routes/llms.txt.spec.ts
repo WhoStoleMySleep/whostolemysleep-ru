@@ -28,7 +28,7 @@ beforeEach(() => {
   plan(state, {
     'select:post': [posts],
     'select:settings': [[{ open_to_work: true, email: 'mail@test.ru', github_url: 'https://github.test', telegram_url: 'https://telegram.test' }]],
-    'select:experience': [[{ date_from: '2022-02-01' }]],
+    'select:experience': [[{ date_from: '2022-02-01', date_to: null }]],
     'select:skill': [[{ group: 'Languages', skill: 'TypeScript' }, { group: 'Frameworks', skill: 'Nuxt' }, { group: 'Languages', skill: 'Rust' }]],
   })
   mocks.header.mockClear()
@@ -101,10 +101,10 @@ describe('Дайджест llms.txt', () => {
     expect((mocks.cached.mock.calls[0]?.[1] as { getKey: () => string }).getKey()).toBe('llms-txt')
   })
 
-  test('не выводит пустые разделы и использует годы по умолчанию без записей в БД', async () => {
+  test('не выводит пустые разделы и не придумывает стаж без записей в БД', async () => {
     plan(state)
     const text = await digest()
-    expect(text).toContain('with 5+ years of experience')
+    expect(text).toContain('with 0+ years of experience')
     expect(text).toContain('Currently not looking for new projects.')
     expect(text).not.toContain('## Skills')
     expect(text).not.toContain('## Projects')
@@ -113,11 +113,11 @@ describe('Дайджест llms.txt', () => {
     expect(text).not.toContain('- Email:')
   })
 
-  test('запрашивает публикации, первую работу и упорядоченные навыки без дополнительных SQL-запросов', async () => {
+  test('запрашивает публикации, все периоды работы и упорядоченные навыки без дополнительных SQL-запросов', async () => {
     await digest()
     expect(state.calls).toHaveLength(4)
     expect(state.calls.map(call => `${call.op}:${call.table}`)).toEqual(['select:post', 'select:settings', 'select:experience', 'select:skill'])
-    expect(stepArg(state.calls, 'select:experience', 'limit')).toBe(1)
+    expect(stepArg(state.calls, 'select:experience', 'limit')).toBeUndefined()
     expect(state.calls.find(call => call.table === 'skill')?.steps.map(step => step.m)).toEqual(['select', 'from', 'innerJoin', 'orderBy'])
     const { PgDialect } = await import('drizzle-orm/pg-core')
     const where = stepArg<import('drizzle-orm').SQL>(state.calls, 'select:post', 'where')!
