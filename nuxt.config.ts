@@ -138,7 +138,7 @@ export default defineNuxtConfig({
         { name: 'color-scheme', content: 'dark light' },
         {
           name: 'description',
-          content: 'Frontend developer working with Vue, Nuxt and TypeScript. Interfaces for online stores and services, Nuxt migrations. Additional experience in React and Rust / Tauri.',
+          content: 'Full-stack developer. Nuxt, Vue and TypeScript on the web, Rust and Tauri for native desktop and mobile apps. Open to remote work worldwide.',
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: 'whostolemysleep' },

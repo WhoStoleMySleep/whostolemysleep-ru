@@ -4,9 +4,9 @@ export default () => ({
     ru: {
       nav: { blog: 'Блог', projects: 'Проекты', resume: 'Резюме', contacts: 'Контакты' },
       hero: {
-        eyebrow: 'Vue · Nuxt · TypeScript',
-        line1: 'Frontend на Vue,',
-        line2: 'Nuxt и TypeScript',
+        eyebrow: 'Nuxt · Vue · TypeScript · Rust · Tauri',
+        line1: 'Nuxt снаружи,',
+        line2: 'Rust внутри',
         line3: 'с опытом более',
         years: 'лет',
         status: 'Открыт к предложениям',
@@ -54,7 +54,7 @@ export default () => ({
       footer: { dev: 'Frontend-разработчик' },
       seo: {
         home_title:     'Frontend-разработчик',
-        home_desc:      'Frontend-разработчик на Vue, Nuxt и TypeScript. Интерфейсы интернет-магазинов и сервисов, миграции Nuxt. Дополнительный опыт — React и Rust / Tauri.',
+        home_desc:      'Frontend-разработчик с опытом более 4 лет. Nuxt, Vue, TypeScript, Rust, Tauri.',
         blog_title:     'Блог',
         blog_desc:      'Статьи о фронтенд-разработке, технологиях и опыте работы.',
         projects_title: 'Проекты',
@@ -68,9 +68,9 @@ export default () => ({
     en: {
       nav: { blog: 'Blog', projects: 'Projects', resume: 'Resume', contacts: 'Contacts' },
       hero: {
-        eyebrow: 'Vue · Nuxt · TypeScript',
-        line1: 'Frontend with Vue,',
-        line2: 'Nuxt and TypeScript',
+        eyebrow: 'Nuxt · Vue · TypeScript · Rust · Tauri',
+        line1: 'Nuxt in front,',
+        line2: 'Rust behind',
         line3: 'with over',
         years: 'years',
         status: 'Open to opportunities',
@@ -118,7 +118,7 @@ export default () => ({
       footer: { dev: 'Frontend Developer' },
       seo: {
         home_title:     'Frontend Developer',
-        home_desc:      'Frontend developer working with Vue, Nuxt and TypeScript. Interfaces for online stores and services, Nuxt migrations. Additional experience in React and Rust / Tauri.',
+        home_desc:      'Frontend developer with 4+ years of experience. Nuxt, Vue, TypeScript, Rust, Tauri.',
         blog_title:     'Blog',
         blog_desc:      'Articles about frontend development, technologies and work experience.',
         projects_title: 'Projects',

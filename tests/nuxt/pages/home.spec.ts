@@ -32,7 +32,7 @@ describe('Selected work на главной', () => {
     expect(messages.news.more).toBeTruthy()
     expect(messages.news.less).toBeTruthy()
     expect(messages.card.pinned).toBeTruthy()
-    expect(messages.hero.line2).toContain('Nuxt')
+    expect(messages.hero.line1).toContain('Nuxt')
   })
 
   test('показывает четыре проекта и раскрывает ещё четыре без перехода', async () => {
@@ -88,17 +88,14 @@ describe('Цели Метрики на главной', () => {
   })
 })
 
-describe('Frontend-позиционирование', () => {
-  test.each(['ru', 'en'] as const)('главная, SEO и CV в локали %s согласованы', async (locale) => {
+describe('Личный сайт и рабочее CV', () => {
+  test.each(['ru', 'en'] as const)('сохраняет прежний голос главной без банков и frontend-роль CV в локали %s', async (locale) => {
     const { readFile } = await import('node:fs/promises')
     const messages = JSON.parse(await readFile(`${process.cwd()}/i18n/locales/${locale}.json`, 'utf8'))
-    expect(messages.hero.lede).toMatch(/^Frontend/i)
+    expect(messages.hero.line1).toBe(locale === 'ru' ? 'Nuxt снаружи,' : 'Nuxt in front,')
+    expect(messages.hero.line2).toBe(locale === 'ru' ? 'Rust внутри' : 'Rust behind')
     expect(messages.hero.lede).toContain('{years}')
-    expect(messages.hero.eyebrow).toBe('Vue · Nuxt · TypeScript')
-    expect(messages.seo.home_title).toMatch(/^Frontend/i)
-    expect(messages.seo.home_desc).toMatch(/^Frontend/i)
-    expect(messages.cv.role).toMatch(/^Frontend/i)
-    const positioning = JSON.stringify([messages.hero, messages.stack, messages.brings, messages.seo, messages.cv])
-    expect(positioning).not.toMatch(/full.stack|фул.?стек|банк|\bbanks?\b|GraphQL|100\/100|Any timezone|Часовой пояс|asynchronously in English|на английском/i)
+    expect(messages.hero.lede).not.toMatch(/банк|\bbanks?\b/i)
+    expect(messages.cv.role).toBe(locale === 'ru' ? 'Frontend-разработчик' : 'Frontend developer')
   })
 })

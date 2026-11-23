@@ -47,7 +47,7 @@ describe('Дайджест llms.txt', () => {
     expect(await digest()).toMatchInlineSnapshot(`
       "# whostolemysleep
 
-      > Frontend developer with 4+ years of experience. My primary stack is Vue, Nuxt and TypeScript. I build interfaces for online stores and services and migrate projects to newer Nuxt versions. Additional experience includes React, server-side development and Rust / Tauri apps.
+      > Full-stack developer with 4+ years of experience. Production web apps in Vue/Nuxt and React, native desktop and mobile apps in Rust with Tauri. Open to remote work worldwide.
 
       Personal site and portfolio. Every page exists in two languages: English under \`/en\` and Russian under \`/ru\`. The content is identical, only the language differs — the links below point to the English version.
 
@@ -63,10 +63,10 @@ describe('Дайджест llms.txt', () => {
 
       ## Focus
 
-      - **Vue / Nuxt** — interface development, SSR/ISR/SSG, i18n, Nuxt 2 to Nuxt 3 and 4 migrations
-      - **React (supporting)** — personal projects, including Wave and Freel
-      - **Rust / Tauri (supporting)** — desktop and Android apps, Tauri plugins, system API integration
-      - **TypeScript / APIs** — frontend integration with REST APIs; additional experience in Nitro server logic and published npm packages
+      - **Vue / Nuxt** — architecture, SSR/ISR/SSG, Nitro, i18n
+      - **React / Next** — React 19, Next.js, Zustand, virtualized lists, motion
+      - **Rust / Tauri** — cross-platform desktop and mobile, native plugins, system APIs
+      - **TypeScript / Node** — REST and GraphQL APIs, published npm packages; Core Web Vitals as a budget, this site scores 100/100 on mobile
 
       ## Skills
 
