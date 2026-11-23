@@ -24,8 +24,7 @@ beforeEach(() => {
   vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
   plan(state, {
     'insert:tag': [[{ id: 21 }, { id: 22 }]],
-    'insert:post': [[{ id: 11 }, { id: 12 }, { id: 13 }, { id: 14 }]],
-    'insert:experience': [[{ id: 31 }], [{ id: 32 }]],
+    'insert:post': [[{ id: 11 }, { id: 12 }]],
     'insert:skill_group': [[{ id: 41 }], [{ id: 42 }], [{ id: 43 }], [{ id: 44 }]],
   })
 })
@@ -40,30 +39,36 @@ async function seed() {
 }
 
 describe('Начальное наполнение БД', () => {
-  test('выполняет те же последовательные вставки с корректными связями', async () => {
+  test('сохраняет публикации и их связи без вымышленных мест работы', async () => {
     await seed()
     expect(mocks.neon).toHaveBeenCalledExactlyOnceWith('postgres://seed.test/db')
     expect(state.calls.map(call => call.table)).toEqual([
-      'about_me', 'tag', 'post', 'post_tag', 'image', 'experience', 'experience', 'experience_bullet', 'education',
+      'about_me', 'tag', 'post', 'post_tag', 'image', 'education',
       'skill_group', 'skill', 'skill_group', 'skill', 'skill_group', 'skill', 'skill_group', 'skill',
     ])
     expect(state.calls.every(call => call.op === 'insert')).toBe(true)
     expect(stepArg(state.calls, 'insert:post_tag', 'values')).toEqual([
-      { post_id: 11, tag_id: 21 }, { post_id: 12, tag_id: 21 }, { post_id: 13, tag_id: 22 }, { post_id: 14, tag_id: 22 },
+      { post_id: 11, tag_id: 21 }, { post_id: 12, tag_id: 21 },
     ])
-    expect(stepArg<{ post_id: number }[]>(state.calls, 'insert:image', 'values')?.map(image => image.post_id)).toEqual([11, 12, 13, 14])
-    const bullets = stepArg<{ experience_id: number; order: number }[]>(state.calls, 'insert:experience_bullet', 'values')!
-    expect(bullets.map(({ experience_id, order }) => ({ experience_id, order }))).toEqual([
-      { experience_id: 31, order: 0 }, { experience_id: 31, order: 1 }, { experience_id: 31, order: 2 },
-      { experience_id: 32, order: 0 }, { experience_id: 32, order: 1 }, { experience_id: 32, order: 2 }, { experience_id: 32, order: 3 },
-    ])
+    expect(stepArg<{ post_id: number }[]>(state.calls, 'insert:image', 'values')?.map(image => image.post_id)).toEqual([11, 12])
     expect(process.exit).not.toHaveBeenCalled()
+  })
+
+  test('не заполняет биографию неподтверждёнными работодателями и достижениями', async () => {
+    await seed()
+    expect(state.calls.some(call => call.table === 'experience' || call.table === 'experience_bullet')).toBe(false)
+    const about = stepArg<{ text_ru: string }>(state.calls, 'insert:about_me', 'values')!
+    expect(about.text_ru).toContain('Frontend-разработчик')
+    expect(about.text_ru).toContain('Vue / Nuxt / TypeScript')
+    expect(about.text_ru).not.toMatch(/\d+%/)
+    const posts = stepArg(state.calls, 'insert:post', 'values')
+    expect(JSON.stringify([about, posts])).not.toMatch(/сбер|почтабанк|Почта России|финтех/i)
   })
 
   test('сохраняет преобразование исходных текстов в цитаты, заголовки и абзацы', async () => {
     await seed()
     const posts = stepArg<{ slug: string; text_ru: string }[]>(state.calls, 'insert:post', 'values')!
-    expect(posts.map(post => post.slug)).toEqual(['ai-i-my', 'pervaya-rabota', 'sberspasibo', 'pochtabank'])
+    expect(posts.map(post => post.slug)).toEqual(['ai-i-my', 'pervaya-rabota'])
     expect(posts[0]?.text_ru).toContain('<blockquote>"Самый опасный миф')
     expect(posts[0]?.text_ru).toContain('<h3>Ловушка №1: Иллюзия эффективности</h3>')
     expect(posts[0]?.text_ru).toContain('</blockquote>\n<p>')

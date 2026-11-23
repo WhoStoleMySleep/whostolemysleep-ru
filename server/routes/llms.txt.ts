@@ -90,8 +90,7 @@ function introduction(years: number, config: DigestSettings) {
     '# whostolemysleep',
     '',
     `> Full-stack developer with ${years}+ years of experience. Production web apps in Vue/Nuxt `
-      + 'and React, native desktop and mobile apps in Rust with Tauri. Previously built '
-      + "high-load interfaces for two of Russia's largest banks. Open to remote work worldwide.",
+      + 'and React, native desktop and mobile apps in Rust with Tauri. Open to remote work worldwide.',
     '',
     'Personal site and portfolio. Every page exists in two languages: English under `/en` '
       + 'and Russian under `/ru`. The content is identical, only the language differs — '

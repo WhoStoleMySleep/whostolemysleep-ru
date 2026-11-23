@@ -87,3 +87,15 @@ describe('Цели Метрики на главной', () => {
     wrapper.unmount()
   })
 })
+
+describe('Личный сайт и рабочее CV', () => {
+  test.each(['ru', 'en'] as const)('сохраняет прежний голос главной без банков и frontend-роль CV в локали %s', async (locale) => {
+    const { readFile } = await import('node:fs/promises')
+    const messages = JSON.parse(await readFile(`${process.cwd()}/i18n/locales/${locale}.json`, 'utf8'))
+    expect(messages.hero.line1).toBe(locale === 'ru' ? 'Nuxt снаружи,' : 'Nuxt in front,')
+    expect(messages.hero.line2).toBe(locale === 'ru' ? 'Rust внутри' : 'Rust behind')
+    expect(messages.hero.lede).toContain('{years}')
+    expect(messages.hero.lede).not.toMatch(/банк|\bbanks?\b/i)
+    expect(messages.cv.role).toBe(locale === 'ru' ? 'Frontend-разработчик' : 'Frontend developer')
+  })
+})

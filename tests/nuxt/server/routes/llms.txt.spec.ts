@@ -47,7 +47,7 @@ describe('Дайджест llms.txt', () => {
     expect(await digest()).toMatchInlineSnapshot(`
       "# whostolemysleep
 
-      > Full-stack developer with 4+ years of experience. Production web apps in Vue/Nuxt and React, native desktop and mobile apps in Rust with Tauri. Previously built high-load interfaces for two of Russia's largest banks. Open to remote work worldwide.
+      > Full-stack developer with 4+ years of experience. Production web apps in Vue/Nuxt and React, native desktop and mobile apps in Rust with Tauri. Open to remote work worldwide.
 
       Personal site and portfolio. Every page exists in two languages: English under \`/en\` and Russian under \`/ru\`. The content is identical, only the language differs — the links below point to the English version.
 

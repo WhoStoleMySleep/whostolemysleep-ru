@@ -16,7 +16,7 @@
     "line2": "Rust behind",
     "years": "years",
     "status": "Open to remote work worldwide",
-    "lede": "Full-stack developer with {years} of experience. My primary stack is Nuxt, Vue and TypeScript, from interfaces to server logic with Nitro. Native desktop and mobile apps — Rust with Tauri. React is an additional tool when the project calls for it. Before that — high-load interfaces for two of Russia's largest banks.",
+    "lede": "Full-stack developer with {years} of experience. My primary stack is Nuxt, Vue and TypeScript, from interfaces to server logic with Nitro. Native desktop and mobile apps — Rust with Tauri. React is an additional tool when the project calls for it.",
     "cta_cv": "Download CV",
     "cta_projects": "View projects"
   },
@@ -173,7 +173,7 @@
   },
   "cv": {
     "name": "Konstantin Naumenko",
-    "role": "Full-stack developer",
+    "role": "Frontend developer",
     "about": "Summary",
     "experience": "Experience",
     "education": "Education",
