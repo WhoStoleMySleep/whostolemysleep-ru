@@ -32,7 +32,7 @@ describe('Selected work на главной', () => {
     expect(messages.news.more).toBeTruthy()
     expect(messages.news.less).toBeTruthy()
     expect(messages.card.pinned).toBeTruthy()
-    expect(messages.hero.line1).toContain('Nuxt')
+    expect(messages.hero.line2).toContain('Nuxt')
   })
 
   test('показывает четыре проекта и раскрывает ещё четыре без перехода', async () => {
@@ -85,5 +85,20 @@ describe('Цели Метрики на главной', () => {
     expect(links[1]!.attributes('data-metrika-goal')).toBeUndefined()
     expect(links[2]!.attributes('data-metrika-goal')).toBeUndefined()
     wrapper.unmount()
+  })
+})
+
+describe('Frontend-позиционирование', () => {
+  test.each(['ru', 'en'] as const)('главная, SEO и CV в локали %s согласованы', async (locale) => {
+    const { readFile } = await import('node:fs/promises')
+    const messages = JSON.parse(await readFile(`${process.cwd()}/i18n/locales/${locale}.json`, 'utf8'))
+    expect(messages.hero.lede).toMatch(/^Frontend/i)
+    expect(messages.hero.lede).toContain('{years}')
+    expect(messages.hero.eyebrow).toBe('Vue · Nuxt · TypeScript')
+    expect(messages.seo.home_title).toMatch(/^Frontend/i)
+    expect(messages.seo.home_desc).toMatch(/^Frontend/i)
+    expect(messages.cv.role).toMatch(/^Frontend/i)
+    const positioning = JSON.stringify([messages.hero, messages.stack, messages.brings, messages.seo, messages.cv])
+    expect(positioning).not.toMatch(/full.stack|фул.?стек|банк|\bbanks?\b|GraphQL|100\/100|Any timezone|Часовой пояс|asynchronously in English|на английском/i)
   })
 })

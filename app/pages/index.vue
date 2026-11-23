@@ -19,7 +19,7 @@ useHead({
       '@type': 'Person',
       name: 'whostolemysleep',
       url: SITE_URL,
-      jobTitle: 'Full-Stack Developer',
+      jobTitle: 'Frontend Developer',
       email: CONTACTS.email,
       sameAs: [CONTACTS.github, CONTACTS.telegram],
       knowsAbout: ['Nuxt', 'Vue', 'TypeScript', 'Rust', 'Tauri', 'React', 'Next.js', 'Node.js'],

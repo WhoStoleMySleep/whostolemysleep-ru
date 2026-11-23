@@ -11,24 +11,24 @@
     "toTop": "Back to top"
   },
   "hero": {
-    "eyebrow": "Nuxt · Vue · TypeScript · Rust · Tauri",
-    "line1": "Nuxt in front,",
-    "line2": "Rust behind",
+    "eyebrow": "Vue · Nuxt · TypeScript",
+    "line1": "Frontend with Vue,",
+    "line2": "Nuxt and TypeScript",
     "years": "years",
     "status": "Open to remote work worldwide",
-    "lede": "Full-stack developer with {years} of experience. My primary stack is Nuxt, Vue and TypeScript, from interfaces to server logic with Nitro. Native desktop and mobile apps — Rust with Tauri. React is an additional tool when the project calls for it. Before that — high-load interfaces for two of Russia's largest banks.",
+    "lede": "Frontend developer with {years} of experience. My primary stack is Vue, Nuxt and TypeScript. I build interfaces for online stores and services and migrate projects to newer Nuxt versions. Additional experience includes React, server-side development and Rust / Tauri apps.",
     "cta_cv": "Download CV",
     "cta_projects": "View projects"
   },
   "stack": {
-    "f1_k": "Nuxt / Vue",
-    "f1_v": "Architecture, SSR/ISR/SSG, Nitro, i18n.",
+    "f1_k": "Vue / Nuxt",
+    "f1_v": "Interface development, SSR/ISR/SSG, i18n. Migrations from Nuxt 2 to Nuxt 3 and 4.",
     "f2_k": "React · supporting",
-    "f2_v": "Maintaining and extending React projects, Next.js, Zustand, virtualized lists and motion. See Wave.",
-    "f3_k": "Rust / Tauri",
-    "f3_v": "Cross-platform desktop and mobile, native plugins, system APIs.",
-    "f4_k": "TS / Node / Perf",
-    "f4_v": "REST and GraphQL APIs, published npm packages. Core Web Vitals as a budget — this site: 100/100 on mobile."
+    "f2_v": "An additional stack for personal projects, including Wave and Freel.",
+    "f3_k": "Rust / Tauri · supporting",
+    "f3_v": "Desktop and Android apps, Tauri plugins and system API integration.",
+    "f4_k": "TypeScript / APIs",
+    "f4_v": "Integrating interfaces with REST APIs. Additional experience includes server logic with Nitro and published npm packages."
   },
   "about": {
     "eyebrow": "About me",
@@ -37,10 +37,10 @@
   },
   "brings": {
     "title": "What I bring to the project",
-    "b1": "Built for distributed teams. I take a task from spec to production without hand-holding, write decisions down, and work asynchronously in English.",
-    "b2": "One person across the whole product — web frontend, native desktop and mobile, and the backend behind them. Fewer handoffs, fewer things lost between teams.",
-    "b3": "I ship and maintain what I build: published npm packages, a Tauri plugin, open-source apps other people actually run. Not demos.",
-    "looking": "Looking for: long-term remote work with product teams that care about craft — Nuxt/Vue as my primary web stack, Rust for speed and native apps. React as an additional skill. Any timezone.",
+    "b1": "Experience implementing projects independently and working across multiple teams, from building interfaces to release and maintenance.",
+    "b2": "My main contribution is frontend: storefronts, merchant dashboards, shopping carts and checkout flows. Server-side experience helps me work with APIs and understand the product beyond its interface.",
+    "b3": "I develop personal projects and open source: a Nuxt 4 website, npm packages, a Tauri plugin and Rust / Tauri apps.",
+    "looking": "Looking for long-term remote work as a frontend developer with Vue / Nuxt / TypeScript. React, Rust / Tauri and server-side development are additional skills.",
     "cta": "Let's talk"
   },
   "news": {
@@ -130,14 +130,14 @@
     "dev": "Frontend Developer"
   },
   "seo": {
-    "home_title": "Full-Stack Developer · Nuxt & Rust",
-    "home_desc": "Full-stack developer: Nuxt, Vue and TypeScript on the web, Rust and Tauri for native desktop and mobile apps. Available for remote work worldwide.",
+    "home_title": "Frontend Developer · Vue / Nuxt / TypeScript",
+    "home_desc": "Frontend developer working with Vue, Nuxt and TypeScript. Interfaces for online stores and services, Nuxt migrations. Additional experience in React and Rust / Tauri.",
     "blog_title": "Blog",
     "blog_desc": "Articles about frontend development, technologies and work experience.",
     "projects_title": "Projects",
     "projects_desc": "Portfolio — Nuxt web apps, Rust and Tauri desktop and mobile apps, open-source packages.",
     "resume_title": "Resume",
-    "resume_desc": "Work experience, education and technical skills — Nuxt, Vue, TypeScript, Rust, Tauri.",
+    "resume_desc": "Work experience, education and frontend development skills — Vue, Nuxt, TypeScript. Additional experience in React, Rust / Tauri and server-side development.",
     "contacts_title": "Contacts",
     "contacts_desc": "Get in touch about remote work or a project. Contact form, email, Telegram, GitHub.",
     "privacy_title": "Privacy Policy",
@@ -173,7 +173,7 @@
   },
   "cv": {
     "name": "Konstantin Naumenko",
-    "role": "Full-stack developer",
+    "role": "Frontend developer",
     "about": "Summary",
     "experience": "Experience",
     "education": "Education",
