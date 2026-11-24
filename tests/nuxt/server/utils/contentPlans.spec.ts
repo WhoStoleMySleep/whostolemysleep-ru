@@ -14,7 +14,7 @@ const id = '11111111-1111-4111-8111-111111111111'
 const actor: ContentActor = { id: `token:${id}`, tokenId: id, environment: 'development', resources: ['pages'], scopes: ['read', 'plan', 'apply'] }
 const admin: ContentActor = { id: 'admin', tokenId: null, environment: 'development', resources: [], scopes: [] }
 function row(overrides: Partial<typeof contentPlan.$inferSelect> = {}): typeof contentPlan.$inferSelect {
-  return { id, environment: 'development', resource: 'pages', record_id: 1, actor: actor.id, token_id: id, version: 'a'.repeat(64), expected_state: {}, before: { ru: {}, en: {} }, after: { ru: {}, en: {} }, diff: [], status: 'pending', expires_at: new Date(Date.now() + 60000).toISOString(), approved_by: null, approved_at: null, applied_at: null, created_at: new Date().toISOString(), ...overrides }
+  return { operation: 'update', id, environment: 'development', resource: 'pages', record_id: 1, actor: actor.id, token_id: id, version: 'a'.repeat(64), expected_state: {}, before: { ru: {}, en: {} }, after: { ru: {}, en: {} }, diff: [], status: 'pending', expires_at: new Date(Date.now() + 60000).toISOString(), approved_by: null, approved_at: null, applied_at: null, created_at: new Date().toISOString(), ...overrides }
 }
 
 beforeEach(() => {
@@ -59,7 +59,7 @@ describe('Планы изменения контента', () => {
     const summary = { id, resource: 'pages', recordId: 1, expiresAt: row().expires_at, status: 'pending' }
     plan(state, { 'select:content_plan': [[summary]] })
     expect(await listContentPlans(admin)).toEqual([summary])
-    expect(Object.keys(stepArg(state.calls, 'select:content_plan', 'select')!)).toEqual(['id', 'resource', 'recordId', 'expiresAt', 'status'])
+    expect(Object.keys(stepArg(state.calls, 'select:content_plan', 'select')!)).toEqual(['operation', 'id', 'resource', 'recordId', 'expiresAt', 'status'])
     expect(stepArg(state.calls, 'select:content_plan', 'limit')).toBe(100)
     await expect(listContentPlans(actor)).rejects.toThrow('Admin approval')
   })

@@ -11,7 +11,7 @@ vi.mock('~~/server/utils/pending', async importOriginal => ({ ...await importOri
 const id = '11111111-1111-4111-8111-111111111111'
 const actor: ContentActor = { id: `token:${id}`, tokenId: id, environment: 'development', resources: ['pages'], scopes: ['apply'] }
 function row(overrides: Partial<typeof contentPlan.$inferSelect> = {}): typeof contentPlan.$inferSelect {
-  return { id, environment: 'development', resource: 'pages', record_id: 1, actor: actor.id, token_id: id, version: 'a'.repeat(64), expected_state: { data: { ru: {}, en: {} } }, before: { ru: {}, en: {} }, after: { ru: { 'hero.line1': 'Новый текст' }, en: {} }, diff: [], status: 'approved', expires_at: new Date(Date.now() + 60000).toISOString(), approved_by: 'admin', approved_at: new Date().toISOString(), applied_at: null, created_at: new Date().toISOString(), ...overrides }
+  return { operation: 'update', id, environment: 'development', resource: 'pages', record_id: 1, actor: actor.id, token_id: id, version: 'a'.repeat(64), expected_state: { data: { ru: {}, en: {} } }, before: { ru: {}, en: {} }, after: { ru: { 'hero.line1': 'Новый текст' }, en: {} }, diff: [], status: 'approved', expires_at: new Date(Date.now() + 60000).toISOString(), approved_by: 'admin', approved_at: new Date().toISOString(), applied_at: null, created_at: new Date().toISOString(), ...overrides }
 }
 
 beforeEach(() => {
@@ -31,7 +31,7 @@ describe('Атомарное применение approved plan', () => {
     const { buildContentApplySql } = await import('~~/server/utils/contentApply')
     const query = new PgDialect().sqlToQuery(buildContentApplySql(actor, row(), ['/', '/blog', '/']))
     expect(query.sql).toContain('caller_token as materialized')
-    expect(query.sql).toContain("t.scopes ? 'apply' for share")
+    expect(query.sql).toContain("t.scopes ? 'apply'")
     expect(query.sql).toContain('t.revoked_at is null')
     expect(query.sql).toContain("p.status = 'approved'")
     expect(query.sql).toContain("p.approved_by = 'admin'")

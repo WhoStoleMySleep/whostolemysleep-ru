@@ -89,6 +89,13 @@ describe('Административные token/history операции', () =
     expect(state.calls[0]?.op).toBe('select')
   })
 
+  test('история создания проекта не маскируется под восстановление скалярных полей', async () => {
+    const { restoreContentPlan } = await import('~~/server/utils/contentAdmin')
+    plan(state, { 'select:content_history': [[{ id, resource: 'post', record_id: 1, before: {} }]] })
+    await expect(restoreContentPlan(actor, id, 'a'.repeat(64))).rejects.toThrow('cannot be restored')
+    expect(create).not.toHaveBeenCalled()
+  })
+
   test('неизвестная история и token actor не имеют restore permission', async () => {
     const { restoreContentPlan, issueContentToken } = await import('~~/server/utils/contentAdmin')
     await expect(restoreContentPlan(actor, id, 'a'.repeat(64))).rejects.toThrow('not found')

@@ -64,6 +64,13 @@
       "when": 1795487097203,
       "tag": "0008_content_editor",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795493634481,
+      "tag": "0009_mcp_project_creation",
+      "breakpoints": true
     }
   ]
 }

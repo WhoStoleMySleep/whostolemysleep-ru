@@ -10,6 +10,7 @@ vi.mock('~~/server/utils/contentPlans', async importOriginal => ({ ...await impo
 const routes = [
   { load: () => import('~~/server/api/content/records.get'), admin: false, action: 'read' },
   { load: () => import('~~/server/api/content/snapshot.get'), admin: false, action: 'read' },
+  { load: () => import('~~/server/api/content/projects/plan.post'), admin: false, action: 'plan' },
   { load: () => import('~~/server/api/content/plan.post'), admin: false, action: 'plan' },
   { load: () => import('~~/server/api/content/apply.post'), admin: false, action: 'apply' },
   { load: () => import('~~/server/api/admin/content/records.get'), admin: true, action: 'read' },

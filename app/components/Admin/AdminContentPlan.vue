@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import type { ChangePlan } from '~~/shared/content/types'
 
-defineProps<{ plan: ChangePlan, canApply: boolean, busy: boolean }>()
+const props = defineProps<{ plan: ChangePlan, canApply: boolean, busy: boolean }>()
 defineEmits<{ apply: [], approve: [] }>()
+
+const createsProject = computed(() => props.plan.operation === 'create-project')
+const changes = computed(() => createsProject.value
+  ? Object.entries(props.plan.after).map(([field, after]) => ({ field, before: undefined, after }))
+  : props.plan.diff)
 
 function show(value: unknown): string {
   if (value === undefined) return '—'
@@ -12,17 +17,18 @@ function show(value: unknown): string {
 
 <template>
   <section class="admin-panel plan-preview" aria-label="Предпросмотр изменений">
-    <h2>Предпросмотр плана</h2>
+    <h2>{{ createsProject ? 'Создание проекта · черновик' : 'Предпросмотр плана' }}</h2>
     <p class="plan-preview__meta">{{ plan.resource }} #{{ plan.recordId }} · {{ plan.status }} · {{ plan.id }}</p>
+    <p v-if="createsProject" class="plan-preview__note"><template v-if="plan.status === 'applied'">Проект создан как черновик, без публикации.</template><template v-else>ID зарезервирован. До применения записи ещё нет. Проект будет создан с is_published: false, без публикации.</template> Поля, технологии и URL изображений ниже показаны как данные, без выполнения HTML и загрузки внешних изображений.</p>
     <p class="plan-preview__meta">Действует до {{ plan.expiresAt }}</p>
-    <div v-for="change in plan.diff" :key="change.field" class="diff-row" :data-diff-field="change.field">
+    <div v-for="change in changes" :key="change.field" class="diff-row" :data-diff-field="change.field">
       <h3>{{ change.field }}</h3>
       <div class="diff-row__values">
         <div><span>До</span><pre>{{ show(change.before) }}</pre></div>
         <div><span>После</span><pre>{{ show(change.after) }}</pre></div>
       </div>
     </div>
-    <p v-if="!plan.diff.length" class="plan-preview__meta">Изменений нет.</p>
+    <p v-if="!changes.length" class="plan-preview__meta">Изменений нет.</p>
     <p class="plan-preview__note">План не меняет сайт до применения. Одобрение для MCP разрешает владельцу токена с правом apply применить именно этот diff до истечения срока.</p>
     <div class="plan-preview__actions">
       <button
@@ -37,7 +43,7 @@ function show(value: unknown): string {
         type="button"
         class="admin-btn admin-btn--primary"
         data-action="apply"
-        :disabled="!canApply || busy || !plan.diff.length"
+        :disabled="!canApply || busy || !changes.length"
         @click="$emit('apply')"
       >{{ plan.status === 'applied' ? 'Применён' : plan.status === 'approved' ? 'Применить' : 'Подтвердить и применить' }}</button>
     </div>

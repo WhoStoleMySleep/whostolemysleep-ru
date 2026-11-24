@@ -89,6 +89,7 @@ export function createContentClient({ baseUrl, environment, token, fetchImpl = f
     records: ({ resource }) => request(`records?${new URLSearchParams({ resource })}`),
     snapshot: ({ resource, recordId }) => request(`snapshot?${new URLSearchParams({ resource, recordId: String(recordId) })}`),
     plan: body => request('plan', body),
+    project: body => request('projects/plan', body),
     apply: body => request('apply', body),
   }
 }

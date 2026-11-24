@@ -19,7 +19,7 @@ const LIST_LIMIT = 100
 
 /** Преобразует внутренние имена БД, не раскрывая expected_state/credential. */
 export function publicContentPlan(row: PlanRow): ChangePlan {
-  return { id: row.id, resource: row.resource, recordId: row.record_id, version: row.version, before: row.before, after: row.after, diff: row.diff, expiresAt: row.expires_at, status: row.status }
+  return { operation: row.operation ?? 'update', id: row.id, resource: row.resource, recordId: row.record_id, version: row.version, before: row.before, after: row.after, diff: row.diff, expiresAt: row.expires_at, status: row.status }
 }
 
 function flattenContent(resource: ContentResource, data: Record<string, unknown>): Record<string, unknown> {
@@ -83,7 +83,7 @@ export async function readContentPlan(actor: ContentActor, planId: string): Prom
 /** Список не выбирает большие JSON-поля, включая внутренний expected_state. */
 export async function listContentPlans(actor: ContentActor): Promise<ContentPlanSummary[]> {
   assertContentAdminActor(actor)
-  return db.select({ id: contentPlan.id, resource: contentPlan.resource, recordId: contentPlan.record_id, expiresAt: contentPlan.expires_at, status: contentPlan.status })
+  return db.select({ operation: contentPlan.operation, id: contentPlan.id, resource: contentPlan.resource, recordId: contentPlan.record_id, expiresAt: contentPlan.expires_at, status: contentPlan.status })
     .from(contentPlan).where(eq(contentPlan.environment, actor.environment)).orderBy(desc(contentPlan.created_at)).limit(LIST_LIMIT)
 }
 

@@ -39,6 +39,12 @@ describe('Сетевой клиент Content MCP', () => {
     expect(fetchImpl.mock.calls[0]?.[0]).not.toContain(TOKEN)
   })
 
+  test('создание проекта обращается только к выделенному маршруту плана', async () => {
+    const { api, fetchImpl } = await setup()
+    await api.project({ slug: 'new-project' })
+    expect(fetchImpl).toHaveBeenCalledWith('http://127.0.0.1:3000/api/content/projects/plan', expect.objectContaining({ method: 'POST', body: '{"slug":"new-project"}', redirect: 'error' }))
+  })
+
   test('применение передаёт только ID плана, не произвольный patch', async () => {
     const { api, fetchImpl } = await setup()
     await api.apply({ planId: 'approved-plan' })

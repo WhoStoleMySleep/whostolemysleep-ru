@@ -1,7 +1,7 @@
-/** Редактирование ограничено существующими публичными записями. */
+/** Ресурсы редакционного контента; создание проекта требует отдельного права. */
 export type ContentResource = 'pages' | 'post' | 'about' | 'settings' | 'experience' | 'education' | 'skill' | 'skill-group'
 /** Токен не имеет полномочий подтверждать план. */
-export type ContentScope = 'read' | 'plan' | 'apply'
+export type ContentScope = 'read' | 'plan' | 'apply' | 'create-project'
 /** Среда задаётся сервером, а не клиентским payload или Host. */
 export type ContentEnvironment = 'development' | 'preview' | 'production'
 /** Минимальные данные для выбора существующей записи. */
@@ -17,6 +17,7 @@ export interface ContentSnapshot {
 export interface ContentDiff { field: string; before: unknown; after: unknown }
 /** План не меняет опубликованные данные до отдельного подтверждения и применения. */
 export interface ChangePlan {
+  operation?: 'update' | 'create-project'
   id: string
   resource: ContentResource
   recordId: number
@@ -28,7 +29,7 @@ export interface ChangePlan {
   status: 'pending' | 'approved' | 'applied'
 }
 /** Список планов не переносит большие снимки и diff до открытия конкретного плана. */
-export type ContentPlanSummary = Pick<ChangePlan, 'id' | 'resource' | 'recordId' | 'expiresAt' | 'status'>
+export type ContentPlanSummary = Pick<ChangePlan, 'id' | 'resource' | 'recordId' | 'expiresAt' | 'status' | 'operation'>
 /** История содержит только разрешённые публичные поля, без секретов. */
 export interface ContentHistory {
   id: string

@@ -3,7 +3,7 @@ import { PAGE_FIELDS } from './registry'
 import type { ContentResource } from './types'
 
 export const CONTENT_RESOURCES = ['pages', 'post', 'about', 'settings', 'experience', 'education', 'skill', 'skill-group'] as const
-export const CONTENT_SCOPES = ['read', 'plan', 'apply'] as const
+export const CONTENT_SCOPES = ['read', 'plan', 'apply', 'create-project'] as const
 const TITLE_LIMIT = 500
 const NAME_LIMIT = 255
 const SLUG_LIMIT = 100
@@ -16,6 +16,8 @@ const MAX_TOKEN_DAYS = 90
 const MAX_PATCH_KEYS = 64
 const HASH_LENGTH = 64
 const MAX_SORT_ORDER = 100000
+const MAX_PROJECT_TAGS = 20
+const MAX_PROJECT_IMAGES = 12
 
 /** Plain text не должен стать HTML при повторной обработке. */
 export function plainContentText(maxLength: number) {
@@ -120,3 +122,13 @@ export const contentTokenSchema = z.strictObject({
   scopes: z.array(z.enum(CONTENT_SCOPES)).min(1).max(CONTENT_SCOPES.length),
   expiresInDays: z.number().int().min(1).max(MAX_TOKEN_DAYS),
 }).refine(value => new Set(value.resources).size === value.resources.length && new Set(value.scopes).size === value.scopes.length, 'Duplicate permissions')
+
+/** Создание проекта всегда готовит черновик, без публикации и произвольных служебных полей. */
+export const contentProjectSchema = z.strictObject({
+  slug: slug.max(POST_SLUG_LIMIT), title_ru: plain.min(1), title_en: plain.min(1),
+  text_ru: richText.min(1), text_en: richText.min(1),
+  excerpt_ru: plainContentText(TITLE_LIMIT).min(1), excerpt_en: plainContentText(TITLE_LIMIT).min(1),
+  url: url.nullable().default(null),
+  tags: z.array(short.trim().min(1)).max(MAX_PROJECT_TAGS).default([]),
+  images: z.array(z.strictObject({ url, alt_ru: plain, alt_en: plain })).max(MAX_PROJECT_IMAGES).default([]),
+}).refine(value => new Set(value.tags).size === value.tags.length, 'Duplicate project tags')

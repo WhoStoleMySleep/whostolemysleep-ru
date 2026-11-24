@@ -36,7 +36,7 @@ function pagesPatch(draft: PageCopy, original: PageCopy): Partial<PageCopy> {
 }
 
 function planSignature(plan: ChangePlan): string {
-  return JSON.stringify([plan.id, plan.resource, plan.recordId, plan.version, plan.before, plan.after, plan.diff])
+  return JSON.stringify([plan.id, plan.operation ?? 'update', plan.resource, plan.recordId, plan.version, plan.before, plan.after, plan.diff])
 }
 
 function planExpired(plan: ChangePlan): boolean {
@@ -50,6 +50,9 @@ export function useContentEditor() {
   const confirm = useAdminConfirm()
   const resource = ref<ContentResource>('pages')
   const recordId = ref<number | null>(1)
+  /** Повторная загрузка плана временно очищает selectedPlan, но запись ещё не существует. */
+  const reservedProjectId = ref<number | null>(null)
+  const creatingProject = computed(() => resource.value === 'post' && recordId.value !== null && recordId.value === reservedProjectId.value)
   const draft = ref<PageCopy>(copyPages())
   const selectedPlan = ref<ChangePlan | null>(null)
   const previewPatch = ref<string | null>(null)
@@ -61,9 +64,9 @@ export function useContentEditor() {
   const records = useAsyncData(() => `admin:content:records:${resource.value}`,
     () => api.get<ContentRecord[]>(`/api/admin/content/records?resource=${encodeURIComponent(resource.value)}`))
   const snapshot = useAsyncData(() => `admin:content:snapshot:${query.value}`,
-    () => recordId.value === null ? Promise.resolve(null) : api.get<ContentSnapshot>(`/api/admin/content/snapshot?${query.value}`))
+    () => recordId.value === null || creatingProject.value ? Promise.resolve(null) : api.get<ContentSnapshot>(`/api/admin/content/snapshot?${query.value}`))
   const history = useAsyncData(() => `admin:content:history:${query.value}`,
-    () => recordId.value === null ? Promise.resolve([]) : api.get<ContentHistory[]>(`/api/admin/content/history?${query.value}`))
+    () => recordId.value === null || creatingProject.value ? Promise.resolve([]) : api.get<ContentHistory[]>(`/api/admin/content/history?${query.value}`))
   const plans = useAsyncData('admin:content:plans', () => api.get<ContentPlanSummary[]>('/api/admin/content/plans'))
 
   const original = computed(() => copyPages(snapshot.data.value?.data))
@@ -72,11 +75,13 @@ export function useContentEditor() {
   const draftChanged = computed(() => previewPatch.value === null
     ? !!selectedPlan.value && dirty.value
     : previewPatch.value !== JSON.stringify(patch.value))
-  const versionChanged = computed(() => selectedPlan.value && selectedPlan.value.status !== 'applied' && snapshot.data.value
-    && selectedPlan.value.version !== snapshot.data.value.version)
+  const versionChanged = computed(() => selectedPlan.value && selectedPlan.value.operation !== 'create-project'
+    && selectedPlan.value.status !== 'applied' && snapshot.data.value && selectedPlan.value.version !== snapshot.data.value.version)
   const canApply = computed(() => !!selectedPlan.value && !busy.value && !conflicted.value && !versionChanged.value
     && !draftChanged.value && !planExpired(selectedPlan.value) && selectedPlan.value.status !== 'applied'
-    && snapshot.data.value?.resource === selectedPlan.value.resource && snapshot.data.value?.recordId === selectedPlan.value.recordId)
+    && resource.value === selectedPlan.value.resource && recordId.value === selectedPlan.value.recordId
+    && (selectedPlan.value.operation === 'create-project'
+      || (snapshot.data.value?.resource === selectedPlan.value.resource && snapshot.data.value?.recordId === selectedPlan.value.recordId)))
   const loading = computed(() => records.pending.value || snapshot.pending.value || history.pending.value || plans.pending.value)
   const loadError = computed(() => [records.error.value, snapshot.error.value, history.error.value, plans.error.value]
     .filter(Boolean).map(contentError).join(' · '))
@@ -93,6 +98,7 @@ export function useContentEditor() {
   }
 
   function selectPlan(plan: ChangePlan) {
+    reservedProjectId.value = plan.operation === 'create-project' && plan.status !== 'applied' ? plan.recordId : null
     resource.value = plan.resource
     recordId.value = plan.recordId
     selectedPlan.value = JSON.parse(JSON.stringify(plan)) as ChangePlan
@@ -139,7 +145,7 @@ export function useContentEditor() {
 
   async function restore(entry: ContentHistory) {
     const current = snapshot.data.value
-    if (busy.value || !current || current.resource !== entry.resource || current.recordId !== entry.recordId) return
+    if (busy.value || !current || current.resource !== entry.resource || current.recordId !== entry.recordId || !Object.keys(entry.before).length) return
     busy.value = true
     error.value = ''
     try {
@@ -163,6 +169,14 @@ export function useContentEditor() {
     return approved
   }
 
+  function confirmationText(plan: ChangePlan, applyNow: boolean): string {
+    if (plan.operation === 'create-project') return applyNow
+      ? 'Будет создан новый проект как черновик со всеми показанными полями, технологиями и изображениями. Публикации не будет.'
+      : 'Владелец токена с правом apply сможет создать именно этот проект как черновик. Одобрение само по себе не создаёт запись и не публикует проект.'
+    return applyNow ? 'Будут опубликованы только показанные изменения. Черновик формы будет сброшен.'
+      : 'Владелец токена с правом apply сможет применить именно этот diff до истечения срока плана. Одобрение само по себе не меняет сайт.'
+  }
+
   async function confirmPlan(applyNow: boolean) {
     const plan = selectedPlan.value
     if (!plan || !canApply.value || planExpired(plan)) return
@@ -171,8 +185,7 @@ export function useContentEditor() {
     try {
       const accepted = await confirm.ask({
         title: applyNow ? 'Подтвердить и применить этот diff?' : 'Одобрить этот diff для MCP?',
-        text: applyNow ? 'Будут опубликованы только показанные изменения. Черновик формы будет сброшен.'
-          : 'Владелец токена с правом apply сможет применить именно этот diff до истечения срока плана. Одобрение само по себе не меняет сайт.',
+        text: confirmationText(plan, applyNow),
         action: applyNow ? 'Применить' : 'Одобрить для MCP', danger: false,
       })
       if (accepted && isStillReviewed(plan)) await finishPlan(plan, applyNow)
@@ -191,9 +204,10 @@ export function useContentEditor() {
     if (applyNow) {
       await api.post('/api/admin/content/apply', { planId: approved.id })
       selectedPlan.value = { ...approved, status: 'applied' }
+      reservedProjectId.value = null
       previewPatch.value = null
-      await Promise.all([snapshot.refresh(), history.refresh()])
-      toast.ok('План применён')
+      await Promise.all([records.refresh(), snapshot.refresh(), history.refresh()])
+      toast.ok(approved.operation === 'create-project' ? 'Проект создан как черновик. Публикации не было.' : 'План применён')
     } else toast.ok('План одобрен. Публичные данные ещё не изменены.')
     await plans.refresh()
   }
@@ -211,7 +225,7 @@ export function useContentEditor() {
   useUnsavedGuard({ dirty, save: preview })
 
   return {
-    resource, recordId, draft, selectedPlan, dirty, busy, error, conflicted, draftChanged, versionChanged, canApply, loading, loadError,
+    resource, recordId, creatingProject, draft, selectedPlan, dirty, busy, error, conflicted, draftChanged, versionChanged, canApply, loading, loadError,
     records: records.data, snapshot: snapshot.data, history: history.data, plans: plans.data,
     preview, reviewPlan, restore, reload, apply: () => confirmPlan(true), approve: () => confirmPlan(false),
   }

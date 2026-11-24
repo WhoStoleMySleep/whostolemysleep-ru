@@ -12,6 +12,7 @@ async function start() {
     client,
     allowPlan: process.env.CONTENT_MCP_ALLOW_PLAN === 'true',
     allowApply: process.env.CONTENT_MCP_ALLOW_APPLY === 'true',
+    allowCreateProject: process.env.CONTENT_MCP_ALLOW_CREATE_PROJECT === 'true',
   })
   await server.connect(new StdioServerTransport())
 }

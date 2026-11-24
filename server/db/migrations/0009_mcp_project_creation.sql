@@ -1,0 +1,1 @@
+ALTER TABLE "content_plan" ADD COLUMN "operation" varchar(32) DEFAULT 'update' NOT NULL;

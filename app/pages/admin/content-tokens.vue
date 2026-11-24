@@ -18,6 +18,7 @@ const resources: { value: ContentResource, label: string }[] = [
 ]
 const scopeOptions: { value: ContentScope, label: string }[] = [
   { value: 'read', label: 'read · читать snapshot' }, { value: 'plan', label: 'plan · создавать diff-планы' }, { value: 'apply', label: 'apply · применять только approved' },
+  { value: 'create-project', label: 'create-project · создавать проекты только как черновики' },
 ]
 const form = reactive({ label: '', resources: ['pages'] as ContentResource[], scopes: ['read', 'plan'] as ContentScope[], expiresInDays: DEFAULT_TOKEN_DAYS })
 const reveal = ref<{ token: string, id: string } | null>(null)
@@ -80,7 +81,7 @@ onBeforeUnmount(hideToken)
 <template>
   <AdminPage title="Токены доступа" note="Секрет показывается один раз и не сохраняется в браузере">
     <div class="token-page">
-      <p class="token-note">Токен не даёт прямого доступа к production DB. По умолчанию доступны read и plan; apply можно выдать только осознанно, а сервер всё равно требует одобрения владельца. Не вставляйте секрет в URL, логи или конфигурацию.</p>
+      <p class="token-note">Токен не даёт прямого доступа к production DB. По умолчанию доступны read и plan; apply и create-project можно выдать только осознанно, а сервер всё равно требует одобрения владельца. Право create-project используется с ресурсом «Статьи и проекты» и позволяет подготовить создание проекта только как черновика, без публикации. Не вставляйте секрет в URL, логи или конфигурацию.</p>
       <p v-if="pending" class="token-note" role="status">Загрузка токенов…</p>
       <p v-if="loadError" class="token-error" role="alert">{{ contentError(loadError) }}</p>
       <section class="admin-panel token-form">
@@ -92,7 +93,7 @@ onBeforeUnmount(hideToken)
         </fieldset>
         <fieldset>
           <legend>Права</legend>
-          <label v-for="item in scopeOptions" :key="item.value"><input type="checkbox" :checked="form.scopes.includes(item.value)" @change="toggleScope(item.value)"> {{ item.label }}</label>
+          <label v-for="item in scopeOptions" :key="item.value"><input type="checkbox" :data-scope="item.value" :checked="form.scopes.includes(item.value)" @change="toggleScope(item.value)"> {{ item.label }}</label>
         </fieldset>
         <AdminField v-model="form.expiresInDays" label="Срок (дни, 1–90)" type="number" :min="1" :max="90" />
         <p v-if="saveError" role="alert" class="token-error">{{ saveError }}</p>
