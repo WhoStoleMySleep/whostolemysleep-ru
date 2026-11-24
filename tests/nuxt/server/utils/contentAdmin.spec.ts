@@ -1,3 +1,4 @@
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
@@ -42,6 +43,30 @@ describe('Административные token/history операции', () =
     const history = await listContentHistory(actor, 'pages', 1)
     expect(history[0]).not.toHaveProperty('expected_state')
     expect(history[0]).not.toHaveProperty('approved_by')
+  })
+
+  test('более100 действующих credentials доступны для отзыва, история ограничена отдельно', async () => {
+    const { listContentTokens, revokeContentToken } = await import('~~/server/utils/contentAdmin')
+    const active = Array.from({ length: 150 }, (_, index) => ({ id: `active-${index}`, label: 'MCP', resources: ['pages'], scopes: ['read'], expires_at: '2099-01-01T00:00:00Z', revoked_at: null }))
+    const inactive = Array.from({ length: 100 }, (_, index) => ({ ...active[0]!, id: `inactive-${index}`, revoked_at: '2025-01-01T00:00:00Z' }))
+    plan(state, { 'select:content_token': [active, inactive] })
+    const result = await listContentTokens(actor)
+    expect(result).toHaveLength(250)
+    expect(result[149]?.id).toBe('active-149')
+    expect(state.calls[0]?.steps.some(step => step.m === 'limit')).toBe(false)
+    expect(stepArg(state.calls, 'select:content_token', 'limit', 1)).toBe(100)
+    const dialect = new PgDialect()
+    const activeQuery = dialect.sqlToQuery(stepArg(state.calls, 'select:content_token', 'where')!)
+    const inactiveQuery = dialect.sqlToQuery(stepArg(state.calls, 'select:content_token', 'where', 1)!)
+    expect(activeQuery.sql).toContain('"revoked_at" is null')
+    expect(activeQuery.sql).toContain('"expires_at" > now()')
+    expect(inactiveQuery.sql).toContain('"revoked_at" is not null')
+    expect(inactiveQuery.sql).toContain('"expires_at" <= now()')
+    expect(activeQuery.params).toEqual(['development'])
+    expect(inactiveQuery.params).toEqual(['development'])
+    for (const call of state.calls) expect(Object.keys(call.steps[0]!.args[0] as object)).not.toContain('secret_hash')
+    await revokeContentToken(actor, result[149]!.id)
+    expect(stepArg(state.calls, 'update:content_token', 'set')).toHaveProperty('revoked_at')
   })
 
   test('revoke только помечает credential, не удаляет историю и планы', async () => {

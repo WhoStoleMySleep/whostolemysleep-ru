@@ -27,6 +27,8 @@ export interface ChangePlan {
   expiresAt: string
   status: 'pending' | 'approved' | 'applied'
 }
+/** Список планов не переносит большие снимки и diff до открытия конкретного плана. */
+export type ContentPlanSummary = Pick<ChangePlan, 'id' | 'resource' | 'recordId' | 'expiresAt' | 'status'>
 /** История содержит только разрешённые публичные поля, без секретов. */
 export interface ContentHistory {
   id: string

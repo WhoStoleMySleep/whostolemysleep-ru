@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, gt, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
 import type { z } from 'zod'
 import { db } from '~~/server/db'
 import { contentHistory, contentToken } from '~~/server/db/schema'
@@ -13,16 +13,20 @@ const LIST_LIMIT = 100
 const DAY_MS = 24 * 60 * 60 * 1000
 type TokenRow = typeof contentToken.$inferSelect
 
-function publicToken(row: TokenRow): ContentTokenInfo {
+function publicToken(row: Pick<TokenRow, 'id' | 'label' | 'resources' | 'scopes' | 'expires_at' | 'revoked_at'>): ContentTokenInfo {
   return { id: row.id, label: row.label, resources: row.resources as ContentTokenInfo['resources'], scopes: row.scopes as ContentTokenInfo['scopes'], expiresAt: row.expires_at, revokedAt: row.revoked_at }
 }
 
-/** Список не выбирает и не возвращает hash или секрет credential. */
+/** Все действующие credentials доступны для отзыва; история ограничена и не содержит секретов. */
 export async function listContentTokens(actor: ContentActor): Promise<ContentTokenInfo[]> {
   assertContentAdminActor(actor)
-  const rows = await db.select({ id: contentToken.id, label: contentToken.label, resources: contentToken.resources, scopes: contentToken.scopes, expires_at: contentToken.expires_at, revoked_at: contentToken.revoked_at })
-    .from(contentToken).where(eq(contentToken.environment, actor.environment)).orderBy(desc(contentToken.created_at)).limit(LIST_LIMIT)
-  return rows.map(row => publicToken(row as TokenRow))
+  const fields = { id: contentToken.id, label: contentToken.label, resources: contentToken.resources, scopes: contentToken.scopes, expires_at: contentToken.expires_at, revoked_at: contentToken.revoked_at }
+  const environment = eq(contentToken.environment, actor.environment)
+  const [active, inactive] = await Promise.all([
+    db.select(fields).from(contentToken).where(and(environment, isNull(contentToken.revoked_at), gt(contentToken.expires_at, sql`now()`))).orderBy(desc(contentToken.created_at)),
+    db.select(fields).from(contentToken).where(and(environment, or(isNotNull(contentToken.revoked_at), lte(contentToken.expires_at, sql`now()`)))).orderBy(desc(contentToken.created_at)).limit(LIST_LIMIT),
+  ])
+  return [...active, ...inactive].map(publicToken)
 }
 
 /** Секрет криптографически случаен и существует в ответе только один раз. */

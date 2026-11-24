@@ -39,7 +39,8 @@ beforeEach(async () => {
     if (url.includes('/records?')) return [{ id: 1, label: 'Страницы сайта' }]
     if (url.includes('/snapshot?')) return structuredClone(mocks.snapshot)
     if (url.includes('/history?')) return structuredClone(mocks.history)
-    if (url.endsWith('/plans')) return structuredClone(mocks.plans)
+    if (url.endsWith('/plans')) return mocks.plans.map(({ id, resource, recordId, expiresAt, status }) => ({ id, resource, recordId, expiresAt, status }))
+    if (url.includes('/plans/')) return structuredClone(mocks.plans.find(plan => url.endsWith(`/${plan.id}`)))
     throw new Error(`Unexpected URL ${url}`)
   })
   mocks.post.mockImplementation(async (url: string, body: { patch?: Parameters<typeof plan>[0], planId?: string }) => {
@@ -159,10 +160,60 @@ describe('Редактор page-copy и планы MCP', () => {
     mocks.plans = [plan()]
     const wrapper = await editor()
     await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
     await wrapper.get('[data-action="approve"]').trigger('click')
     await flushPromises()
     expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/approve', { planId: 'plan-1' })
     expect(mocks.ask).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('именно этот diff') }))
+    wrapper.unmount()
+  })
+
+  test('список содержит только метаданные, полный diff загружается после выбора плана', async () => {
+    mocks.plans = [plan()]
+    const wrapper = await editor()
+    expect(mocks.get.mock.calls.some(([url]) => url.includes('/plans/'))).toBe(false)
+    expect(wrapper.find('[data-diff-field="ru.hero.line1"]').exists()).toBe(false)
+    await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/plans/plan-1')
+    expect(wrapper.get('[data-diff-field="ru.hero.line1"]').text()).toContain('Новый заголовок')
+    expect(mocks.post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test('до загрузки полного плана нет diff и действий approve/apply, повторный клик не дублирует запрос', async () => {
+    mocks.plans = [plan()]
+    const wrapper = await editor()
+    const fullPlan = structuredClone(mocks.plans[0]!)
+    let resolvePlan!: (value: ChangePlan) => void
+    mocks.get.mockImplementationOnce(() => new Promise(resolve => { resolvePlan = resolve }))
+    const button = wrapper.get('[aria-label="Планы изменений"] button')
+    await button.trigger('click')
+    await flushPromises()
+    expect(button.attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-action="apply"]').exists()).toBe(false)
+    expect(wrapper.find('[data-action="approve"]').exists()).toBe(false)
+    await button.trigger('click')
+    expect(mocks.get.mock.calls.filter(([url]) => url.includes('/plans/'))).toHaveLength(1)
+    resolvePlan(fullPlan)
+    await flushPromises()
+    expect(wrapper.find('[data-action="approve"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  test('ошибка загрузки полного плана не оставляет ранее выбранный diff доступным для применения', async () => {
+    mocks.plans = [plan()]
+    const wrapper = await editor()
+    const button = wrapper.get('[aria-label="Планы изменений"] button')
+    await button.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-action="apply"]').exists()).toBe(true)
+    mocks.get.mockRejectedValueOnce(new Error('Не удалось загрузить план'))
+    await button.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Не удалось загрузить план')
+    expect(wrapper.find('[data-action="apply"]').exists()).toBe(false)
+    expect(mocks.post).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 
@@ -184,6 +235,7 @@ describe('Редактор page-copy и планы MCP', () => {
     mocks.plans = [pending]
     const wrapper = await editor()
     await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
     expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
     expect(mocks.post).not.toHaveBeenCalled()
     wrapper.unmount()
