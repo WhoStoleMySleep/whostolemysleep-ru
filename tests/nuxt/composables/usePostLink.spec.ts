@@ -4,21 +4,25 @@ import type { Post } from '~/types'
 
 mockNuxtImport('useLocalePath', () => () => (path: string) => `/ru${path}`)
 
-const post = (fields: Partial<Post>) => ({ id: 1, slug: 'hello', ...fields } as Post)
+const post = (fields: Partial<Post>) => ({ id: 1, slug: 'hello', type: 'blog', ...fields } as Post)
 
-describe('usePostLink', () => {
-  test('an entry with no link points at the blog page inside the locale', async () => {
+describe('Ссылки на публикации', () => {
+  test('статья без URL ведёт на локализованную страницу блога', async () => {
     const { usePostLink } = await import('~/composables/usePostLink')
     expect(usePostLink().linkFor(post({ url: null }))).toEqual({ href: '/ru/blog/hello', isExternal: false })
   })
 
-  test('a project with its own url points outwards', async () => {
+  test.each([null, '', 'https://github.com/x'])('проект с url=%s ведёт на собственный кейс', async (url) => {
     const { usePostLink } = await import('~/composables/usePostLink')
-    expect(usePostLink().linkFor(post({ url: 'https://github.com/x' })))
-      .toEqual({ href: 'https://github.com/x', isExternal: true })
+    expect(usePostLink().linkFor(post({ type: 'project', url }))).toEqual({ href: '/ru/projects/hello', isExternal: false })
   })
 
-  test('an empty string in url is not a link but an unfilled field', async () => {
+  test('статья с внешним URL сохраняет прежнее поведение', async () => {
+    const { usePostLink } = await import('~/composables/usePostLink')
+    expect(usePostLink().linkFor(post({ url: 'https://example.com' }))).toEqual({ href: 'https://example.com', isExternal: true })
+  })
+
+  test('пустой URL статьи не считается внешней ссылкой', async () => {
     const { usePostLink } = await import('~/composables/usePostLink')
     expect(usePostLink().linkFor(post({ url: '' })).isExternal).toBe(false)
   })

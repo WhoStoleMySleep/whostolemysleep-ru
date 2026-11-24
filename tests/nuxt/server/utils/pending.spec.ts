@@ -45,11 +45,11 @@ describe('resumePaths', () => {
 
 test.each([null, ''])('проект без внешнего URL имеет внутреннюю страницу при url=%s', async (url) => {
   const { postPaths } = await import('~~/server/utils/pending')
-  expect(postPaths({ slug: 'internal', type: 'project', url })).toContain('/blog/internal')
+  expect(postPaths({ slug: 'internal', type: 'project', url })).toEqual(['/', '/blog', '/projects', '/projects/internal', '/blog/internal'])
 })
 
-test('внешний проект обновляет только списки, а статья с URL всё равно имеет страницу', async () => {
+test('внешний проект обновляет кейс, а статья с URL сохраняет страницу', async () => {
   const { postPaths } = await import('~~/server/utils/pending')
-  expect(postPaths({ slug: 'wave', type: 'project', url: 'https://example.com' })).toEqual(['/', '/blog', '/projects'])
+  expect(postPaths({ slug: 'wave', type: 'project', url: 'https://example.com' })).toEqual(['/', '/blog', '/projects', '/projects/wave'])
   expect(postPaths({ slug: 'article', type: 'blog', url: 'https://example.com' })).toContain('/blog/article')
 })

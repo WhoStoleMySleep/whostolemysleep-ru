@@ -35,13 +35,14 @@ beforeEach(() => {
 describe('sitemap', () => {
   test('a project with no site of its own is listed — it has a page here', async () => {
     const xml = await sitemap()
-    expect(xml).toContain('https://whostolemysleep.ru/ru/blog/publisher')
-    expect(xml).toContain('https://whostolemysleep.ru/en/blog/publisher')
+    expect(xml).toContain('https://whostolemysleep.ru/ru/projects/publisher')
+    expect(xml).toContain('https://whostolemysleep.ru/en/projects/publisher')
   })
 
-  test('a project that links out is not listed — the page belongs to the other site', async () => {
+  test('проект с внешним сайтом имеет собственный кейс в обеих локалях', async () => {
     const xml = await sitemap()
-    expect(xml).not.toContain('lives-elsewhere')
+    expect(xml).toContain('/ru/projects/lives-elsewhere')
+    expect(xml).toContain('/en/projects/lives-elsewhere')
   })
 
   test('blog posts are listed in both locales', async () => {

@@ -65,6 +65,17 @@
     "back": "Back to blog",
     "source": "Open source"
   },
+  "project": {
+    "back": "All projects",
+    "eyebrow": "Project · case study",
+    "stack": "Technologies",
+    "visit": "Visit project",
+    "read": "Read case study",
+    "about": "About the project",
+    "screens": "A closer look",
+    "more": "More things I’ve worked on",
+    "preview": "Local preview · case study draft. This content is not saved to the database or published on the site."
+  },
   "projects": {
     "eyebrow": "Projects",
     "title": "Works & Experiments",

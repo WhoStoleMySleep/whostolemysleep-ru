@@ -15,6 +15,9 @@ const { data: post, error } = await useLocaleData<Post>(`/api/blog/${slug}`)
 if (error.value && error.value.statusCode !== NOT_FOUND_STATUS) throw createError(error.value)
 if (!post.value) throw createError({ statusCode: NOT_FOUND_STATUS, message: 'Post not found' })
 
+// Старые ссылки на проекты сохраняют адресуемость после выделения кейсов.
+if (post.value.type === 'project') await navigateTo(localePath(`/projects/${slug}`), { redirectCode: 301 })
+
 /**
  * A shared link is a card, and the card is built from these tags alone. The
  * site-wide og:image in nuxt.config is the same picture for every url, which for a
