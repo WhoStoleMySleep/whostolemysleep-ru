@@ -1,3 +1,4 @@
+import { PgDialect } from 'drizzle-orm/pg-core'
 import { beforeEach, afterEach, describe, expect, test, vi } from 'vitest'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
@@ -45,6 +46,37 @@ describe('Планы изменения контента', () => {
     expect(after.text_ru).toBe('<p>Хорошо</p>')
     expect(() => prepareContentAfter('post', before, { title_ru: '<b>Название</b>' })).toThrow()
     expect(() => prepareContentAfter('post', before, { secret: 'no' })).toThrow()
+  })
+
+  test.each([101, 255])('изменение заголовка существующего post со slug длиной %i не блокируется', async (length) => {
+    const { prepareContentAfter } = await import('~~/server/utils/contentPlans')
+    const before = { slug: 'a'.repeat(length), type: 'blog', title_ru: 'До', title_en: '', text_ru: '', text_en: '', excerpt_ru: '', excerpt_en: '', url: null, published_at: null }
+    expect(prepareContentAfter('post', before, { title_ru: 'После' })).toEqual({ ...before, title_ru: 'После' })
+  })
+
+  test('список планов выбирает только метаданные без снимков и diff', async () => {
+    const { listContentPlans } = await import('~~/server/utils/contentPlans')
+    const summary = { id, resource: 'pages', recordId: 1, expiresAt: row().expires_at, status: 'pending' }
+    plan(state, { 'select:content_plan': [[summary]] })
+    expect(await listContentPlans(admin)).toEqual([summary])
+    expect(Object.keys(stepArg(state.calls, 'select:content_plan', 'select')!)).toEqual(['id', 'resource', 'recordId', 'expiresAt', 'status'])
+    expect(stepArg(state.calls, 'select:content_plan', 'limit')).toBe(100)
+    await expect(listContentPlans(actor)).rejects.toThrow('Admin approval')
+  })
+
+  test('полный план по ID доступен админу своей среды без внутренних CAS и credential полей', async () => {
+    const { readContentPlan } = await import('~~/server/utils/contentPlans')
+    plan(state, { 'select:content_plan': [[row({ expected_state: { private: true } })]] })
+    const result = await readContentPlan(admin, id)
+    expect(result).toMatchObject({ id, before: row().before, after: row().after, diff: [] })
+    expect(result).not.toHaveProperty('expected_state')
+    expect(result).not.toHaveProperty('token_id')
+    const query = new PgDialect().sqlToQuery(stepArg(state.calls, 'select:content_plan', 'where')!)
+    expect(query.params).toEqual([id, 'development'])
+    plan(state)
+    await expect(readContentPlan(admin, id)).rejects.toThrow('not found')
+    await expect(readContentPlan(actor, id)).rejects.toThrow('Admin approval')
+    expect(state.calls).toHaveLength(1)
   })
 
   test('создание сохраняет pending и actor на сервере, не меняет live', async () => {

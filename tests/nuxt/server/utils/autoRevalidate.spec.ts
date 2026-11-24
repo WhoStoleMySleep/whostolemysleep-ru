@@ -5,10 +5,11 @@ import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
 
 const state = vi.hoisted((): FakeDbState => ({ results: {}, calls: [], cursor: {} }))
-const mocks = vi.hoisted(() => ({ revalidate: vi.fn() }))
+const mocks = vi.hoisted(() => ({ revalidate: vi.fn(), execute: vi.fn() }))
 vi.mock('~~/server/db', async () => {
   const { makeFakeDb } = await import('~~/tests/helpers/fakeDb')
-  return { db: makeFakeDb(state) }
+  const fake = makeFakeDb(state) as object
+  return { db: new Proxy(fake, { get: (target, key) => key === 'execute' ? mocks.execute : Reflect.get(target, key) }) }
 })
 vi.mock('~~/server/utils/revalidate', () => ({ revalidatePaths: mocks.revalidate }))
 
@@ -16,6 +17,10 @@ const queued = (path: string, revision = '2026-11-21 12:00:00.123456+00') => ({ 
 
 beforeEach(() => {
   plan(state)
+  mocks.execute.mockReset().mockImplementation(async (statement: SQL) => {
+    state.calls.push({ op: 'execute', table: '?', steps: [{ m: 'execute', args: [statement] }] })
+    return { rows: [] }
+  })
   mocks.revalidate.mockReset().mockImplementation(async (paths: string[]) => ({ revalidated: paths, failed: [] }))
 })
 afterEach(() => vi.restoreAllMocks())
@@ -40,10 +45,10 @@ describe('Автоматическое обновление страниц', () 
     plan(state, { 'select:pending_revalidation': [[queued('/projects')]] })
     const { markDirty } = await import('~~/server/utils/pending')
     await markDirty(['/projects', '/projects'])
-    expect(state.calls[0]?.op).toBe('insert')
-    expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([{ path: '/projects' }])
-    const conflict = stepArg<{ set: { added_at: SQL } }>(state.calls, 'insert:pending_revalidation', 'onConflictDoUpdate')!
-    expect(new PgDialect().sqlToQuery(conflict.set.added_at).sql).toContain("interval '1 microsecond'")
+    expect(state.calls[0]?.op).toBe('execute')
+    const query = new PgDialect().sqlToQuery(mocks.execute.mock.calls[0]![0])
+    expect(query.params).toEqual(['["/projects"]'])
+    expect(query.sql).toContain("interval '1 microsecond'")
     expect(mocks.revalidate).toHaveBeenCalledWith(['/ru/projects', '/en/projects'], [])
     expect(state.calls.at(-1)?.op).toBe('delete')
   })
@@ -146,6 +151,66 @@ test('ручной Flush использует ту же очередь и воз
   }
 })
 
+describe('Durable site-wide marker', () => {
+  test.each([{ paths: undefined }, { paths: ['content:site'] }])('раскрывает marker после commit в том числе для filter=$paths, не отправляя marker в HTTP', async ({ paths }) => {
+    const { flushPending, SITE_REVALIDATION_MARKER } = await import('~~/server/utils/pending')
+    const realPaths = ['/', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy', '/blog/newly-published']
+    plan(state, {
+      'select:pending_revalidation': [[queued(SITE_REVALIDATION_MARKER)], [...realPaths.map(path => queued(path)), queued(SITE_REVALIDATION_MARKER, '2026-11-21 12:00:00.123457+00')]],
+      'select:post': [[{ slug: 'newly-published', type: 'blog', url: null, is_published: true }]],
+    })
+    await flushPending(paths)
+    const query = new PgDialect().sqlToQuery(mocks.execute.mock.calls[0]![0])
+    expect(query.params).toEqual([JSON.stringify(realPaths), SITE_REVALIDATION_MARKER, queued('').revision])
+    expect(query.sql).toContain('with queued as (insert into pending_revalidation')
+    expect(query.sql).toContain('delete from pending_revalidation where path =')
+    expect(query.sql).toContain('::timestamptz')
+    expect(query.sql).toContain('exists(select 1 from queued)')
+    expect(mocks.revalidate).toHaveBeenCalledWith(realPaths.flatMap(path => path === '/' ? ['/ru', '/en'] : [`/ru${path}`, `/en${path}`]), [])
+    expect(JSON.stringify(mocks.revalidate.mock.calls)).not.toContain(SITE_REVALIDATION_MARKER)
+    const clear = new PgDialect().sqlToQuery(stepArg<SQL>(state.calls, 'delete:pending_revalidation', 'where')!)
+    expect(clear.params).not.toContain(SITE_REVALIDATION_MARKER)
+    expect(state.calls.findIndex(call => call.table === 'post')).toBeLessThan(state.calls.findIndex(call => call.op === 'execute'))
+  })
+
+  test('ошибка перечисления не очищает marker и не запрашивает HTTP', async () => {
+    const { flushPending, SITE_REVALIDATION_MARKER } = await import('~~/server/utils/pending')
+    plan(state, { 'select:pending_revalidation': [[queued(SITE_REVALIDATION_MARKER)]] })
+    Object.defineProperty(state.results, 'select:post', { get: () => { throw new Error('Enumeration unavailable') } })
+    await expect(flushPending()).rejects.toThrow('Enumeration unavailable')
+    expect(mocks.execute).not.toHaveBeenCalled()
+    expect(mocks.revalidate).not.toHaveBeenCalled()
+    expect(state.calls.some(call => call.op === 'delete')).toBe(false)
+  })
+
+  test('ошибка UPSERT путей не очищает marker и не запускает HTTP', async () => {
+    const { flushPending, SITE_REVALIDATION_MARKER } = await import('~~/server/utils/pending')
+    plan(state, { 'select:pending_revalidation': [[queued(SITE_REVALIDATION_MARKER)]] })
+    mocks.execute.mockRejectedValueOnce(new Error('Outbox unavailable'))
+    await expect(flushPending([SITE_REVALIDATION_MARKER])).rejects.toThrow('Outbox unavailable')
+    expect(mocks.execute).toHaveBeenCalledTimes(1)
+    expect(mocks.revalidate).not.toHaveBeenCalled()
+    expect(state.calls.some(call => call.op === 'delete')).toBe(false)
+  })
+
+  test('обычный resume flush не раскрывает site marker и не расширяет область обновления', async () => {
+    const { flushPending } = await import('~~/server/utils/pending')
+    plan(state, { 'select:pending_revalidation': [[queued('/resume')]] })
+    await flushPending(['/resume'])
+    expect(mocks.execute).not.toHaveBeenCalled()
+    expect(state.calls.some(call => call.table === 'post')).toBe(false)
+    expect(mocks.revalidate).toHaveBeenCalledExactlyOnceWith(['/ru/resume', '/en/resume'], [])
+  })
+
+  test('ошибка постановки markDirty остаётся ошибкой до запуска flush', async () => {
+    const { markDirty } = await import('~~/server/utils/pending')
+    mocks.execute.mockRejectedValueOnce(new Error('Queue unavailable'))
+    await expect(markDirty(['/resume'])).rejects.toThrow('Queue unavailable')
+    expect(mocks.revalidate).not.toHaveBeenCalled()
+    expect(state.calls).toHaveLength(0)
+  })
+})
+
 describe('Обновление страниц связанной с изображением записи', () => {
   test.each([
     { type: 'blog', url: null, details: ['/blog/post'] },
@@ -161,7 +226,7 @@ describe('Обновление страниц связанной с изобра
     })
     const { markPostDirty } = await import('~~/server/utils/pending')
     await markPostDirty(19)
-    expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual(paths.map(path => ({ path })))
+    expect(new PgDialect().sqlToQuery(mocks.execute.mock.calls[0]![0]).params).toEqual([JSON.stringify(paths)])
     const where = new PgDialect().sqlToQuery(stepArg<SQL>(state.calls, 'select:post', 'where')!)
     expect(where.params).toEqual([19])
     expect(mocks.revalidate).toHaveBeenCalledWith(paths.flatMap(path => {

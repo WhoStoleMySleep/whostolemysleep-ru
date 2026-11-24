@@ -45,6 +45,19 @@ describe('Строгие схемы редакционного контента'
     expect(contentRecordSchema(resource).safeParse(data).success).toBe(false)
   })
 
+  test.each([[101, true], [255, true], [256, false]])('slug post длиной %i соответствует лимиту БД: %s', async (length, valid) => {
+    const { contentRecordSchema, contentPatchSchema } = await import('~~/shared/content/schemas')
+    const slug = 'a'.repeat(length as number)
+    expect(contentRecordSchema('post').safeParse({ ...validPost, slug }).success).toBe(valid)
+    expect(contentPatchSchema('post').safeParse({ slug }).success).toBe(valid)
+  })
+
+  test('slug группы навыков по-прежнему ограничен100 символами', async () => {
+    const { contentPatchSchema } = await import('~~/shared/content/schemas')
+    expect(contentPatchSchema('skill-group').safeParse({ slug: 'a'.repeat(100) }).success).toBe(true)
+    expect(contentPatchSchema('skill-group').safeParse({ slug: 'a'.repeat(101) }).success).toBe(false)
+  })
+
   test('валидирует частичный patch без неявного coercion и пустых изменений', async () => {
     const { contentPatchSchema } = await import('~~/shared/content/schemas')
     expect(contentPatchSchema('post').safeParse({ title_ru: 'Название' }).success).toBe(true)

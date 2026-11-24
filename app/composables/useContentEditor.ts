@@ -1,6 +1,6 @@
 import { PAGE_DEFAULTS, PAGE_FIELDS } from '~~/shared/content/registry'
 import type { PageCopy } from '~~/shared/content/registry'
-import type { ChangePlan, ContentHistory, ContentRecord, ContentResource, ContentSnapshot } from '~~/shared/content/types'
+import type { ChangePlan, ContentHistory, ContentPlanSummary, ContentRecord, ContentResource, ContentSnapshot } from '~~/shared/content/types'
 
 const CONFLICT_STATUS = 409
 const WRITES_DISABLED_STATUS = 503
@@ -64,7 +64,7 @@ export function useContentEditor() {
     () => recordId.value === null ? Promise.resolve(null) : api.get<ContentSnapshot>(`/api/admin/content/snapshot?${query.value}`))
   const history = useAsyncData(() => `admin:content:history:${query.value}`,
     () => recordId.value === null ? Promise.resolve([]) : api.get<ContentHistory[]>(`/api/admin/content/history?${query.value}`))
-  const plans = useAsyncData('admin:content:plans', () => api.get<ChangePlan[]>('/api/admin/content/plans'))
+  const plans = useAsyncData('admin:content:plans', () => api.get<ContentPlanSummary[]>('/api/admin/content/plans'))
 
   const original = computed(() => copyPages(snapshot.data.value?.data))
   const patch = computed(() => pagesPatch(draft.value, original.value))
@@ -92,8 +92,7 @@ export function useContentEditor() {
     toast.err(error.value)
   }
 
-  function reviewPlan(plan: ChangePlan) {
-    if (busy.value) return
+  function selectPlan(plan: ChangePlan) {
     resource.value = plan.resource
     recordId.value = plan.recordId
     selectedPlan.value = JSON.parse(JSON.stringify(plan)) as ChangePlan
@@ -101,6 +100,18 @@ export function useContentEditor() {
     previewPatch.value = null
     conflicted.value = false
     error.value = ''
+  }
+
+  async function reviewPlan(summary: ContentPlanSummary) {
+    if (busy.value) return
+    busy.value = true
+    selectedPlan.value = null
+    error.value = ''
+    try {
+      const plan = await api.get<ChangePlan>(`/api/admin/content/plans/${encodeURIComponent(summary.id)}`)
+      selectPlan(plan)
+    } catch (cause) { fail(cause) }
+    finally { busy.value = false }
   }
 
   async function preview() {

@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import { db } from '~~/server/db'
 import { contentPlan } from '~~/server/db/schema'
 import { contentPatchSchema, contentRecordSchema, type contentPlanSchema } from '~~/shared/content/schemas'
-import type { ChangePlan, ContentDiff, ContentResource } from '~~/shared/content/types'
+import type { ChangePlan, ContentDiff, ContentPlanSummary, ContentResource } from '~~/shared/content/types'
 import type { ContentActor } from './contentAuth'
 import { assertContentOwnership, assertContentPermission } from './contentAuth'
 import { parseContentInput, requireContentWrites } from './contentInput'
@@ -74,11 +74,17 @@ export async function loadContentPlan(actor: ContentActor, planId: string): Prom
   return row
 }
 
-/** Админ видит планы MCP, но их применение остаётся отдельным действием. */
-export async function listContentPlans(actor: ContentActor): Promise<ChangePlan[]> {
+/** Админ загружает полные снимки только выбранного для проверки плана. */
+export async function readContentPlan(actor: ContentActor, planId: string): Promise<ChangePlan> {
   assertContentAdminActor(actor)
-  const rows = await db.select().from(contentPlan).where(eq(contentPlan.environment, actor.environment)).orderBy(desc(contentPlan.created_at)).limit(LIST_LIMIT)
-  return rows.map(publicContentPlan)
+  return publicContentPlan(await loadContentPlan(actor, planId))
+}
+
+/** Список не выбирает большие JSON-поля, включая внутренний expected_state. */
+export async function listContentPlans(actor: ContentActor): Promise<ContentPlanSummary[]> {
+  assertContentAdminActor(actor)
+  return db.select({ id: contentPlan.id, resource: contentPlan.resource, recordId: contentPlan.record_id, expiresAt: contentPlan.expires_at, status: contentPlan.status })
+    .from(contentPlan).where(eq(contentPlan.environment, actor.environment)).orderBy(desc(contentPlan.created_at)).limit(LIST_LIMIT)
 }
 
 /** Даже внутренний вызов с token actor не получает права approve. */

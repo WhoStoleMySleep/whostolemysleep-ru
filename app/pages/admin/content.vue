@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChangePlan, ContentResource } from '~~/shared/content/types'
+import type { ContentPlanSummary, ContentResource } from '~~/shared/content/types'
 
 defineI18nRoute(false)
 definePageMeta({ layout: 'admin', middleware: 'admin' })
@@ -44,8 +44,8 @@ async function changeRecord(event: Event) {
   if (await mayDiscard()) recordId.value = next
 }
 
-async function review(plan: ChangePlan) {
-  if (await mayDiscard()) reviewPlan(plan)
+async function review(plan: ContentPlanSummary) {
+  if (await mayDiscard()) await reviewPlan(plan)
 }
 </script>
 

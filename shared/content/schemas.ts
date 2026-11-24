@@ -7,6 +7,7 @@ export const CONTENT_SCOPES = ['read', 'plan', 'apply'] as const
 const TITLE_LIMIT = 500
 const NAME_LIMIT = 255
 const SLUG_LIMIT = 100
+const POST_SLUG_LIMIT = 255
 const URL_LIMIT = 1000
 const TEXT_LIMIT = 100000
 const EMAIL_LIMIT = 254
@@ -40,7 +41,7 @@ const name = plainContentText(NAME_LIMIT)
 const short = plainContentText(SLUG_LIMIT)
 const richText = z.string().max(TEXT_LIMIT)
 const order = z.number().int().min(0).max(MAX_SORT_ORDER)
-const slug = short.min(1).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+const slug = z.string().min(1).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const url = z.string().max(URL_LIMIT).refine(validUrl, 'Invalid HTTP(S) URL')
 const optionalUrl = z.union([url, z.literal('')])
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(validDate, 'Invalid calendar date')
@@ -59,7 +60,7 @@ function validDate(value: string): boolean {
 }
 
 const postSchema = z.strictObject({
-  slug, type: z.enum(['blog', 'project']), title_ru: plain.min(1), title_en: plain,
+  slug: slug.max(POST_SLUG_LIMIT), type: z.enum(['blog', 'project']), title_ru: plain.min(1), title_en: plain,
   text_ru: richText, text_en: richText, excerpt_ru: plainContentText(TEXT_LIMIT), excerpt_en: plainContentText(TEXT_LIMIT),
   url: url.nullable(), published_at: timestamp.nullable(),
 })
@@ -77,7 +78,7 @@ const educationSchema = z.strictObject({
   date_from: date, date_to: date.nullable(), order,
 })
 const skillSchema = z.strictObject({ name: short.min(1), order })
-const groupSchema = z.strictObject({ slug, name_ru: short.min(1), name_en: short, order })
+const groupSchema = z.strictObject({ slug: slug.max(SLUG_LIMIT), name_ru: short.min(1), name_en: short, order })
 const recordSchemas = { post: postSchema, about: aboutSchema, settings: settingsSchema, experience: experienceSchema, education: educationSchema, skill: skillSchema, 'skill-group': groupSchema }
 
 /** Список берётся из того же allowlist, что и runtime-валидация. */

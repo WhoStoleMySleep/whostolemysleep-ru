@@ -9,7 +9,7 @@ import { assertContentPermission } from './contentAuth'
 import { requireContentWrites } from './contentInput'
 import { CONTENT_TABLES, loadContent } from './contentRecords'
 import { loadContentPlan } from './contentPlans'
-import { markDirty, postPaths, resumePaths, sitePaths } from './pending'
+import { buildPendingEnqueueSql, flushPending, postPaths, resumePaths, SITE_REVALIDATION_MARKER } from './pending'
 
 type PlanRow = typeof contentPlan.$inferSelect
 
@@ -68,20 +68,29 @@ function auditSql(actor: ContentActor): SQL {
   ), applied as (
     update content_plan p set status = 'applied', applied_at = clock_timestamp()
     from audit where p.id = audit.plan_id returning p.id
-  ) select id from applied`
+  )`
 }
 
-/** Один statement: row locks + CAS + live update + audit + status; нет update без истории. */
-export function buildContentApplySql(actor: ContentActor, plan: PlanRow): SQL {
-  return sql`with ${callerTokenSql(actor, plan)}, ${lockedPlanSql(actor, plan)}, ${liveUpdateSql(plan)}, ${auditSql(actor)}`
+function outboxSql(paths: string[]): SQL {
+  return sql`queued as (${buildPendingEnqueueSql(paths, sql`applied`)}) select id from applied`
 }
 
-async function refreshContent(plan: PlanRow): Promise<void> {
+/** Live update, audit, applied и durable очередь фиксируются или откатываются вместе. */
+export function buildContentApplySql(actor: ContentActor, plan: PlanRow, paths: string[]): SQL {
+  return sql`with ${callerTokenSql(actor, plan)}, ${lockedPlanSql(actor, plan)}, ${liveUpdateSql(plan)}, ${auditSql(actor)}, ${outboxSql(paths)}`
+}
+
+function contentPaths(plan: PlanRow): string[] {
+  if (plan.resource === 'post') return [...postPaths(plan.before as Parameters<typeof postPaths>[0]), ...postPaths(plan.after as Parameters<typeof postPaths>[0])]
+  if (['experience', 'education', 'skill', 'skill-group'].includes(plan.resource)) return resumePaths()
+  return [SITE_REVALIDATION_MARKER]
+}
+
+async function refreshContent(paths?: string[]): Promise<void> {
   try {
-    const paths = plan.resource === 'post' ? [...postPaths(plan.before as Parameters<typeof postPaths>[0]), ...postPaths(plan.after as Parameters<typeof postPaths>[0])]
-      : ['experience', 'education', 'skill', 'skill-group'].includes(plan.resource) ? resumePaths() : await sitePaths()
-    await markDirty(paths)
-  } catch (error) { console.error('Content committed; cache refresh needs retry', error) }
+    const result = await flushPending(paths)
+    if (!result.ok) console.warn('Content committed; some cache refreshes remain queued', result.failed)
+  } catch (error) { console.error('Content committed; cache refresh remains queued', error) }
 }
 
 function requireApprovedPlan(plan: PlanRow): void {
@@ -89,17 +98,28 @@ function requireApprovedPlan(plan: PlanRow): void {
   if (Date.parse(plan.expires_at) <= Date.now()) throw createError({ statusCode: 409, message: 'Content plan expired' })
 }
 
-/** Повторный apply своего уже применённого плана не создаёт второй audit. */
+async function applyApprovedPlan(actor: ContentActor, plan: PlanRow): Promise<void> {
+  requireApprovedPlan(plan)
+  const current = await loadContent(plan.resource, plan.record_id, actor.environment)
+  if (current.snapshot.version !== plan.version) {
+    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return refreshContent()
+    throw createError({ statusCode: 409, message: 'Content version conflict' })
+  }
+  const paths = contentPaths(plan)
+  const result = await db.execute<{ id: string }>(buildContentApplySql(actor, plan, paths))
+  if (!result.rows.length) {
+    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return refreshContent()
+    throw createError({ statusCode: 409, message: 'Content conflict, expired plan, or revoked source token' })
+  }
+  await refreshContent(paths)
+}
+
+/** Повторный apply обрабатывает только остатки durable очереди, не создавая новое событие. */
 export async function applyContentPlan(actor: ContentActor, planId: string): Promise<{ status: 'applied'; planId: string }> {
   requireContentWrites()
   const plan = await loadContentPlan(actor, planId)
   assertContentPermission(actor, plan.resource, 'apply')
-  if (plan.status === 'applied') return { status: 'applied', planId }
-  requireApprovedPlan(plan)
-  const current = await loadContent(plan.resource, plan.record_id, actor.environment)
-  if (current.snapshot.version !== plan.version) throw createError({ statusCode: 409, message: 'Content version conflict' })
-  const result = await db.execute<{ id: string }>(buildContentApplySql(actor, plan))
-  if (!result.rows.length && (await loadContentPlan(actor, planId)).status !== 'applied') throw createError({ statusCode: 409, message: 'Content conflict, expired plan, or revoked source token' })
-  await refreshContent(plan)
+  if (plan.status === 'applied') await refreshContent()
+  else await applyApprovedPlan(actor, plan)
   return { status: 'applied', planId }
 }

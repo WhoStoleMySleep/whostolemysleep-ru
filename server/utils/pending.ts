@@ -1,23 +1,30 @@
-import { and, eq, inArray, or, sql } from 'drizzle-orm'
+import { and, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '../db'
 import * as schema from '../db/schema'
 import { revalidatePaths } from './revalidate'
+
+/** Служебная запись раскрывается после content commit и никогда не запрашивается как URL. */
+export const SITE_REVALIDATION_MARKER = 'content:site'
 
 const LOCALES = ['ru', 'en'] as const
 
 type PendingPage = { path: string; revision: string }
 type PostPage = Pick<typeof schema.post.$inferSelect, 'slug' | 'type' | 'url'>
 
+/** Единый UPSERT сохраняет точную монотонную revision при всех способах постановки очереди. */
+export function buildPendingEnqueueSql(paths: string[], source?: SQL): SQL {
+  const dependency = source ? sql`${source} cross join ` : sql``
+  return sql`insert into pending_revalidation(path)
+    select paths.path from ${dependency}jsonb_array_elements_text(${JSON.stringify([...new Set(paths)])}::jsonb) as paths(path)
+    on conflict(path) do update set added_at = greatest(clock_timestamp(), pending_revalidation.added_at + interval '1 microsecond')
+    returning path`
+}
+
 /** Сначала сохраняет очередь: сбой обновления страниц не отменяет сохранённый контент. */
 export async function markDirty(paths: string[]): Promise<void> {
   const unique = [...new Set(paths)]
   if (!unique.length) return
-  await db.insert(schema.pendingRevalidation)
-    .values(unique.map(path => ({ path })))
-    .onConflictDoUpdate({
-      target: schema.pendingRevalidation.path,
-      set: { added_at: sql`greatest(clock_timestamp(), ${schema.pendingRevalidation.added_at} + interval '1 microsecond')` },
-    })
+  await db.execute(buildPendingEnqueueSql(unique))
 
   try {
     const result = await flushPending(unique)
@@ -53,13 +60,33 @@ async function missingDetails(paths: string[]): Promise<string[]> {
   }).flatMap(withLocales)
 }
 
-/** Один механизм для автоматического обновления и ручной повторной попытки. */
+function loadPending(paths?: string[]): PromiseLike<PendingPage[]> {
+  // Date теряет микросекунды PostgreSQL; текстовая версия сохраняет точность сравнения.
+  return db.select({ path: schema.pendingRevalidation.path, revision: sql<string>`${schema.pendingRevalidation.added_at}::text` })
+    .from(schema.pendingRevalidation).where(paths ? inArray(schema.pendingRevalidation.path, paths) : undefined)
+}
+
+/** Материализация путей и CAS удаления marker атомарны: сбой не теряет site-wide событие. */
+export function buildPendingSiteExpansionSql(marker: PendingPage, paths: string[]): SQL {
+  return sql`with queued as (${buildPendingEnqueueSql(paths)})
+    delete from pending_revalidation where path = ${marker.path} and added_at = ${marker.revision}::timestamptz
+      and exists(select 1 from queued)`
+}
+
+async function expandedPending(paths?: string[]): Promise<PendingPage[]> {
+  const pending = await loadPending(paths)
+  const marker = pending.find(page => page.path === SITE_REVALIDATION_MARKER)
+  if (!marker) return pending
+  const expanded = await sitePaths()
+  await db.execute(buildPendingSiteExpansionSql(marker, expanded))
+  const materialized = await loadPending(paths ? [...paths, ...expanded] : undefined)
+  return materialized.filter(page => page.path !== SITE_REVALIDATION_MARKER)
+}
+
+/** Один механизм для автоматического обновления, site-wide marker и ручной повторной попытки. */
 export async function flushPending(paths?: string[]) {
   if (paths && !paths.length) return { ok: true, cleared: [], failed: [] }
-  // Date теряет микросекунды PostgreSQL; текстовая версия сохраняет точность сравнения.
-  const pending = await db.select({ path: schema.pendingRevalidation.path, revision: sql<string>`${schema.pendingRevalidation.added_at}::text` })
-    .from(schema.pendingRevalidation)
-    .where(paths ? inArray(schema.pendingRevalidation.path, paths) : undefined)
+  const pending = await expandedPending(paths)
   const queued = pending.map(page => page.path)
   const targets = [...new Set(queued.flatMap(withLocales))]
   const { revalidated, failed } = await revalidatePaths(targets, await missingDetails(queued))
