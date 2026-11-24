@@ -13,6 +13,7 @@ const sections = [
     links: [
       { label: 'Dashboard',        to: '/admin' },
       { label: 'Posts & Projects', to: '/admin/posts' },
+      { label: 'Тексты и планы',    to: '/admin/content' },
     ],
   },
   {
@@ -29,6 +30,7 @@ const sections = [
     label: 'System',
     links: [
       { label: 'Settings', to: '/admin/settings' },
+      { label: 'Токены контента', to: '/admin/content-tokens' },
     ],
   },
 ]
@@ -37,7 +39,7 @@ const navOpen = ref(false)
 watch(() => route.path, () => { navOpen.value = false })
 
 function isActive(to: string) {
-  return to === '/admin' ? route.path === '/admin' : route.path.startsWith(to)
+  return to === '/admin' ? route.path === '/admin' : route.path === to || route.path.startsWith(`${to}/`)
 }
 
 async function logout() {

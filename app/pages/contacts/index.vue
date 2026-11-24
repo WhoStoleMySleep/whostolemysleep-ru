@@ -110,6 +110,17 @@ const contactLinks = computed(() => {
       </a>
     </section>
 
+    <dl class="contact-availability">
+      <div v-if="siteSettings?.open_to_work">
+        <dt>{{ t('contacts.status') }}</dt>
+        <dd>{{ t('contacts.statusText') }}</dd>
+      </div>
+      <div>
+        <dt>{{ t('contacts.response') }}</dt>
+        <dd>{{ t('contacts.responseVal') }}</dd>
+      </div>
+    </dl>
+
     <section v-if="contactForm" class="form-section">
       <div class="form-section__intro">
         <h2 class="form-section__title">{{ t('contacts.form_title') }}</h2>
@@ -208,6 +219,10 @@ const contactLinks = computed(() => {
 </template>
 
 <style scoped>
+.contact-availability { display: flex; flex-wrap: wrap; gap: 18px 32px; margin-top: 20px; }
+.contact-availability dt { color: var(--text-4); font-size: 10px; margin-bottom: 6px; }
+.contact-availability dd { color: var(--text-2); font-size: 12px; }
+
 /* ── Contact methods ── */
 .methods { display: flex; flex-wrap: wrap; gap: 10px; }
 

@@ -1,6 +1,6 @@
 import {
   pgTable, pgEnum, serial, varchar, text, integer,
-  timestamp, boolean, date, primaryKey,
+  timestamp, boolean, date, primaryKey, jsonb, uuid, index,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -145,6 +145,52 @@ export const user = pgTable('user', {
   role:          userRoleEnum('role').notNull().default('admin'),
   created_at:    timestamp('created_at', { mode: 'string' }).notNull().defaultNow(),
 })
+
+export const contentEnvironmentEnum = pgEnum('content_environment', ['development', 'preview', 'production'])
+export const contentResourceEnum = pgEnum('content_resource', ['pages', 'post', 'about', 'settings', 'experience', 'education', 'skill', 'skill-group'])
+export const contentPlanStatusEnum = pgEnum('content_plan_status', ['pending', 'approved', 'applied'])
+
+/** Каждая среда имеет собственный singleton, без записи на публичном чтении. */
+export const pageContent = pgTable('page_content', {
+  environment: contentEnvironmentEnum('environment').primaryKey(),
+  data: jsonb('data').$type<{ ru: Record<string, string>; en: Record<string, string> }>().notNull().default({ ru: {}, en: {} }),
+  updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+})
+
+/** Отдельный credential не связан с publish/admin secrets. */
+export const contentToken = pgTable('content_token', {
+  id: uuid('id').primaryKey(), environment: contentEnvironmentEnum('environment').notNull(),
+  label: varchar('label', { length: 100 }).notNull(), secret_hash: varchar('secret_hash', { length: 64 }).notNull().unique(),
+  resources: jsonb('resources').$type<string[]>().notNull(), scopes: jsonb('scopes').$type<string[]>().notNull(),
+  expires_at: timestamp('expires_at', { withTimezone: true, mode: 'string' }).notNull(),
+  revoked_at: timestamp('revoked_at', { withTimezone: true, mode: 'string' }),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+}, t => [index('content_token_environment_idx').on(t.environment)])
+
+/** expected_state используется только для CAS и не возвращается через API. */
+export const contentPlan = pgTable('content_plan', {
+  id: uuid('id').primaryKey(), environment: contentEnvironmentEnum('environment').notNull(),
+  resource: contentResourceEnum('resource').notNull(), record_id: integer('record_id').notNull(),
+  actor: text('actor').notNull(), token_id: uuid('token_id').references(() => contentToken.id),
+  version: varchar('version', { length: 64 }).notNull(), expected_state: jsonb('expected_state').$type<Record<string, unknown>>().notNull(),
+  before: jsonb('before').$type<Record<string, unknown>>().notNull(), after: jsonb('after').$type<Record<string, unknown>>().notNull(),
+  diff: jsonb('diff').$type<{ field: string; before: unknown; after: unknown }[]>().notNull(),
+  status: contentPlanStatusEnum('status').notNull().default('pending'),
+  expires_at: timestamp('expires_at', { withTimezone: true, mode: 'string' }).notNull(),
+  approved_by: text('approved_by'), approved_at: timestamp('approved_at', { withTimezone: true, mode: 'string' }),
+  applied_at: timestamp('applied_at', { withTimezone: true, mode: 'string' }),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+}, t => [index('content_plan_environment_created_idx').on(t.environment, t.created_at)])
+
+/** Unique plan_id исключает повторную запись аудита при идемпотентном apply. */
+export const contentHistory = pgTable('content_history', {
+  id: uuid('id').primaryKey(), environment: contentEnvironmentEnum('environment').notNull(),
+  plan_id: uuid('plan_id').notNull().unique().references(() => contentPlan.id),
+  resource: contentResourceEnum('resource').notNull(), record_id: integer('record_id').notNull(),
+  actor: text('actor').notNull(), approved_by: text('approved_by').notNull(),
+  before: jsonb('before').$type<Record<string, unknown>>().notNull(), after: jsonb('after').$type<Record<string, unknown>>().notNull(),
+  created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+}, t => [index('content_history_record_idx').on(t.environment, t.resource, t.record_id)])
 
 /* ── Relations ── */
 
