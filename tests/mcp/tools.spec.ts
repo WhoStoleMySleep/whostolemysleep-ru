@@ -13,6 +13,7 @@ async function connect(permissions = {}) {
     records: vi.fn(async (_input: unknown) => [{ id: 1, label: 'Pages' }]),
     snapshot: vi.fn(async (_input: unknown) => ({ version: 'v1', data: {} })),
     plan: vi.fn(async (_input: unknown) => ({ id: 'plan', status: 'pending', diff: [] })),
+    project: vi.fn(async (_input: unknown) => ({ id: 'project-plan', operation: 'create-project', status: 'pending' })),
     apply: vi.fn(async (_input: unknown) => ({ status: 'applied' })),
   }
   const server = createContentServer({ client: operations, ...permissions })
@@ -44,6 +45,22 @@ describe('Ограниченные MCP-инструменты', () => {
     await client.callTool({ name: 'prepare_content_change', arguments: args })
     expect(operations.plan).toHaveBeenCalledExactlyOnceWith(args)
     expect(operations.apply).not.toHaveBeenCalled()
+  })
+
+  test('создание проекта требует отдельного флага и не включает публикацию или approve', async () => {
+    const hidden = await connect({ allowPlan: true })
+    expect((await hidden.client.listTools()).tools.map(tool => tool.name)).not.toContain('prepare_project_page')
+    const { client, operations } = await connect({ allowPlan: true, allowCreateProject: true })
+    const tools = (await client.listTools()).tools
+    expect(tools.map(tool => tool.name)).toContain('prepare_project_page')
+    expect(tools.some(tool => /approve|publish/.test(tool.name))).toBe(false)
+    const args = { slug: 'test-project', title_ru: 'Проект', title_en: 'Project', text_ru: '<p>Кейс</p>', text_en: '<p>Case</p>', excerpt_ru: 'Текст', excerpt_en: 'Text', tags: ['Nuxt'] }
+    const result = await client.callTool({ name: 'prepare_project_page', arguments: args })
+    expect(result.isError).not.toBe(true)
+    expect(operations.project).toHaveBeenCalledExactlyOnceWith(args)
+    expect(operations.apply).not.toHaveBeenCalled()
+    await client.callTool({ name: 'prepare_project_page', arguments: { ...args, is_published: true } })
+    expect(operations.project).toHaveBeenCalledTimes(1)
   })
 
   test('применение принимает только ID и помечено изменяющим данные', async () => {

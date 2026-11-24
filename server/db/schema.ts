@@ -171,6 +171,7 @@ export const contentToken = pgTable('content_token', {
 export const contentPlan = pgTable('content_plan', {
   id: uuid('id').primaryKey(), environment: contentEnvironmentEnum('environment').notNull(),
   resource: contentResourceEnum('resource').notNull(), record_id: integer('record_id').notNull(),
+  operation: varchar('operation', { length: 32 }).$type<'update' | 'create-project'>().notNull().default('update'),
   actor: text('actor').notNull(), token_id: uuid('token_id').references(() => contentToken.id),
   version: varchar('version', { length: 64 }).notNull(), expected_state: jsonb('expected_state').$type<Record<string, unknown>>().notNull(),
   before: jsonb('before').$type<Record<string, unknown>>().notNull(), after: jsonb('after').$type<Record<string, unknown>>().notNull(),

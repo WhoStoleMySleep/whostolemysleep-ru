@@ -27,6 +27,26 @@ function plan(patch = { ru: { 'hero.line1': 'Новый заголовок' }, e
   }
 }
 
+function projectPlan(status: ChangePlan['status'] = 'pending'): ChangePlan {
+  const after = {
+    slug: 'mcp-project', type: 'project', title_ru: 'Проект из репозитория', title_en: 'Project from repository',
+    excerpt_ru: 'Кратко о проекте', excerpt_en: 'Project overview',
+    text_ru: '<script>alert("RU")</script>\n## Задача', text_en: '<img src=x onerror=alert("EN")>\n## Solution',
+    url: 'https://github.com/example/project?tab=readme&lang=en', published_at: null, is_published: false,
+    tags: ['Nuxt', 'PostgreSQL'],
+    images: [
+      { url: 'https://images.example.com/screen.png?width=1200&format=webp', alt_ru: '<svg onload=alert(1)>', alt_en: 'Project screenshot', position: 0 },
+      { url: 'https://cdn.example.org/detail.webp', alt_ru: 'Детали', alt_en: 'Details', position: 1 },
+    ],
+  }
+  return {
+    id: 'creation-plan', operation: 'create-project', resource: 'post', recordId: 42,
+    version: 'creation-version', before: {}, after,
+    diff: [{ field: 'title_ru', before: undefined, after: after.title_ru }],
+    expiresAt: '2099-01-01T00:00:00.000Z', status,
+  }
+}
+
 beforeEach(async () => {
   vi.resetAllMocks()
   clearNuxtData()
@@ -36,10 +56,18 @@ beforeEach(async () => {
   mocks.history = []
   mocks.ask.mockResolvedValue(true)
   mocks.get.mockImplementation(async (url: string) => {
-    if (url.includes('/records?')) return [{ id: 1, label: 'Страницы сайта' }]
-    if (url.includes('/snapshot?')) return structuredClone(mocks.snapshot)
-    if (url.includes('/history?')) return structuredClone(mocks.history)
-    if (url.endsWith('/plans')) return mocks.plans.map(({ id, resource, recordId, expiresAt, status }) => ({ id, resource, recordId, expiresAt, status }))
+    if (url.includes('/records?')) return url.includes('resource=post')
+      ? [...(mocks.snapshot?.resource === 'post' ? [{ id: mocks.snapshot.recordId, label: 'Созданный проект' }] : [])]
+      : [{ id: 1, label: 'Страницы сайта' }]
+    if (url.includes('/snapshot?')) {
+      if (url.includes('resource=post') && mocks.snapshot?.resource !== 'post') throw new Error('Запись ещё не существует')
+      return structuredClone(mocks.snapshot)
+    }
+    if (url.includes('/history?')) {
+      if (url.includes('resource=post') && mocks.snapshot?.resource !== 'post') throw new Error('Запись ещё не существует')
+      return structuredClone(mocks.history)
+    }
+    if (url.endsWith('/plans')) return mocks.plans.map(({ id, operation, resource, recordId, expiresAt, status }) => ({ id, operation, resource, recordId, expiresAt, status }))
     if (url.includes('/plans/')) return structuredClone(mocks.plans.find(plan => url.endsWith(`/${plan.id}`)))
     throw new Error(`Unexpected URL ${url}`)
   })
@@ -49,6 +77,10 @@ beforeEach(async () => {
     if (url.endsWith('/apply')) {
       const applied = { ...mocks.plans[0]!, status: 'applied' as const }
       mocks.snapshot = { resource: applied.resource, recordId: applied.recordId, version: 'version-2', data: structuredClone(applied.after) }
+      if (applied.operation === 'create-project') mocks.history = [{
+        id: 'creation-history', resource: 'post', recordId: applied.recordId, createdAt: '2026-11-24',
+        before: {}, after: structuredClone(applied.after), actor: 'admin',
+      }]
       mocks.plans = [applied]
       return { status: 'applied', planId: body.planId }
     }
@@ -283,14 +315,209 @@ describe('Редактор page-copy и планы MCP', () => {
     wrapper.unmount()
   })
 
+  test('изменённая сервером операция после approve не применяется даже при прежнем diff', async () => {
+    const wrapper = await editor()
+    await editAndPreview(wrapper)
+    mocks.post.mockImplementationOnce(async () => ({ ...plan(), operation: 'create-project', status: 'approved' }))
+    await wrapper.get('[data-action="apply"]').trigger('click')
+    await flushPromises()
+    expect(mocks.post.mock.calls.some(([url]) => url.endsWith('/apply'))).toBe(false)
+    expect(wrapper.text()).toContain('План изменился или истёк')
+    wrapper.unmount()
+  })
+
+  test('явная operation update сохраняет проверку устаревшей версии', async () => {
+    mocks.plans = [{ ...plan(), operation: 'update', version: 'old-version' }]
+    const wrapper = await editor()
+    await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('План устарел')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
+    expect(mocks.post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
   test('восстановление создаёт только новый план и показывает его diff', async () => {
-    mocks.history = [{ id: 'history-1', resource: 'pages', recordId: 1, createdAt: '2026-11-24', before: {}, after: {}, actor: 'admin' }]
+    mocks.history = [{ id: 'history-1', resource: 'pages', recordId: 1, createdAt: '2026-11-24', before: structuredClone(mocks.snapshot!.data), after: {}, actor: 'admin' }]
     const wrapper = await editor()
     await wrapper.get('[aria-label="История изменений"] button').trigger('click')
     await flushPromises()
     expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/restore-plan', { historyId: 'history-1', expectedVersion: 'version-1' })
     expect(wrapper.find('[data-diff-field="ru.hero.line1"]').exists()).toBe(true)
     expect(mocks.ask).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+})
+
+async function reviewProject(status: ChangePlan['status'] = 'pending') {
+  mocks.plans = [projectPlan(status)]
+  const wrapper = await editor()
+  expect(wrapper.get('[aria-label="Планы изменений"]').text()).toContain('Создание проекта · черновик')
+  await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+  await flushPromises()
+  return wrapper
+}
+
+function reservedRecordReads() {
+  return mocks.get.mock.calls.filter(([url]) => /\/(snapshot|history)\?resource=post&recordId=42$/.test(url))
+}
+
+describe('Создание проекта из плана MCP', () => {
+  test.each(['pending', 'approved'] as const)('показывает весь проект %s без чтения несуществующей записи и выполнения HTML', async (status) => {
+    const wrapper = await reviewProject(status)
+    const preview = wrapper.get('[aria-label="Предпросмотр изменений"]')
+    expect(preview.get('h2').text()).toBe('Создание проекта · черновик')
+    for (const [field, value] of Object.entries(projectPlan().after)) {
+      const rendered = preview.get(`[data-diff-field="${field}"]`)
+      const expected = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+      expect(rendered.findAll('pre')[1]!.element.textContent).toBe(expected)
+    }
+    expect(preview.findAll('script, img, svg, iframe, a')).toHaveLength(0)
+    expect(preview.html()).toContain('&lt;script&gt;')
+    expect(preview.html()).toContain('&lt;svg')
+    expect(wrapper.get('[aria-label="Запись контента"]').text()).toContain('Новый проект #42 · черновик')
+    expect(wrapper.get('[aria-label="История изменений"]').text()).toContain('Запись ещё не создана')
+    expect(wrapper.text()).not.toContain('План устарел')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeUndefined()
+    expect(reservedRecordReads()).toHaveLength(0)
+    expect(mocks.post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test('повторная проверка и обновление данных не запрашивают snapshot/history зарезервированного ID', async () => {
+    const wrapper = await reviewProject()
+    await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
+    await wrapper.findAll('button').find(button => button.text() === 'Обновить данные')!.trigger('click')
+    await flushPromises()
+    expect(reservedRecordReads()).toHaveLength(0)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(mocks.post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test('переход из создания к текстам страниц возвращает обычный update-предпросмотр', async () => {
+    const wrapper = await reviewProject()
+    await wrapper.get('[aria-label="Раздел контента"]').setValue('pages')
+    await flushPromises()
+    expect(wrapper.find('[data-action="apply"]').exists()).toBe(false)
+    expect(wrapper.get('[aria-label="Запись контента"]').element).toHaveProperty('value', '1')
+    await editAndPreview(wrapper)
+    expect(wrapper.get('[aria-label="Предпросмотр изменений"] h2').text()).toBe('Предпросмотр плана')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeUndefined()
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/plan', expect.objectContaining({ resource: 'pages', recordId: 1 }))
+    expect(reservedRecordReads()).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  test('выбор существующей записи после создания загружает её snapshot и сохраняет stale guard update', async () => {
+    const defaultGet = mocks.get.getMockImplementation()!
+    const existing: ContentSnapshot = { resource: 'post', recordId: 7, version: 'existing-version', data: { title_ru: 'Существующий проект' } }
+    mocks.get.mockImplementation(async (url: string) => {
+      if (url === '/api/admin/content/records?resource=post') return [{ id: 7, label: 'Существующий проект' }]
+      if (url === '/api/admin/content/snapshot?resource=post&recordId=7') return structuredClone(existing)
+      if (url === '/api/admin/content/history?resource=post&recordId=7') return []
+      return defaultGet(url)
+    })
+    const wrapper = await reviewProject()
+    await wrapper.get('[aria-label="Запись контента"]').setValue('7')
+    await flushPromises()
+    expect(wrapper.find('[data-action="apply"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Запись ещё не создана')
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/snapshot?resource=post&recordId=7')
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/history?resource=post&recordId=7')
+    mocks.plans = [{ ...projectPlan(), operation: 'update', recordId: 7, version: 'stale-version', before: existing.data }]
+    await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[aria-label="Предпросмотр изменений"] h2').text()).toBe('Предпросмотр плана')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('План устарел')
+    expect(reservedRecordReads()).toHaveLength(0)
+    expect(mocks.post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  test('отдельное approve не создаёт проект и не запрашивает snapshot/history', async () => {
+    const wrapper = await reviewProject()
+    await wrapper.get('[data-action="approve"]').trigger('click')
+    await flushPromises()
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/approve', { planId: 'creation-plan' })
+    expect(mocks.ask).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('не создаёт запись и не публикует') }))
+    expect(wrapper.get('[data-action="apply"]').text()).toBe('Применить')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeUndefined()
+    expect(reservedRecordReads()).toHaveLength(0)
+    expect(mocks.snapshot?.resource).toBe('pages')
+    wrapper.unmount()
+  })
+
+  test.each(['pending', 'approved'] as const)('после явного apply проекта %s обновляет records/snapshot/history и не публикует', async (status) => {
+    const wrapper = await reviewProject(status)
+    mocks.get.mockClear()
+    await wrapper.get('[data-action="apply"]').trigger('click')
+    await flushPromises()
+    expect(mocks.ask).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('Публикации не будет.') }))
+    expect(mocks.post.mock.calls.map(([url]) => url)).toEqual(status === 'pending'
+      ? ['/api/admin/content/approve', '/api/admin/content/apply'] : ['/api/admin/content/apply'])
+    expect(mocks.post).toHaveBeenLastCalledWith('/api/admin/content/apply', { planId: 'creation-plan' })
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/records?resource=post')
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/snapshot?resource=post&recordId=42')
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/history?resource=post&recordId=42')
+    expect(mocks.get).toHaveBeenCalledWith('/api/admin/content/plans')
+    expect(wrapper.get('[aria-label="Запись контента"]').text()).toContain('Созданный проект')
+    expect(wrapper.get('[aria-label="История изменений"]').text()).toContain('creation-history')
+    expect(wrapper.get('[aria-label="История изменений"]').text()).toContain('Восстановление до отсутствующей записи не поддерживается')
+    expect(wrapper.find('[aria-label="История изменений"] button').exists()).toBe(false)
+    expect(wrapper.get('[data-action="apply"]').text()).toBe('Применён')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
+    expect(mocks.snapshot?.data.is_published).toBe(false)
+    expect(wrapper.text()).not.toContain('План устарел')
+    expect(mocks.ok).toHaveBeenCalledWith('Проект создан как черновик. Публикации не было.')
+    wrapper.unmount()
+  })
+
+  test('отмена apply оставляет проект несуществующим', async () => {
+    const wrapper = await reviewProject()
+    mocks.ask.mockResolvedValue(false)
+    await wrapper.get('[data-action="apply"]').trigger('click')
+    await flushPromises()
+    expect(mocks.post).not.toHaveBeenCalled()
+    expect(reservedRecordReads()).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  test('истёкший план создания нельзя одобрить или применить', async () => {
+    const wrapper = await reviewProject()
+    mocks.plans[0]!.expiresAt = '2000-01-01T00:00:00.000Z'
+    await wrapper.get('[aria-label="Планы изменений"] button').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-action="approve"]').attributes('disabled')).toBeDefined()
+    expect(mocks.post).not.toHaveBeenCalled()
+    expect(reservedRecordReads()).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  test('изменение operation create-project на update после approve требует повторной проверки', async () => {
+    const wrapper = await reviewProject()
+    mocks.post.mockResolvedValueOnce({ ...projectPlan(), operation: 'update', status: 'approved' })
+    await wrapper.get('[data-action="apply"]').trigger('click')
+    await flushPromises()
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/approve', { planId: 'creation-plan' })
+    expect(wrapper.text()).toContain('План изменился или истёк')
+    expect(reservedRecordReads()).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  test('конфликт создания не читает несуществующий проект и блокирует повторный apply', async () => {
+    const wrapper = await reviewProject('approved')
+    mocks.post.mockRejectedValueOnce({ statusCode: 409 })
+    await wrapper.get('[data-action="apply"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Конфликт версий')
+    expect(wrapper.get('[data-action="apply"]').attributes('disabled')).toBeDefined()
+    expect(reservedRecordReads()).toHaveLength(0)
+    expect(mocks.ok).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 })

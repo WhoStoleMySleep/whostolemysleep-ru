@@ -9,6 +9,7 @@ import { assertContentPermission } from './contentAuth'
 import { requireContentWrites } from './contentInput'
 import { CONTENT_TABLES, loadContent } from './contentRecords'
 import { loadContentPlan } from './contentPlans'
+import { buildProjectCreateSql } from './contentProject'
 import { buildPendingEnqueueSql, flushPending, postPaths, resumePaths, SITE_REVALIDATION_MARKER } from './pending'
 
 type PlanRow = typeof contentPlan.$inferSelect
@@ -28,7 +29,8 @@ function callerTokenSql(actor: ContentActor, plan: PlanRow): SQL {
   return sql`caller_token as materialized (
     select t.id from content_token t where t.id = ${actor.tokenId}::uuid
       and t.environment = ${actor.environment} and t.revoked_at is null and t.expires_at > now()
-      and t.resources ? ${plan.resource} and t.scopes ? 'apply' for share
+      and t.resources ? ${plan.resource} and t.scopes ? 'apply'
+      and (${plan.operation === 'create-project'} = false or t.scopes ? 'create-project') for share
   )`
 }
 
@@ -37,10 +39,14 @@ function lockedPlanSql(actor: ContentActor, plan: PlanRow): SQL {
   return sql`source_token as materialized (
     select t.id from content_token t where t.id = ${plan.token_id}::uuid
       and t.environment = ${actor.environment} and t.revoked_at is null and t.expires_at > now()
-      and t.resources ? ${plan.resource} and t.scopes ? 'plan' for share
+      and t.resources ? ${plan.resource} and t.scopes ? 'plan'
+      and (${plan.operation === 'create-project'} = false or t.scopes ? 'create-project') for share
   ), locked_plan as materialized (
     select p.* from content_plan p where p.id = ${plan.id}::uuid
-      and p.environment = ${actor.environment} and p.status = 'approved'
+      and p.environment = ${actor.environment} and p.operation = ${plan.operation ?? 'update'}
+      and p.after = ${JSON.stringify(plan.after)}::jsonb and p.expected_state = ${JSON.stringify(plan.expected_state)}::jsonb
+      and p.record_id = ${plan.record_id} and p.resource = ${plan.resource} and p.version = ${plan.version}
+      and p.status = 'approved'
       and p.approved_by = 'admin' and p.expires_at > now() ${owner}
       and (p.token_id is null or exists(select 1 from source_token))
     for update
@@ -77,10 +83,11 @@ function outboxSql(paths: string[]): SQL {
 
 /** Live update, audit, applied и durable очередь фиксируются или откатываются вместе. */
 export function buildContentApplySql(actor: ContentActor, plan: PlanRow, paths: string[]): SQL {
-  return sql`with ${callerTokenSql(actor, plan)}, ${lockedPlanSql(actor, plan)}, ${liveUpdateSql(plan)}, ${auditSql(actor)}, ${outboxSql(paths)}`
+  return sql`with ${callerTokenSql(actor, plan)}, ${lockedPlanSql(actor, plan)}, ${plan.operation === 'create-project' ? buildProjectCreateSql() : liveUpdateSql(plan)}, ${auditSql(actor)}, ${outboxSql(paths)}`
 }
 
 function contentPaths(plan: PlanRow): string[] {
+  if (plan.operation === 'create-project') return postPaths(plan.after as Parameters<typeof postPaths>[0])
   if (plan.resource === 'post') return [...postPaths(plan.before as Parameters<typeof postPaths>[0]), ...postPaths(plan.after as Parameters<typeof postPaths>[0])]
   if (['experience', 'education', 'skill', 'skill-group'].includes(plan.resource)) return resumePaths()
   return [SITE_REVALIDATION_MARKER]
@@ -100,6 +107,7 @@ function requireApprovedPlan(plan: PlanRow): void {
 
 async function applyApprovedPlan(actor: ContentActor, plan: PlanRow): Promise<void> {
   requireApprovedPlan(plan)
+  if (plan.operation === 'create-project') return applyProjectPlan(actor, plan)
   const current = await loadContent(plan.resource, plan.record_id, actor.environment)
   if (current.snapshot.version !== plan.version) {
     if ((await loadContentPlan(actor, plan.id)).status === 'applied') return refreshContent()
@@ -119,7 +127,27 @@ export async function applyContentPlan(actor: ContentActor, planId: string): Pro
   requireContentWrites()
   const plan = await loadContentPlan(actor, planId)
   assertContentPermission(actor, plan.resource, 'apply')
+  if (plan.operation === 'create-project') assertContentPermission(actor, 'post', 'create-project')
   if (plan.status === 'applied') await refreshContent()
   else await applyApprovedPlan(actor, plan)
   return { status: 'applied', planId }
+}
+
+async function applyProjectPlan(actor: ContentActor, plan: PlanRow): Promise<void> {
+  const paths = contentPaths(plan)
+  let result
+  try { result = await db.execute<{ id: string }>(buildContentApplySql(actor, plan, paths)) }
+  catch (error) {
+    if (isUniqueConflict(error)) throw createError({ statusCode: 409, message: 'Project slug or tag changed; prepare a new plan' })
+    throw error
+  }
+  if (!result.rows.length && (await loadContentPlan(actor, plan.id)).status !== 'applied') {
+    throw createError({ statusCode: 409, message: 'Project conflict, expired plan, or revoked source token' })
+  }
+  await refreshContent(paths)
+}
+
+function isUniqueConflict(error: unknown): boolean {
+  const cause = error as { code?: string; cause?: unknown }
+  return cause?.code === '23505' || !!(cause?.cause && cause.cause !== error && isUniqueConflict(cause.cause))
 }

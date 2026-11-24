@@ -65,5 +65,6 @@ export async function restoreContentPlan(actor: ContentActor, historyId: string,
   assertContentAdminActor(actor)
   const [history] = await db.select().from(contentHistory).where(and(eq(contentHistory.id, historyId), eq(contentHistory.environment, actor.environment))).limit(1)
   if (!history) throw createError({ statusCode: 404, message: 'Content history not found' })
+  if (!Object.keys(history.before).length) throw createError({ statusCode: 409, message: 'Project creation cannot be restored as a scalar update' })
   return createContentPlan(actor, { resource: history.resource, recordId: history.record_id, expectedVersion, patch: history.before })
 }

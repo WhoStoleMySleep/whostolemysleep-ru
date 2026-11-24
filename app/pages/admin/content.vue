@@ -6,7 +6,7 @@ definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Admin — Тексты и планы' })
 
 const {
-  resource, recordId, draft, selectedPlan, dirty, busy, error, conflicted, draftChanged, versionChanged, canApply, loading, loadError,
+  resource, recordId, creatingProject, draft, selectedPlan, dirty, busy, error, conflicted, draftChanged, versionChanged, canApply, loading, loadError,
   records, snapshot, history, plans, preview, reviewPlan, restore, reload, apply, approve,
 } = useContentEditor()
 const confirm = useAdminConfirm()
@@ -23,6 +23,7 @@ const resources: { value: ContentResource, label: string, editor?: string }[] = 
 const editorLink = computed(() => resources.find(item => item.value === resource.value)?.editor)
 const historyEntries = computed(() => (history.value ?? []).map(entry => ({
   ...entry, beforeText: JSON.stringify(entry.before, null, 2), afterText: JSON.stringify(entry.after, null, 2),
+  restorable: Object.keys(entry.before).length > 0,
 })))
 const note = computed(() => dirty.value ? 'Есть черновик · ⌘S создаёт только план, не публикует' : 'Сначала diff, затем явное подтверждение')
 
@@ -66,7 +67,8 @@ async function review(plan: ContentPlanSummary) {
         </label>
         <label>Запись
           <select :value="recordId ?? ''" :disabled="busy || !records?.length" aria-label="Запись контента" @change="changeRecord">
-            <option v-if="!records?.length" value="">Нет записей</option>
+            <option v-if="creatingProject" :value="recordId">Новый проект #{{ recordId }} · черновик</option>
+            <option v-else-if="!records?.length" value="">Нет записей</option>
             <option v-for="item in records" :key="item.id" :value="item.id">{{ item.label }}</option>
           </select>
         </label>
@@ -84,7 +86,7 @@ async function review(plan: ContentPlanSummary) {
           <button type="button" class="admin-btn admin-btn--primary" data-action="preview" :disabled="busy || !dirty || loading" @click="preview()">Создать план и посмотреть diff</button>
         </div>
       </section>
-      <p v-else-if="editorLink" class="content-note">Существующие записи редактируются в <NuxtLink :to="editorLink">обычном редакторе</NuxtLink>. Здесь можно проверить планы MCP и восстановить версию через новый план. Создания и удаления записей здесь нет.</p>
+      <p v-else-if="editorLink" class="content-note">Существующие записи редактируются в <NuxtLink :to="editorLink">обычном редакторе</NuxtLink>. Здесь можно проверить планы MCP и восстановить версию через новый план. Создание проекта через MCP требует одобрения и создаёт только черновик, без публикации.</p>
 
       <AdminContentPlan v-if="selectedPlan" :plan="selectedPlan" :can-apply="canApply" :busy="busy" @apply="apply()" @approve="approve()" />
 
@@ -92,20 +94,22 @@ async function review(plan: ContentPlanSummary) {
         <h2>Все планы, включая MCP</h2>
         <p v-if="!plans?.length" class="content-note">Планов пока нет.</p>
         <article v-for="plan in plans" :key="plan.id" class="content-list__item">
-          <div><p>{{ plan.resource }} #{{ plan.recordId }} · {{ plan.status }}</p><p class="content-note">{{ plan.id }} · до {{ plan.expiresAt }}</p></div>
+          <div><p><template v-if="plan.operation === 'create-project'">Создание проекта · черновик · </template>{{ plan.resource }} #{{ plan.recordId }} · {{ plan.status }}</p><p class="content-note">{{ plan.id }} · до {{ plan.expiresAt }}</p></div>
           <button type="button" class="admin-btn admin-btn--ghost" :disabled="busy" :aria-pressed="selectedPlan?.id === plan.id" @click="review(plan)">Проверить diff</button>
         </article>
       </section>
 
       <section class="admin-panel content-list" aria-label="История изменений">
         <h2>История выбранной записи</h2>
-        <p v-if="!history?.length" class="content-note">Применённых изменений пока нет.</p>
+        <p v-if="creatingProject" class="content-note">Запись ещё не создана. История появится после применения плана создания черновика.</p>
+        <p v-else-if="!history?.length" class="content-note">Применённых изменений пока нет.</p>
         <article v-for="entry in historyEntries" :key="entry.id" class="content-list__item">
           <div class="history-entry">
             <p>{{ entry.createdAt }} · {{ entry.actor }}</p><p class="content-note">{{ entry.id }}</p>
             <details><summary>Посмотреть до / после</summary><p>До</p><pre>{{ entry.beforeText }}</pre><p>После</p><pre>{{ entry.afterText }}</pre></details>
           </div>
-          <button type="button" class="admin-btn admin-btn--ghost" :disabled="busy || !snapshot" @click="restore(entry)">Создать план восстановления</button>
+          <button v-if="entry.restorable" type="button" class="admin-btn admin-btn--ghost" :disabled="busy || !snapshot" @click="restore(entry)">Создать план восстановления</button>
+          <p v-else class="content-note">Это создание черновика. Восстановление до отсутствующей записи не поддерживается.</p>
         </article>
       </section>
     </div>

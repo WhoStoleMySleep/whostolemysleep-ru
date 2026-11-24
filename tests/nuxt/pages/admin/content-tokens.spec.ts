@@ -36,6 +36,8 @@ describe('Токены контента', () => {
   test('по умолчанию выдаёт только read+plan, секрет хранится только до скрытия', async () => {
     const wrapper = await tokensPage()
     const storage = vi.spyOn(Storage.prototype, 'setItem')
+    expect(wrapper.get('[data-scope="create-project"]').element).toHaveProperty('checked', false)
+    expect(wrapper.text()).toContain('create-project · создавать проекты только как черновики')
     await createToken(wrapper)
     expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/tokens', {
       label: 'Мой MCP', resources: ['pages'], scopes: ['read', 'plan'], expiresInDays: 30,
@@ -58,7 +60,7 @@ describe('Токены контента', () => {
     await wrapper.get('input[type="text"]').setValue('Мой MCP')
     const checkboxes = wrapper.findAll('input[type="checkbox"]')
     await checkboxes[1]!.setValue(true)
-    await checkboxes.at(-1)!.setValue(true)
+    await wrapper.get('[data-scope="apply"]').setValue(true)
     await wrapper.get('input[type="number"]').setValue(7)
     await wrapper.get('.token-form button').trigger('click')
     await flushPromises()
@@ -66,6 +68,31 @@ describe('Токены контента', () => {
       label: 'Мой MCP', resources: ['pages', 'post'], scopes: ['read', 'plan', 'apply'], expiresInDays: 7,
     })
     expect(wrapper.text()).toContain('сервер всё равно требует одобрения владельца')
+    wrapper.unmount()
+  })
+
+  test('create-project включается явно и передаётся только после выбора', async () => {
+    const wrapper = await tokensPage()
+    const creationScope = wrapper.get('[data-scope="create-project"]')
+    await creationScope.setValue(true)
+    expect(creationScope.element).toHaveProperty('checked', true)
+    await wrapper.findAll('input[type="checkbox"]')[1]!.setValue(true)
+    await createToken(wrapper)
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/tokens', {
+      label: 'Мой MCP', resources: ['pages', 'post'], scopes: ['read', 'plan', 'create-project'], expiresInDays: 30,
+    })
+    expect(wrapper.text()).toContain('без публикации')
+    wrapper.unmount()
+  })
+
+  test('отключённый create-project не отправляется с обычными scopes', async () => {
+    const wrapper = await tokensPage()
+    await wrapper.get('[data-scope="create-project"]').setValue(true)
+    await wrapper.get('[data-scope="create-project"]').setValue(false)
+    await createToken(wrapper)
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith('/api/admin/content/tokens', {
+      label: 'Мой MCP', resources: ['pages'], scopes: ['read', 'plan'], expiresInDays: 30,
+    })
     wrapper.unmount()
   })
 
