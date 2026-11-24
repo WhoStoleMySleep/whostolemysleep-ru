@@ -12,6 +12,8 @@ const { t } = useLocale()
 const localePath = useLocalePath()
 const { formatPeriod } = useFormatDate()
 
+await usePageCopy().load()
+
 const [
   { data: about },
   { data: experience },

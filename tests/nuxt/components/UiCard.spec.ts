@@ -29,6 +29,16 @@ const post = (fields: Partial<Post> = {}): Post => ({
 })
 
 describe('UiCard', () => {
+  test.each([null, '', 'https://example.com'])('карточка проекта с url=%s открывает кейс в той же вкладке', async (url) => {
+    const wrapper = await mountSuspended(UiCard, { props: { item: post({ type: 'project', url }) } })
+    const link = wrapper.get('a')
+    expect(link.attributes('href')).toBe('/ru/projects/hello')
+    expect(link.attributes('target')).toBeUndefined()
+    expect(wrapper.get('.card__link').text()).toBe('project.read →')
+    expect(wrapper.text()).not.toContain('example.com ↗')
+    wrapper.unmount()
+  })
+
   test('an internal entry links to the blog page and opens in the same window', async () => {
     const wrapper = await mountSuspended(UiCard, { props: { item: post() } })
     const link = wrapper.get('a')
@@ -109,7 +119,7 @@ describe('Домены и закрепление в карточке', () => {
 
 describe('Цели Метрики в карточках', () => {
   test.each([
-    { type: 'project' as const, url: 'https://example.com', expected: 'project_open' },
+    { type: 'project' as const, url: 'https://example.com', expected: undefined },
     { type: 'project' as const, url: null, expected: undefined },
     { type: 'blog' as const, url: 'https://example.com', expected: undefined },
   ])('метка события для $type со ссылкой $url', async ({ type, url, expected }) => {

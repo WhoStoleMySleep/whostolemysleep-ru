@@ -78,10 +78,10 @@ test('смена slug обновляет старую и новую страни
   expect(mocks.dirty).toHaveBeenCalledWith(expect.arrayContaining(['/blog/old', '/blog/new']))
 })
 
-test('создание внешнего проекта не ставит несуществующую страницу в очередь', async () => {
+test('создание проекта с внешним URL обновляет также его кейс', async () => {
   plan(state, { 'insert:post': [[{ id: 7, slug: 'wave', type: 'project', url: 'https://example.com' }]] })
   await save({ type: 'project', slug: 'wave', url: 'https://example.com', text_ru: '', text_en: '' }, true)
-  expect(mocks.dirty).toHaveBeenCalledWith(['/', '/blog', '/projects'])
+  expect(mocks.dirty).toHaveBeenCalledWith(['/', '/blog', '/projects', '/projects/wave'])
 })
 
 test('снятие с публикации сохраняет путь для удаления старой ISR-копии', async () => {

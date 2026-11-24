@@ -12,9 +12,14 @@ const LOCALE_COOKIE_MAX_AGE = DAYS_PER_YEAR * HOURS_PER_DAY * MINUTES_PER_HOUR *
 
 /** Locale switching with a fade over the navigation, plus strings that need Russian plural rules. */
 export function useLocale() {
-  const { locale: rawLocale, t } = useI18n()
+  const { locale: rawLocale, t: translate } = useI18n()
   const switchLocalePath = useSwitchLocalePath()
   const locale = computed(() => rawLocale.value as Locale)
+  const pageCopy = usePageCopy()
+
+  function t(key: string, params: Record<string, string | number> = {}): string {
+    return pageCopy.text(key, locale.value, params) ?? translate(key, params)
+  }
 
   async function setLocale(l: Locale) {
     const isFading = useState('lang-fade', () => false)

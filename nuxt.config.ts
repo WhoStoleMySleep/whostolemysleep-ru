@@ -81,6 +81,8 @@ export default defineNuxtConfig({
     '/en/blog/**':   isr(600),
     '/ru/projects':  isr(600),
     '/en/projects':  isr(600),
+    '/ru/projects/**': isr(600),
+    '/en/projects/**': isr(600),
     '/ru/resume':    isr(7200),
     '/en/resume':    isr(7200),
     // The printable CV: kept out of search so it does not compete with /resume.

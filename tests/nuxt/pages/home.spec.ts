@@ -74,14 +74,16 @@ describe('Selected work на главной', () => {
 })
 
 describe('Цели Метрики на главной', () => {
-  test('только внешний проект получает метку события', async () => {
+  test('проекты ведут на кейсы без цели внешнего перехода', async () => {
     state.projects = projects(3)
     state.projects[0]!.url = 'https://example.com/project'
     state.projects[1]!.url = 'https://example.com/article'
     state.projects[1]!.type = 'blog'
     const wrapper = await mountHome()
     const links = wrapper.findAll('#selected-work .row')
-    expect(links[0]!.attributes('data-metrika-goal')).toBe('project_open')
+    expect(links[0]!.attributes('data-metrika-goal')).toBeUndefined()
+    expect(links[0]!.attributes('href')).toBe('/ru/projects/project-0')
+    expect(links[2]!.attributes('href')).toBe('/ru/projects/project-2')
     expect(links[1]!.attributes('data-metrika-goal')).toBeUndefined()
     expect(links[2]!.attributes('data-metrika-goal')).toBeUndefined()
     wrapper.unmount()

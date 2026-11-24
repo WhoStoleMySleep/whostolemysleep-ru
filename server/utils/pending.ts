@@ -36,19 +36,20 @@ export async function clearPending(pages: PendingPage[]): Promise<void> {
   ))))
 }
 
-function detailSlug(path: string): string | undefined {
-  return /^\/(?:(?:ru|en)\/)?blog\/([^/]+)$/.exec(path)?.[1]
+function detailPath(path: string): string | undefined {
+  return /^\/(?:(?:ru|en)\/)?((?:blog|projects)\/[^/]+)$/.exec(path)?.[1]
 }
 
 async function missingDetails(paths: string[]): Promise<string[]> {
-  const slugs = [...new Set(paths.map(detailSlug).filter((slug): slug is string => !!slug))]
+  const details = paths.map(detailPath).filter((path): path is string => !!path)
+  const slugs = [...new Set(details.map(path => path.split('/')[1]!))]
   if (!slugs.length) return []
   const rows = await db.select({ slug: schema.post.slug, type: schema.post.type, url: schema.post.url, is_published: schema.post.is_published })
     .from(schema.post).where(inArray(schema.post.slug, slugs))
-  const available = new Set(rows.filter(row => row.is_published && hasDetail(row)).map(row => row.slug))
+  const available = new Set(rows.filter(row => row.is_published).flatMap(detailPaths).map(path => path.slice(1)))
   return paths.filter(path => {
-    const slug = detailSlug(path)
-    return slug !== undefined && !available.has(slug)
+    const detail = detailPath(path)
+    return detail !== undefined && !available.has(detail)
   }).flatMap(withLocales)
 }
 
@@ -74,18 +75,18 @@ export function withLocales(path: string): string[] {
   return LOCALES.map(locale => `/${locale}${rest}`)
 }
 
-function hasDetail(post: PostPage): boolean {
-  return post.type === 'blog' || !post.url
+function detailPaths(post: PostPage): string[] {
+  if (post.type === 'blog') return [`/blog/${post.slug}`]
+  // Старые страницы без внешнего URL остаются редиректами и тоже могут быть закешированы.
+  return [`/projects/${post.slug}`, ...(post.url ? [] : [`/blog/${post.slug}`])]
 }
 
-/** Внешний проект меняет списки, но не имеет собственной страницы /blog/slug. */
+/** Контент меняет списки, собственную страницу и ранее доступный адрес проекта. */
 export function postPaths(post?: PostPage): string[] {
-  const paths = ['/', '/blog', '/projects']
-  if (post && hasDetail(post)) paths.push(`/blog/${post.slug}`)
-  return paths
+  return ['/', '/blog', '/projects', ...(post ? detailPaths(post) : [])]
 }
 
-/** Изображение меняет карточку и страницу записи; внешний проект по-прежнему обновляет только списки. */
+/** Изображения используются и в карточках, и на странице проекта или статьи. */
 export async function markPostDirty(postId: number): Promise<void> {
   const [post] = await db.select({ slug: schema.post.slug, type: schema.post.type, url: schema.post.url })
     .from(schema.post).where(eq(schema.post.id, postId)).limit(1)
@@ -96,7 +97,7 @@ export async function markPostDirty(postId: number): Promise<void> {
 export async function sitePaths(): Promise<string[]> {
   const posts = await db.select({ slug: schema.post.slug, type: schema.post.type, url: schema.post.url })
     .from(schema.post).where(eq(schema.post.is_published, true))
-  return ['/', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy', ...posts.filter(hasDetail).map(post => `/blog/${post.slug}`)]
+  return ['/', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy', ...posts.flatMap(detailPaths)]
 }
 
 /** Печатное CV использует те же таблицы, что и резюме. */

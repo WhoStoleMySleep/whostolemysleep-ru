@@ -18,6 +18,7 @@ const routes = [
   () => import('~~/server/api/posts/latest.get'),
   () => import('~~/server/api/posts/[type].get'),
   () => import('~~/server/api/blog/[slug].get'),
+  () => import('~~/server/api/projects/[slug].get'),
 ]
 
 beforeEach(() => {
@@ -62,7 +63,7 @@ describe('Свежие данные для пересборки ISR', () => {
     const pages = [
       '/ru', '/en',
       '/ru/blog', '/en/blog', '/ru/blog/**', '/en/blog/**',
-      '/ru/projects', '/en/projects',
+      '/ru/projects', '/en/projects', '/ru/projects/**', '/en/projects/**',
       '/ru/resume', '/en/resume', '/ru/cv', '/en/cv',
       '/ru/contacts', '/en/contacts', '/ru/privacy', '/en/privacy',
     ] as const

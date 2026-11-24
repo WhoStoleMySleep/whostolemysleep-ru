@@ -53,8 +53,9 @@ const OPTIONAL_LINKS = [
 type DigestPost = Awaited<ReturnType<typeof loadDigestData>>['posts'][number]
 type DigestSettings = typeof settings.$inferSelect | undefined
 
-/** A project with its own url links out; everything else links to the blog page. */
-function linkFor(row: { slug: string; url: string | null }) {
+/** Ссылка на кейс сохраняет контекст проекта, даже если у него есть внешний сайт. */
+function linkFor(row: { slug: string; url: string | null; type: string }) {
+  if (row.type === 'project') return `${BASE_URL}/en/projects/${row.slug}`
   return row.url || `${BASE_URL}/en/blog/${row.slug}`
 }
 

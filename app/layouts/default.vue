@@ -7,6 +7,8 @@ const localePath = useLocalePath()
 const nav = useNav()
 const { progress, toTop } = useScrollProgress()
 
+await usePageCopy().load()
+
 const progressPct = computed(() => `${Math.round(progress.value * 100)}%`)
 const showToTop = computed(() => progress.value > TO_TOP_VISIBILITY_THRESHOLD)
 

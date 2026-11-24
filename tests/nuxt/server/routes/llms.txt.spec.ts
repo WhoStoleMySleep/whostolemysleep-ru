@@ -75,8 +75,8 @@ describe('Дайджест llms.txt', () => {
 
       ## Projects
 
-      - [Внешний проект](https://project.test): Ссылка
-      - [Internal](https://whostolemysleep.ru/en/blog/internal)
+      - [Внешний проект](https://whostolemysleep.ru/en/projects/project): Ссылка
+      - [Internal](https://whostolemysleep.ru/en/projects/internal)
 
       ## Blog posts
 

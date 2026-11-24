@@ -98,6 +98,23 @@ describe('Автоматическое обновление страниц', () 
     expect(mocks.revalidate).toHaveBeenCalledWith(['/en/blog/deleted'], ['/en/blog/deleted'])
   })
 
+  test('проверяет существование кейса по типу маршрута, включая локализованный путь', async () => {
+    const paths = ['/projects/deleted', '/projects/draft', '/projects/published', '/en/projects/article', '/ru/projects/published']
+    plan(state, {
+      'select:pending_revalidation': [paths.map(path => queued(path))],
+      'select:post': [[
+        { slug: 'draft', type: 'project', url: null, is_published: false },
+        { slug: 'published', type: 'project', url: 'https://example.com', is_published: true },
+        { slug: 'article', type: 'blog', url: null, is_published: true },
+      ]],
+    })
+    const { flushPending } = await import('~~/server/utils/pending')
+    await flushPending()
+    expect(mocks.revalidate.mock.calls[0]?.[1]).toEqual([
+      '/ru/projects/deleted', '/en/projects/deleted', '/ru/projects/draft', '/en/projects/draft', '/en/projects/article',
+    ])
+  })
+
   test('при завершении сравнивает точную версию очереди, а не только путь', async () => {
     const { clearPending } = await import('~~/server/utils/pending')
     await clearPending([queued('/blog')])
@@ -107,10 +124,10 @@ describe('Автоматическое обновление страниц', () 
     expect(query.params).toEqual(['/blog', '2026-11-21 12:00:00.123456+00'])
   })
 
-  test('общие настройки обновляют все страницы, но не внешние проекты', async () => {
+  test('общие настройки обновляют также кейсы проектов с внешними сайтами', async () => {
     plan(state, { 'select:post': [[{ slug: 'article', type: 'blog', url: null }, { slug: 'external', type: 'project', url: 'https://example.com' }]] })
     const { sitePaths } = await import('~~/server/utils/pending')
-    expect(await sitePaths()).toEqual(['/', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy', '/blog/article'])
+    expect(await sitePaths()).toEqual(['/', '/blog', '/projects', '/resume', '/cv', '/contacts', '/privacy', '/blog/article', '/projects/external'])
   })
 })
 
@@ -131,13 +148,13 @@ test('ручной Flush использует ту же очередь и воз
 
 describe('Обновление страниц связанной с изображением записи', () => {
   test.each([
-    { type: 'blog', url: null, detail: true },
-    { type: 'blog', url: 'https://example.com', detail: true },
-    { type: 'project', url: null, detail: true },
-    { type: 'project', url: '', detail: true },
-    { type: 'project', url: 'https://example.com', detail: false },
-  ])('тип=$type url=$url учитывает наличие внутренней страницы', async ({ type, url, detail }) => {
-    const paths = ['/', '/blog', '/projects', ...(detail ? ['/blog/post'] : [])]
+    { type: 'blog', url: null, details: ['/blog/post'] },
+    { type: 'blog', url: 'https://example.com', details: ['/blog/post'] },
+    { type: 'project', url: null, details: ['/projects/post', '/blog/post'] },
+    { type: 'project', url: '', details: ['/projects/post', '/blog/post'] },
+    { type: 'project', url: 'https://example.com', details: ['/projects/post'] },
+  ])('тип=$type url=$url учитывает наличие внутренней страницы', async ({ type, url, details }) => {
+    const paths = ['/', '/blog', '/projects', ...details]
     plan(state, {
       'select:post': [[{ slug: 'post', type, url, is_published: true }]],
       'select:pending_revalidation': [paths.map(path => queued(path))],

@@ -40,7 +40,8 @@ const host = computed(() => {
     <h2 class="card__title">{{ item.title }}</h2>
     <p class="card__desc">{{ item.excerpt }}</p>
 
-    <span v-if="host" class="card__link">{{ host }} ↗</span>
+    <span v-if="item.type === 'project'" class="card__link">{{ t('project.read') }} →</span>
+    <span v-else-if="host" class="card__link">{{ host }} ↗</span>
   </NuxtLink>
 </template>
 

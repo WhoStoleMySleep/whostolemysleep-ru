@@ -40,6 +40,8 @@ const news = computed(() => (latest.value ?? [])
 
 /** Years of experience live here only — the heading no longer repeats them. */
 const years = computed(() => siteSettings.value?.years_experience ?? 0)
+const YEARS_PLACEHOLDER = '\u0000years\u0000'
+const ledeParts = computed(() => t('hero.lede', { years: YEARS_PLACEHOLDER }).split(YEARS_PLACEHOLDER))
 
 const stack = computed(() => [
   { k: t('stack.f1_k'), v: t('stack.f1_v') },
@@ -75,11 +77,7 @@ const brings = computed(() => [
 
         <div class="hero__lede-row">
           <span class="hero__rule" aria-hidden="true" />
-          <i18n-t keypath="hero.lede" tag="p" class="hero__lede" scope="global">
-            <template #years>
-              <span class="hero__years">{{ years }}+ {{ t('hero.years') }}</span>
-            </template>
-          </i18n-t>
+          <p class="hero__lede"><template v-for="(part, index) in ledeParts" :key="index">{{ part }}<span v-if="index < ledeParts.length - 1" class="hero__years">{{ years }}+ {{ t('hero.years') }}</span></template></p>
         </div>
 
         <div class="hero__cta">

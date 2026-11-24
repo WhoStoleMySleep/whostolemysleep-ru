@@ -24,7 +24,7 @@ defineRouteMeta({
 
 function postEntries(row: SitemapPost): Entry[] {
   return LOCALES.map(locale => ({
-    loc: `${BASE_URL}/${locale}/blog/${row.slug}`,
+    loc: `${BASE_URL}/${locale}/${row.type === 'project' ? 'projects' : 'blog'}/${row.slug}`,
     lastmod: row.updated_at?.slice(0, 10),
   }))
 }
@@ -47,9 +47,8 @@ export default defineCachedEventHandler(async (event) => {
   const staticUrls: Entry[] = STATIC_PATHS.flatMap(path =>
     LOCALES.map(locale => ({ loc: `${BASE_URL}/${locale}${path}` }))
   )
-  // External projects have no local page. Static pages omit lastmod because their
-  // markup's modification time is not known here.
-  const postUrls = posts.filter(row => row.type === 'blog' || !row.url).flatMap(postEntries)
+  // Static pages omit lastmod because their modification time is not known here.
+  const postUrls = posts.flatMap(postEntries)
   const xml = sitemapXml([...staticUrls, ...postUrls])
   setHeader(event, 'Content-Type', 'application/xml; charset=utf-8')
   return xml
