@@ -72,7 +72,8 @@ describe('Атомарное применение approved plan', () => {
     mocks.plan.mockResolvedValue(row({ status: 'applied' }))
     await expect(applyContentPlan(actor, id)).resolves.toEqual({ status: 'applied', planId: id })
     expect(mocks.execute).not.toHaveBeenCalled()
-    expect(mocks.dirty).toHaveBeenCalledWith(['/'])
+    expect(mocks.dirty).not.toHaveBeenCalled()
+    expect(mocks.flush).toHaveBeenCalledWith(undefined)
   })
 
   test('оптимистический конфликт до write и race conflict в SQL возвращают 409', async () => {
@@ -100,7 +101,7 @@ describe('Атомарное применение approved plan', () => {
     await expect(applyContentPlan(actor, id)).resolves.toEqual({ status: 'applied', planId: id })
     expect(mocks.execute).toHaveBeenCalledTimes(1)
     expect(mocks.dirty).not.toHaveBeenCalled()
-    expect(mocks.flush).toHaveBeenCalledWith(['/'])
+    expect(mocks.flush).toHaveBeenCalledWith(['content:site'])
     expect(log).toHaveBeenCalled()
     log.mockRestore()
   })
@@ -119,18 +120,23 @@ describe('Атомарное применение approved plan', () => {
     mocks.load.mockResolvedValue({ snapshot: { version: 'b'.repeat(64) } })
     await expect(applyContentPlan(actor, id)).resolves.toEqual({ status: 'applied', planId: id })
     expect(mocks.execute).not.toHaveBeenCalled()
-    expect(mocks.dirty).toHaveBeenCalledWith(['/'])
+    expect(mocks.dirty).not.toHaveBeenCalled()
+    expect(mocks.flush).toHaveBeenCalledWith(undefined)
   })
 
-  test('ошибка вычисления путей до commit не применяет контент', async () => {
+  test.each(['pages', 'settings', 'about'] as const)('site-wide ресурс %s сохраняет marker до postcommit enumeration', async (resource) => {
     const { applyContentPlan } = await import('~~/server/utils/contentApply')
-    mocks.paths.mockRejectedValue(new Error('Paths unavailable'))
-    await expect(applyContentPlan(actor, id)).rejects.toThrow('Paths unavailable')
-    expect(mocks.execute).not.toHaveBeenCalled()
-    expect(mocks.flush).not.toHaveBeenCalled()
+    const admin: ContentActor = { id: 'admin', tokenId: null, environment: 'development', resources: [], scopes: [] }
+    mocks.plan.mockResolvedValue(row({ resource }))
+    await applyContentPlan(admin, id)
+    const query = new PgDialect().sqlToQuery(mocks.execute.mock.calls[0]![0])
+    expect(query.params).toContain('["content:site"]')
+    expect(mocks.paths).not.toHaveBeenCalled()
+    expect(mocks.flush).toHaveBeenCalledWith(['content:site'])
+    expect(mocks.flush).toHaveBeenCalledAfter(mocks.execute)
   })
 
-  test('повтор после сбоя refresh повторно ставит очередь, не создавая второй audit', async () => {
+  test('повтор после сбоя refresh обрабатывает остатки очереди без повторного enqueue', async () => {
     const { applyContentPlan } = await import('~~/server/utils/contentApply')
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     mocks.flush.mockRejectedValueOnce(new Error('Refresh unavailable'))
@@ -138,8 +144,20 @@ describe('Атомарное применение approved plan', () => {
     mocks.plan.mockResolvedValue(row({ status: 'applied' }))
     await applyContentPlan(actor, id)
     expect(mocks.execute).toHaveBeenCalledTimes(1)
-    expect(mocks.dirty).toHaveBeenCalledExactlyOnceWith(['/'])
+    expect(mocks.dirty).not.toHaveBeenCalled()
+    expect(mocks.flush.mock.calls).toEqual([[['content:site']], [undefined]])
     log.mockRestore()
+  })
+
+  test('повтор applied не перечисляет сайт и не ставит новые события', async () => {
+    const { applyContentPlan } = await import('~~/server/utils/contentApply')
+    mocks.plan.mockResolvedValue(row({ status: 'applied' }))
+    await applyContentPlan(actor, id)
+    await applyContentPlan(actor, id)
+    expect(mocks.flush.mock.calls).toEqual([[undefined], [undefined]])
+    expect(mocks.paths).not.toHaveBeenCalled()
+    expect(mocks.execute).not.toHaveBeenCalled()
+    expect(mocks.dirty).not.toHaveBeenCalled()
   })
 
   test('пути старого и нового адреса post сохраняются в atomic outbox до refresh', async () => {

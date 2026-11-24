@@ -1,3 +1,5 @@
+import { PgDialect } from 'drizzle-orm/pg-core'
+import type { SQL } from 'drizzle-orm'
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
 import type { FakeDbState } from '~~/tests/helpers/fakeDb'
@@ -155,9 +157,7 @@ describe('cache invalidation queue', () => {
   test('the post paths go into pending_revalidation', async () => {
     await save(payload())
 
-    expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([
-      { path: '/' }, { path: '/blog' }, { path: '/projects' }, { path: '/blog/post' },
-    ])
+    expect(new PgDialect().sqlToQuery(stepArg<SQL>(state.calls, 'execute:?', 'execute')!).params).toEqual(['["/","/blog","/projects","/blog/post"]'])
   })
 })
 
@@ -167,7 +167,5 @@ test('переименование через publisher обновляет пр�
     'update:post': [[saved]],
   })
   await save(payload(), 7)
-  expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([
-    { path: '/' }, { path: '/blog' }, { path: '/projects' }, { path: '/blog/old-slug' }, { path: '/blog/post' },
-  ])
+  expect(new PgDialect().sqlToQuery(stepArg<SQL>(state.calls, 'execute:?', 'execute')!).params).toEqual(['["/","/blog","/projects","/blog/old-slug","/blog/post"]'])
 })

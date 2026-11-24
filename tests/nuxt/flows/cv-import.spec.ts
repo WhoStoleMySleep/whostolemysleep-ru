@@ -1,3 +1,5 @@
+import { PgDialect } from 'drizzle-orm/pg-core'
+import type { SQL } from 'drizzle-orm'
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { H3Event } from 'h3'
 import { plan, stepArg } from '~~/tests/helpers/fakeDb'
@@ -149,9 +151,7 @@ describe('CV import: export → diff → apply', () => {
   test('applying queues the CV pages for cache invalidation', async () => {
     await apply({ snapshot: uploaded, accept: ['about:text_ru'] })
 
-    expect(stepArg(state.calls, 'insert:pending_revalidation', 'values')).toEqual([
-      { path: '/' }, { path: '/resume' }, { path: '/cv' },
-    ])
+    expect(new PgDialect().sqlToQuery(stepArg<SQL>(state.calls, 'execute:?', 'execute')!).params).toEqual(['["/","/resume","/cv"]'])
   })
 
   test('a section missing from the file does not delete that section rows', async () => {

@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNotNull, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import type { z } from 'zod'
 import { db } from '~~/server/db'
 import { contentHistory, contentToken } from '~~/server/db/schema'
@@ -20,13 +20,15 @@ function publicToken(row: Pick<TokenRow, 'id' | 'label' | 'resources' | 'scopes'
 /** Все действующие credentials доступны для отзыва; история ограничена и не содержит секретов. */
 export async function listContentTokens(actor: ContentActor): Promise<ContentTokenInfo[]> {
   assertContentAdminActor(actor)
-  const fields = { id: contentToken.id, label: contentToken.label, resources: contentToken.resources, scopes: contentToken.scopes, expires_at: contentToken.expires_at, revoked_at: contentToken.revoked_at }
-  const environment = eq(contentToken.environment, actor.environment)
-  const [active, inactive] = await Promise.all([
-    db.select(fields).from(contentToken).where(and(environment, isNull(contentToken.revoked_at), gt(contentToken.expires_at, sql`now()`))).orderBy(desc(contentToken.created_at)),
-    db.select(fields).from(contentToken).where(and(environment, or(isNotNull(contentToken.revoked_at), lte(contentToken.expires_at, sql`now()`)))).orderBy(desc(contentToken.created_at)).limit(LIST_LIMIT),
-  ])
-  return [...active, ...inactive].map(publicToken)
+  const fields = sql`id, label, resources, scopes, expires_at, revoked_at`
+  const result = await db.execute<Pick<TokenRow, 'id' | 'label' | 'resources' | 'scopes' | 'expires_at' | 'revoked_at'>>(sql`
+    (select ${fields} from content_token where environment = ${actor.environment}
+      and revoked_at is null and expires_at > now() order by created_at desc)
+    union all
+    (select ${fields} from content_token where environment = ${actor.environment}
+      and (revoked_at is not null or expires_at <= now()) order by created_at desc limit ${LIST_LIMIT})
+  `)
+  return result.rows.map(publicToken)
 }
 
 /** Секрет криптографически случаен и существует в ответе только один раз. */

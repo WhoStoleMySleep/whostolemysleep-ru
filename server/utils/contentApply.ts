@@ -9,7 +9,7 @@ import { assertContentPermission } from './contentAuth'
 import { requireContentWrites } from './contentInput'
 import { CONTENT_TABLES, loadContent } from './contentRecords'
 import { loadContentPlan } from './contentPlans'
-import { flushPending, markDirty, postPaths, resumePaths, sitePaths } from './pending'
+import { buildPendingEnqueueSql, flushPending, postPaths, resumePaths, SITE_REVALIDATION_MARKER } from './pending'
 
 type PlanRow = typeof contentPlan.$inferSelect
 
@@ -72,12 +72,7 @@ function auditSql(actor: ContentActor): SQL {
 }
 
 function outboxSql(paths: string[]): SQL {
-  return sql`queued as (
-    insert into pending_revalidation(path)
-    select paths.path from applied cross join jsonb_array_elements_text(${JSON.stringify([...new Set(paths)])}::jsonb) as paths(path)
-    on conflict(path) do update set added_at = greatest(clock_timestamp(), pending_revalidation.added_at + interval '1 microsecond')
-    returning path
-  ) select id from applied`
+  return sql`queued as (${buildPendingEnqueueSql(paths, sql`applied`)}) select id from applied`
 }
 
 /** Live update, audit, applied и durable очередь фиксируются или откатываются вместе. */
@@ -85,22 +80,17 @@ export function buildContentApplySql(actor: ContentActor, plan: PlanRow, paths: 
   return sql`with ${callerTokenSql(actor, plan)}, ${lockedPlanSql(actor, plan)}, ${liveUpdateSql(plan)}, ${auditSql(actor)}, ${outboxSql(paths)}`
 }
 
-async function contentPaths(plan: PlanRow): Promise<string[]> {
+function contentPaths(plan: PlanRow): string[] {
   if (plan.resource === 'post') return [...postPaths(plan.before as Parameters<typeof postPaths>[0]), ...postPaths(plan.after as Parameters<typeof postPaths>[0])]
   if (['experience', 'education', 'skill', 'skill-group'].includes(plan.resource)) return resumePaths()
-  return sitePaths()
+  return [SITE_REVALIDATION_MARKER]
 }
 
-async function refreshContent(paths: string[]): Promise<void> {
+async function refreshContent(paths?: string[]): Promise<void> {
   try {
     const result = await flushPending(paths)
     if (!result.ok) console.warn('Content committed; some cache refreshes remain queued', result.failed)
   } catch (error) { console.error('Content committed; cache refresh remains queued', error) }
-}
-
-async function retryContentRefresh(plan: PlanRow): Promise<void> {
-  try { await markDirty(await contentPaths(plan)) }
-  catch (error) { console.error('Content committed; cache refresh needs retry', error) }
 }
 
 function requireApprovedPlan(plan: PlanRow): void {
@@ -112,24 +102,24 @@ async function applyApprovedPlan(actor: ContentActor, plan: PlanRow): Promise<vo
   requireApprovedPlan(plan)
   const current = await loadContent(plan.resource, plan.record_id, actor.environment)
   if (current.snapshot.version !== plan.version) {
-    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return retryContentRefresh(plan)
+    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return refreshContent()
     throw createError({ statusCode: 409, message: 'Content version conflict' })
   }
-  const paths = await contentPaths(plan)
+  const paths = contentPaths(plan)
   const result = await db.execute<{ id: string }>(buildContentApplySql(actor, plan, paths))
   if (!result.rows.length) {
-    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return retryContentRefresh(plan)
+    if ((await loadContentPlan(actor, plan.id)).status === 'applied') return refreshContent()
     throw createError({ statusCode: 409, message: 'Content conflict, expired plan, or revoked source token' })
   }
   await refreshContent(paths)
 }
 
-/** Повторный apply повторяет постановку ревалидации, но не live update или audit. */
+/** Повторный apply обрабатывает только остатки durable очереди, не создавая новое событие. */
 export async function applyContentPlan(actor: ContentActor, planId: string): Promise<{ status: 'applied'; planId: string }> {
   requireContentWrites()
   const plan = await loadContentPlan(actor, planId)
   assertContentPermission(actor, plan.resource, 'apply')
-  if (plan.status === 'applied') await retryContentRefresh(plan)
+  if (plan.status === 'applied') await refreshContent()
   else await applyApprovedPlan(actor, plan)
   return { status: 'applied', planId }
 }
